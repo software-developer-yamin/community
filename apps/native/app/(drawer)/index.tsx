@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "expo-router";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 
@@ -6,7 +7,7 @@ import { Container } from "@/components/container";
 import { SignIn } from "@/components/sign-in";
 import { SignUp } from "@/components/sign-up";
 import { authClient } from "@/lib/auth-client";
-import { queryClient, orpc } from "@/utils/orpc";
+import { orpc, queryClient } from "@/utils/orpc";
 
 export default function Home() {
   const healthCheck = useQuery(orpc.healthCheck.queryOptions());
@@ -22,17 +23,18 @@ export default function Home() {
             <View style={styles.sessionInfoCard}>
               <View style={styles.sessionUserRow}>
                 <Text style={styles.welcomeText}>
-                  Welcome, <Text style={styles.userNameText}>{session.user.name}</Text>
+                  Welcome,{" "}
+                  <Text style={styles.userNameText}>{session.user.name}</Text>
                 </Text>
               </View>
               <Text style={styles.emailText}>{session.user.email}</Text>
 
               <TouchableOpacity
-                style={styles.signOutButton}
                 onPress={() => {
                   authClient.signOut();
                   queryClient.invalidateQueries();
                 }}
+                style={styles.signOutButton}
               >
                 <Text style={styles.signOutButtonText}>Sign Out</Text>
               </TouchableOpacity>
@@ -44,15 +46,21 @@ export default function Home() {
               <View
                 style={[
                   styles.statusIndicatorDot,
-                  healthCheck.data ? styles.statusIndicatorGreen : styles.statusIndicatorRed,
+                  healthCheck.data
+                    ? styles.statusIndicatorGreen
+                    : styles.statusIndicatorRed,
                 ]}
               />
               <Text style={styles.mutedText}>
-                {healthCheck.isLoading
-                  ? "Checking..."
-                  : healthCheck.data
-                    ? "Connected to API"
-                    : "API Disconnected"}
+                {(() => {
+                  if (healthCheck.isLoading) {
+                    return "Checking...";
+                  }
+                  if (healthCheck.data) {
+                    return "Connected to API";
+                  }
+                  return "API Disconnected";
+                })()}
               </Text>
             </View>
           </View>
@@ -60,10 +68,27 @@ export default function Home() {
             <Text style={styles.cardTitle}>Private Data</Text>
             {privateData && (
               <View>
-                <Text style={styles.mutedText}>{privateData.data?.message}</Text>
+                <Text style={styles.mutedText}>
+                  {privateData.data?.message}
+                </Text>
               </View>
             )}
           </View>
+          {session?.user ? (
+            <View style={styles.callCard}>
+              <Text style={styles.cardTitle}>Live Calls</Text>
+              <Text style={styles.mutedText}>
+                Join a LiveKit room to start a video call.
+              </Text>
+              <Link asChild href="/call/lobby">
+                <TouchableOpacity style={styles.joinCallButton}>
+                  <Text style={styles.joinCallButtonText}>
+                    Join room: lobby
+                  </Text>
+                </TouchableOpacity>
+              </Link>
+            </View>
+          ) : null}
           {!session?.user && (
             <>
               <SignIn />
@@ -185,5 +210,24 @@ const styles = StyleSheet.create((theme) => ({
     borderWidth: 1,
     borderColor: theme?.colors?.border,
     padding: 16,
+  },
+  callCard: {
+    marginBottom: 24,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme?.colors?.border,
+    padding: 16,
+  },
+  joinCallButton: {
+    marginTop: 12,
+    backgroundColor: theme?.colors?.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+  },
+  joinCallButtonText: {
+    color: theme?.colors?.primaryForeground,
+    fontWeight: "500",
   },
 }));

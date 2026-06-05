@@ -1,6 +1,12 @@
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
-import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 import z from "zod";
 
@@ -8,12 +14,21 @@ import { authClient } from "@/lib/auth-client";
 import { queryClient } from "@/utils/orpc";
 
 const signInSchema = z.object({
-  email: z.string().trim().min(1, "Email is required").email("Enter a valid email address"),
-  password: z.string().min(1, "Password is required").min(8, "Use at least 8 characters"),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email is required")
+    .email("Enter a valid email address"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(8, "Use at least 8 characters"),
 });
 
 function getErrorMessage(error: unknown): string | null {
-  if (!error) return null;
+  if (!error) {
+    return null;
+  }
 
   if (typeof error === "string") {
     return error;
@@ -65,7 +80,7 @@ export function SignIn() {
             formApi.reset();
             queryClient.refetchQueries();
           },
-        },
+        }
       );
     },
   });
@@ -94,9 +109,8 @@ export function SignIn() {
               <form.Field name="email">
                 {(field) => (
                   <TextInput
-                    style={styles.input}
-                    placeholder="Email"
-                    value={field.state.value}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
                     onBlur={field.handleBlur}
                     onChangeText={(value) => {
                       field.handleChange(value);
@@ -104,8 +118,9 @@ export function SignIn() {
                         setError(null);
                       }
                     }}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
+                    placeholder="Email"
+                    style={styles.input}
+                    value={field.state.value}
                   />
                 )}
               </form.Field>
@@ -113,9 +128,6 @@ export function SignIn() {
               <form.Field name="password">
                 {(field) => (
                   <TextInput
-                    style={styles.input}
-                    placeholder="Password"
-                    value={field.state.value}
                     onBlur={field.handleBlur}
                     onChangeText={(value) => {
                       field.handleChange(value);
@@ -123,19 +135,22 @@ export function SignIn() {
                         setError(null);
                       }
                     }}
-                    secureTextEntry
                     onSubmitEditing={form.handleSubmit}
+                    placeholder="Password"
+                    secureTextEntry
+                    style={styles.input}
+                    value={field.state.value}
                   />
                 )}
               </form.Field>
 
               <TouchableOpacity
-                onPress={form.handleSubmit}
                 disabled={isSubmitting}
+                onPress={form.handleSubmit}
                 style={styles.button}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text style={styles.buttonText}>Sign In</Text>
                 )}

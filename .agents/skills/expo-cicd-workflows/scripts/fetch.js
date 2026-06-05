@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createHash } from "node:crypto";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import process from "node:process";
 
@@ -11,7 +11,7 @@ const DEFAULT_TTL_SECONDS = 15 * 60; // 15 minutes
 export async function fetchCached(url) {
   await mkdir(CACHE_DIRECTORY, { recursive: true });
 
-  const cacheFile = resolve(CACHE_DIRECTORY, hashUrl(url) + ".json");
+  const cacheFile = resolve(CACHE_DIRECTORY, `${hashUrl(url)}.json`);
   const cached = await loadCacheEntry(cacheFile);
   if (cached && cached.expires > Math.floor(Date.now() / 1000)) {
     return cached.data;
@@ -84,12 +84,14 @@ function getExpires(headers) {
   return now + DEFAULT_TTL_SECONDS;
 }
 
+const MAX_AGE_REGEX = /max-age=(\d+)/i;
+
 function parseMaxAge(cacheControl) {
   if (!cacheControl) {
     return null;
   }
-  const match = cacheControl.match(/max-age=(\d+)/i);
-  return match ? parseInt(match[1], 10) : null;
+  const match = cacheControl.match(MAX_AGE_REGEX);
+  return match ? Number.parseInt(match[1], 10) : null;
 }
 
 if (import.meta.main) {

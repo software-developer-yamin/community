@@ -33,7 +33,7 @@ const DrawerLayout = () => {
           headerTitle: "Home",
           drawerLabel: "Home",
           drawerIcon: ({ size, color }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+            <Ionicons color={color} name="home-outline" size={size} />
           ),
         }}
       />
@@ -43,10 +43,10 @@ const DrawerLayout = () => {
           headerTitle: "Tabs",
           drawerLabel: "Tabs",
           drawerIcon: ({ size, color }) => (
-            <MaterialIcons name="border-bottom" size={size} color={color} />
+            <MaterialIcons color={color} name="border-bottom" size={size} />
           ),
           headerRight: () => (
-            <Link href="/modal" asChild>
+            <Link asChild href="/modal">
               <HeaderButton />
             </Link>
           ),
@@ -58,7 +58,7 @@ const DrawerLayout = () => {
           headerTitle: "Todos",
           drawerLabel: "Todos",
           drawerIcon: ({ size, color }) => (
-            <Ionicons name="checkbox-outline" size={size} color={color} />
+            <Ionicons color={color} name="checkbox-outline" size={size} />
           ),
         }}
       />
@@ -68,7 +68,11 @@ const DrawerLayout = () => {
           headerTitle: "AI",
           drawerLabel: "AI",
           drawerIcon: ({ size, color }) => (
-            <Ionicons name="chatbubble-ellipses-outline" size={size} color={color} />
+            <Ionicons
+              color={color}
+              name="chatbubble-ellipses-outline"
+              size={size}
+            />
           ),
         }}
       />

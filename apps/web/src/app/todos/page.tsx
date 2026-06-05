@@ -12,7 +12,7 @@ import { Checkbox } from "@community/ui/components/checkbox";
 import { Input } from "@community/ui/components/input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { type FormEvent, useState } from "react";
 
 import { orpc } from "@/utils/orpc";
 
@@ -28,21 +28,21 @@ export default function TodosPage() {
         todos.refetch();
         setNewTodoText("");
       },
-    }),
+    })
   );
   const toggleMutation = useMutation(
     orpc.todo.toggle.mutationOptions({
       onSuccess: () => {
         todos.refetch();
       },
-    }),
+    })
   );
   const deleteMutation = useMutation(
     orpc.todo.delete.mutationOptions({
       onSuccess: () => {
         todos.refetch();
       },
-    }),
+    })
   );
 
   const handleAddTodo = (e: FormEvent<HTMLFormElement>) => {
@@ -68,56 +68,76 @@ export default function TodosPage() {
           <CardDescription>Manage your tasks efficiently</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAddTodo} className="mb-6 flex items-center space-x-2">
+          <form
+            className="mb-6 flex items-center space-x-2"
+            onSubmit={handleAddTodo}
+          >
             <Input
-              value={newTodoText}
+              disabled={createMutation.isPending}
               onChange={(e) => setNewTodoText(e.target.value)}
               placeholder="Add a new task..."
-              disabled={createMutation.isPending}
+              value={newTodoText}
             />
-            <Button type="submit" disabled={createMutation.isPending || !newTodoText.trim()}>
-              {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+            <Button
+              disabled={createMutation.isPending || !newTodoText.trim()}
+              type="submit"
+            >
+              {createMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Add"
+              )}
             </Button>
           </form>
 
-          {todos.isLoading ? (
-            <div className="flex justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
-          ) : todos.data?.length === 0 ? (
-            <p className="py-4 text-center">No todos yet. Add one above!</p>
-          ) : (
-            <ul className="space-y-2">
-              {todos.data?.map((todo) => (
-                <li
-                  key={todo.id}
-                  className="flex items-center justify-between rounded-md border p-2"
-                >
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={todo.completed}
-                      onCheckedChange={() => handleToggleTodo(todo.id, todo.completed)}
-                      id={`todo-${todo.id}`}
-                    />
-                    <label
-                      htmlFor={`todo-${todo.id}`}
-                      className={`${todo.completed ? "line-through text-muted-foreground" : ""}`}
-                    >
-                      {todo.text}
-                    </label>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteTodo(todo.id)}
-                    aria-label="Delete todo"
+          {(() => {
+            if (todos.isLoading) {
+              return (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              );
+            }
+            if (todos.data?.length === 0) {
+              return (
+                <p className="py-4 text-center">No todos yet. Add one above!</p>
+              );
+            }
+            return (
+              <ul className="space-y-2">
+                {todos.data?.map((todo) => (
+                  <li
+                    className="flex items-center justify-between rounded-md border p-2"
+                    key={todo.id}
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={todo.completed}
+                        id={`todo-${todo.id}`}
+                        onCheckedChange={() =>
+                          handleToggleTodo(todo.id, todo.completed)
+                        }
+                      />
+                      <label
+                        className={`${todo.completed ? "text-muted-foreground line-through" : ""}`}
+                        htmlFor={`todo-${todo.id}`}
+                      >
+                        {todo.text}
+                      </label>
+                    </div>
+                    <Button
+                      aria-label="Delete todo"
+                      onClick={() => handleDeleteTodo(todo.id)}
+                      size="icon"
+                      variant="ghost"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            );
+          })()}
         </CardContent>
       </Card>
     </div>

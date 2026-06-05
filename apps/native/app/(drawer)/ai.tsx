@@ -2,15 +2,15 @@ import { useChat } from "@ai-sdk/react";
 import { env } from "@community/env/native";
 import { Ionicons } from "@expo/vector-icons";
 import { DefaultChatTransport } from "ai";
-import React, { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
+  View,
 } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 
@@ -19,7 +19,9 @@ import { Container } from "@/components/container";
 const generateAPIUrl = (relativePath: string) => {
   const serverUrl = env.EXPO_PUBLIC_SERVER_URL;
   if (!serverUrl) {
-    throw new Error("EXPO_PUBLIC_SERVER_URL environment variable is not defined");
+    throw new Error(
+      "EXPO_PUBLIC_SERVER_URL environment variable is not defined"
+    );
   }
   const path = relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
   return serverUrl.concat(path);
@@ -39,7 +41,7 @@ export default function AIScreen() {
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
+  }, []);
 
   const onSubmit = () => {
     const value = input.trim();
@@ -54,7 +56,9 @@ export default function AIScreen() {
       <Container>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Error: {error.message}</Text>
-          <Text style={styles.errorSubtext}>Please check your connection and try again.</Text>
+          <Text style={styles.errorSubtext}>
+            Please check your connection and try again.
+          </Text>
         </View>
       </Container>
     );
@@ -63,23 +67,27 @@ export default function AIScreen() {
   return (
     <Container>
       <KeyboardAvoidingView
-        style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
       >
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>AI Chat</Text>
-            <Text style={styles.headerSubtitle}>Chat with our AI assistant</Text>
+            <Text style={styles.headerSubtitle}>
+              Chat with our AI assistant
+            </Text>
           </View>
 
           <ScrollView
             ref={scrollViewRef}
-            style={styles.messagesContainer}
             showsVerticalScrollIndicator={false}
+            style={styles.messagesContainer}
           >
             {messages.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>Ask me anything to get started!</Text>
+                <Text style={styles.emptyText}>
+                  Ask me anything to get started!
+                </Text>
               </View>
             ) : (
               <View style={styles.messagesWrapper}>
@@ -88,23 +96,31 @@ export default function AIScreen() {
                     key={message.id}
                     style={[
                       styles.messageContainer,
-                      message.role === "user" ? styles.userMessage : styles.assistantMessage,
+                      message.role === "user"
+                        ? styles.userMessage
+                        : styles.assistantMessage,
                     ]}
                   >
                     <Text style={styles.messageRole}>
                       {message.role === "user" ? "You" : "AI Assistant"}
                     </Text>
                     <View style={styles.messageContentWrapper}>
-                      {message.parts.map((part, i) => {
+                      {message.parts.map((part) => {
                         if (part.type === "text") {
                           return (
-                            <Text key={`${message.id}-${i}`} style={styles.messageContent}>
+                            <Text
+                              key={`${message.id}-text-${part.text}`}
+                              style={styles.messageContent}
+                            >
                               {part.text}
                             </Text>
                           );
                         }
                         return (
-                          <Text key={`${message.id}-${i}`} style={styles.messageContent}>
+                          <Text
+                            key={`${message.id}-${JSON.stringify(part)}`}
+                            style={styles.messageContent}
+                          >
                             {JSON.stringify(part)}
                           </Text>
                         );
@@ -119,26 +135,31 @@ export default function AIScreen() {
           <View style={styles.inputSection}>
             <View style={styles.inputContainer}>
               <TextInput
-                value={input}
+                autoFocus={true}
                 onChangeText={setInput}
-                placeholder="Type your message..."
-                placeholderTextColor={theme.colors.border}
-                style={styles.textInput}
                 onSubmitEditing={(e) => {
                   e.preventDefault();
                   onSubmit();
                 }}
-                autoFocus={true}
+                placeholder="Type your message..."
+                placeholderTextColor={theme.colors.border}
+                style={styles.textInput}
+                value={input}
               />
               <TouchableOpacity
-                onPress={onSubmit}
                 disabled={!input.trim()}
-                style={[styles.sendButton, !input.trim() && styles.sendButtonDisabled]}
+                onPress={onSubmit}
+                style={[
+                  styles.sendButton,
+                  !input.trim() && styles.sendButtonDisabled,
+                ]}
               >
                 <Ionicons
+                  color={
+                    input.trim() ? theme.colors.background : theme.colors.border
+                  }
                   name="send"
                   size={20}
-                  color={input.trim() ? theme.colors.background : theme.colors.border}
                 />
               </TouchableOpacity>
             </View>
@@ -210,7 +231,7 @@ const styles = StyleSheet.create((theme) => ({
     borderRadius: 8,
   },
   userMessage: {
-    backgroundColor: theme.colors.primary + "20",
+    backgroundColor: `${theme.colors.primary}20`,
     marginLeft: theme.spacing.xl,
     alignSelf: "flex-end",
   },

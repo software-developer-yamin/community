@@ -48,6 +48,12 @@
       "skillPath": "skills/hono/SKILL.md",
       "computedHash": "220e5e1b12bbaeec49ec362b6e2262d77632d0536e9758bba9acbbc323fef990"
     },
+    "livekit-agents": {
+      "source": "livekit/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/livekit-agents/SKILL.md",
+      "computedHash": "373669b9a938ced840f301173e838a0046408acd0397c02c03420cc9b6a8cb42"
+    },
     "native-data-fetching": {
       "source": "expo/skills",
       "sourceType": "github",

@@ -24,6 +24,7 @@
     "dotenv": "catalog:",
     "evlog": "catalog:",
     "hono": "catalog:",
+    "livekit-server-sdk": "^2.15.4",
     "zod": "catalog:"
   },
   "devDependencies": {

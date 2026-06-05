@@ -21,6 +21,10 @@
     "db:watch": "turbo -F @community/db db:watch",
     "db:stop": "turbo -F @community/db db:stop",
     "db:down": "turbo -F @community/db db:down",
+    "livekit:up": "docker compose -f docker/livekit/docker-compose.yml up -d",
+    "livekit:down": "docker compose -f docker/livekit/docker-compose.yml down",
+    "livekit:logs": "docker compose -f docker/livekit/docker-compose.yml logs -f livekit",
+    "livekit:ps": "docker compose -f docker/livekit/docker-compose.yml ps",
     "check": "ultracite check",
     "fix": "ultracite fix",
     "prepare": "husky"

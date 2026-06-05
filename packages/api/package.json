@@ -21,6 +21,7 @@
     "@types/pg": "catalog:",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
+    "livekit-server-sdk": "^2.15.4",
     "zod": "catalog:"
   },
   "devDependencies": {

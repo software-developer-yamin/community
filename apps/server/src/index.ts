@@ -9,11 +9,14 @@ import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
-import { streamText, convertToModelMessages, wrapLanguageModel } from "ai";
+import { convertToModelMessages, streamText, wrapLanguageModel } from "ai";
 import { initLogger } from "evlog";
 import { createAILogger, createEvlogIntegration } from "evlog/ai";
-import { createAuthMiddleware, type BetterAuthInstance } from "evlog/better-auth";
-import { evlog, type EvlogVariables } from "evlog/hono";
+import {
+  type BetterAuthInstance,
+  createAuthMiddleware,
+} from "evlog/better-auth";
+import { type EvlogVariables, evlog } from "evlog/hono";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
@@ -41,7 +44,7 @@ app.use(
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-  }),
+  })
 );
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
@@ -72,7 +75,7 @@ app.use("/*", async (c, next) => {
 
   const rpcResult = await rpcHandler.handle(c.req.raw, {
     prefix: "/rpc",
-    context: context,
+    context,
   });
 
   if (rpcResult.matched) {
@@ -81,7 +84,7 @@ app.use("/*", async (c, next) => {
 
   const apiResult = await apiHandler.handle(c.req.raw, {
     prefix: "/api-reference",
-    context: context,
+    context,
   });
 
   if (apiResult.matched) {
@@ -111,8 +114,6 @@ app.post("/ai", async (c) => {
   return result.toUIMessageStreamResponse();
 });
 
-app.get("/", (c) => {
-  return c.text("OK");
-});
+app.get("/", (c) => c.text("OK"));
 
 export default app;

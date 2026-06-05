@@ -1,9 +1,16 @@
 import { expo } from "@better-auth/expo";
 import { createDb } from "@community/db";
-import * as schema from "@community/db/schema/auth";
+import {
+  account,
+  session,
+  user,
+  verification,
+} from "@community/db/schema/auth";
 import { env } from "@community/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+
+const schema = { user, session, account, verification };
 
 export function createAuth() {
   const db = createDb();
@@ -12,9 +19,14 @@ export function createAuth() {
     database: drizzleAdapter(db, {
       provider: "pg",
 
-      schema: schema,
+      schema,
     }),
-    trustedOrigins: [env.CORS_ORIGIN, "community://", "exp://", "http://localhost:8081"],
+    trustedOrigins: [
+      env.CORS_ORIGIN,
+      "community://",
+      "exp://",
+      "http://localhost:8081",
+    ],
     emailAndPassword: {
       enabled: true,
     },

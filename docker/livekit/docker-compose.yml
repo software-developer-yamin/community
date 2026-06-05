@@ -1,0 +1,47 @@
+# LiveKit self-hosted stack (server + redis) for local dev.
+# Usage:
+#   pnpm livekit:up       # start in background
+#   pnpm livekit:logs     # tail server logs
+#   pnpm livekit:down     # stop
+#
+# LAN access: bind_addresses is 0.0.0.0:7880 + 7881 (TCP) + 50000-50100 (UDP).
+# Update LIVEKIT_URL in apps/server/.env to http://localhost:7880 (or your LAN IP)
+# and EXPO_PUBLIC_LIVEKIT_URL in apps/native/.env to ws://localhost:7880 for sim
+# or ws://<host-lan-ip>:7880 for a physical device on the same network.
+
+name: livekit
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: livekit-redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: livekit-server
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["--config", "/etc/livekit/livekit.yaml"]
+    ports:
+      - "7880:7880" # HTTP/WS signaling
+      - "7881:7881" # WebRTC TCP
+      - "7882:7882/udp" # ICE/UDP
+      - "50000-50100:50000-50100/udp" # WebRTC UDP media
+    volumes:
+      - ./livekit.yaml:/etc/livekit/livekit.yaml:ro
+      # Mount TLS certs here when enabling TURN:
+      # - ./certs:/etc/livekit/certs:ro
+    environment:
+      # Override keys at runtime: LIVEKIT_KEYS="key1: secret1, key2: secret2"
+      # If unset, falls back to `keys:` block in livekit.yaml.
+      LIVEKIT_KEYS: ${LIVEKIT_KEYS:?LIVEKIT_KEYS must be set in docker/livekit/.env}
+      TZ: UTC

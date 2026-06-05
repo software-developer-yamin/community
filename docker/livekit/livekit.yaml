@@ -1,0 +1,41 @@
+# LiveKit self-hosted server (single-node dev + small prod).
+# See https://github.com/livekit/livekit/blob/master/config-sample.yaml for full options.
+
+port: 7880
+bind_addresses:
+  - "0.0.0.0"
+log_level: info
+
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50100
+  # LAN dev: false. Cloud/prod: true (uses STUN to discover public IP).
+  use_external_ip: false
+
+redis:
+  address: "redis:6379"
+
+keys:
+  # Must match LIVEKIT_API_KEY / LIVEKIT_API_SECRET in apps/server/.env.
+  # Override per-environment with LIVEKIT_KEYS env var if you prefer.
+  devkey: "15703ce0d7236474f2d0f635e4b38ddb80a8137d984eeee2b05d5e16093ab5db"
+
+room:
+  # 24h default room TTL for dev comfort.
+  empty_timeout: 3600
+  max_participants: 50
+
+# Optional: enable TURN for hostile networks. Requires a domain + TLS cert.
+# turn:
+#   enabled: true
+#   udp_port: 3478
+#   tls_port: 5349
+#   domain: turn.example.com
+#   cert_file: /etc/livekit/certs/turn.crt
+#   key_file: /etc/livekit/certs/turn.key
+
+# Webhook for room events (server SDK room service hooks use this).
+# webhook:
+#   url: "http://apps-server:3000/livekit/webhook"
+#   api_key: "devkey"

@@ -8,7 +8,14 @@
     "scheme": "community",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera for video calls.",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone for video calls.",
+        "UIBackgroundModes": ["voip", "audio"]
+      },
+      "bitcode": false,
+      "bundleIdentifier": "com.anonymous.mybettertapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +25,23 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.mybettertapp"
+      "package": "com.anonymous.mybettertapp",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_CAMERA",
+        "android.permission.FOREGROUND_SERVICE_MICROPHONE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.INTERNET",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WAKE_LOCK",
+        "android.permission.BLUETOOTH"
+      ]
     },
     "web": {
       "output": "static",
@@ -37,7 +60,19 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      [
+        "@livekit/react-native-expo-plugin",
+        {
+          "android": {
+            "audioType": "communication"
+          },
+          "ios": {
+            "enableMultitaskingCameraAccess": false
+          }
+        }
+      ],
+      "@config-plugins/react-native-webrtc"
     ],
     "experiments": {
       "typedRoutes": true,

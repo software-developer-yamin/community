@@ -1,0 +1,4 @@
+# LiveKit runtime data (if you add persistent volumes).
+data/
+certs/
+.env

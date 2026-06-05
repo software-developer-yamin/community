@@ -5,10 +5,10 @@ import { darkTheme, lightTheme } from "./theme";
 
 type AppBreakpoints = typeof breakpoints;
 
-type AppThemes = {
-  light: typeof lightTheme;
+interface AppThemes {
   dark: typeof darkTheme;
-};
+  light: typeof lightTheme;
+}
 
 declare module "react-native-unistyles" {
   export interface UnistylesBreakpoints extends AppBreakpoints {}

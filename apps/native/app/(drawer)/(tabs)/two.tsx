@@ -9,7 +9,9 @@ export default function TabTwo() {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerSection}>
           <Text style={styles.title}>Tab Two</Text>
-          <Text style={styles.subtitle}>Discover more features and content</Text>
+          <Text style={styles.subtitle}>
+            Discover more features and content
+          </Text>
         </View>
       </ScrollView>
     </Container>

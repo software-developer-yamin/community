@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
+  View,
 } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 
@@ -26,21 +26,21 @@ export default function TodosScreen() {
         todos.refetch();
         setNewTodoText("");
       },
-    }),
+    })
   );
   const toggleMutation = useMutation(
     orpc.todo.toggle.mutationOptions({
       onSuccess: () => {
         todos.refetch();
       },
-    }),
+    })
   );
   const deleteMutation = useMutation(
     orpc.todo.delete.mutationOptions({
       onSuccess: () => {
         todos.refetch();
       },
-    }),
+    })
   );
 
   const handleAddTodo = () => {
@@ -73,31 +73,36 @@ export default function TodosScreen() {
       <ScrollView style={styles.scrollView}>
         <View style={styles.headerContainer}>
           <Text style={styles.headerTitle}>Todo List</Text>
-          <Text style={styles.headerSubtitle}>Manage your tasks efficiently</Text>
+          <Text style={styles.headerSubtitle}>
+            Manage your tasks efficiently
+          </Text>
 
           <View style={styles.inputContainer}>
             <TextInput
-              value={newTodoText}
+              editable={!isCreating}
               onChangeText={setNewTodoText}
+              onSubmitEditing={handleAddTodo}
               placeholder="Add a new task..."
               placeholderTextColor={theme.colors.border}
-              editable={!isCreating}
-              style={styles.textInput}
-              onSubmitEditing={handleAddTodo}
               returnKeyType="done"
+              style={styles.textInput}
+              value={newTodoText}
             />
             <TouchableOpacity
-              onPress={handleAddTodo}
               disabled={isCreating || !newTodoText.trim()}
+              onPress={handleAddTodo}
               style={[
                 styles.addButton,
                 (isCreating || !newTodoText.trim()) && styles.addButtonDisabled,
               ]}
             >
               {isCreating ? (
-                <ActivityIndicator size="small" color={primaryButtonTextColor} />
+                <ActivityIndicator
+                  color={primaryButtonTextColor}
+                  size="small"
+                />
               ) : (
-                <Ionicons name="add" size={24} color={primaryButtonTextColor} />
+                <Ionicons color={primaryButtonTextColor} name="add" size={24} />
               )}
             </TouchableOpacity>
           </View>
@@ -105,7 +110,7 @@ export default function TodosScreen() {
 
         {isLoading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <ActivityIndicator color={theme.colors.primary} size="large" />
             <Text style={styles.loadingText}>Loading todos...</Text>
           </View>
         )}
@@ -113,27 +118,42 @@ export default function TodosScreen() {
         {todos.data && todos.data.length === 0 && !isLoading && (
           <Text style={styles.emptyText}>No todos yet. Add one!</Text>
         )}
-        {todos.data?.map((todo: { id: number; text: string; completed: boolean }) => (
-          <View key={todo.id} style={styles.todoItem}>
-            <TouchableOpacity
-              onPress={() => handleToggleTodo(todo.id, todo.completed)}
-              style={styles.todoContent}
-            >
-              <Ionicons
-                name={todo.completed ? "checkbox" : "square-outline"}
-                size={24}
-                color={todo.completed ? theme.colors.primary : theme.colors.typography}
-                style={styles.checkbox}
-              />
-              <Text style={[styles.todoText, todo.completed && styles.todoTextCompleted]}>
-                {todo.text}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDeleteTodo(todo.id)}>
-              <Ionicons name="trash-outline" size={24} color={theme.colors.destructive} />
-            </TouchableOpacity>
-          </View>
-        ))}
+        {todos.data?.map(
+          (todo: { id: number; text: string; completed: boolean }) => (
+            <View key={todo.id} style={styles.todoItem}>
+              <TouchableOpacity
+                onPress={() => handleToggleTodo(todo.id, todo.completed)}
+                style={styles.todoContent}
+              >
+                <Ionicons
+                  color={
+                    todo.completed
+                      ? theme.colors.primary
+                      : theme.colors.typography
+                  }
+                  name={todo.completed ? "checkbox" : "square-outline"}
+                  size={24}
+                  style={styles.checkbox}
+                />
+                <Text
+                  style={[
+                    styles.todoText,
+                    todo.completed && styles.todoTextCompleted,
+                  ]}
+                >
+                  {todo.text}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDeleteTodo(todo.id)}>
+                <Ionicons
+                  color={theme.colors.destructive}
+                  name="trash-outline"
+                  size={24}
+                />
+              </TouchableOpacity>
+            </View>
+          )
+        )}
       </ScrollView>
     </Container>
   );
