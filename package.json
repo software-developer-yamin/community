@@ -1,0 +1,43 @@
+{
+  "name": "community",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
+    "dev:native": "turbo -F native dev",
+    "dev:web": "turbo -F web dev",
+    "dev:server": "turbo -F server dev",
+    "db:push": "turbo -F @community/db db:push",
+    "db:studio": "turbo -F @community/db db:studio",
+    "db:generate": "turbo -F @community/db db:generate",
+    "db:migrate": "turbo -F @community/db db:migrate",
+    "db:start": "turbo -F @community/db db:start",
+    "db:watch": "turbo -F @community/db db:watch",
+    "db:stop": "turbo -F @community/db db:stop",
+    "db:down": "turbo -F @community/db db:down",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@community/env": "workspace:*",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "@community/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "husky": "latest",
+    "turbo": "^2.8.12",
+    "typescript": "catalog:",
+    "ultracite": "7.8.1"
+  },
+  "packageManager": "pnpm@10.9.0"
+}
