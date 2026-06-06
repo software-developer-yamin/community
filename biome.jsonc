@@ -4,5 +4,8 @@
     "ultracite/biome/core",
     "ultracite/biome/next",
     "ultracite/biome/react"
-  ]
+  ],
+  "files": {
+    "includes": ["!_bmad", "!.agents/skills", "!.claude/skills"]
+  }
 }

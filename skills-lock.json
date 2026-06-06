@@ -12,6 +12,12 @@
       "sourceType": "well-known",
       "computedHash": "28bd8254997b767ebba1f7f2cf4567ddb6c51b1fcdca9baf9b9cd7ee3ca51d7c"
     },
+    "bad": {
+      "source": "stephenleo/bmad-autonomous-development",
+      "sourceType": "github",
+      "skillPath": "skills/bad/SKILL.md",
+      "computedHash": "2fda02f0bcb2c38d427af51c2be5164a130b49a27675b58298d685c213500906"
+    },
     "better-auth-best-practices": {
       "source": "better-auth/skills",
       "sourceType": "github",
