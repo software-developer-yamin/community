@@ -18,7 +18,7 @@ Key Features:
 
 8\. Structured Courses: Gain access to a variety of structured courses focused on pronunciation, vocabulary, and grammar. This comprehensive approach ensures you improve all aspects of your spoken English, making you a confident communicator in no time.
 
-9\. Tailored for Indian Learners: AceFluency addresses the specific needs of Indian learners, where 4 out of 5 individuals face challenges with spoken English fluency. Our app is crafted to help you overcome these barriers, offering a supportive environment to practice English speaking effectively.
+9\. Tailored for Bangladeshi Learners: AceFluency addresses the specific needs of Bangladeshi learners, where 4 out of 5 individuals face challenges with spoken English fluency. Our app is crafted to help you overcome these barriers, offering a supportive environment to practice English speaking effectively.
 
 Why Choose AceFluency?
 

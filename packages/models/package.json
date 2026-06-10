@@ -1,0 +1,16 @@
+{
+  "name": "@community/models",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "onnx-embedder",
+    "onnx-pron"
+  ],
+  "scripts": {
+    "models:up": "docker compose -f ../../apps/server/docker-compose.models.yml up -d",
+    "models:down": "docker compose -f ../../apps/server/docker-compose.models.yml down",
+    "models:logs": "docker compose -f ../../apps/server/docker-compose.models.yml logs -f",
+    "models:eval": "bun run eval/run.ts"
+  }
+}

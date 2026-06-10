@@ -48,6 +48,12 @@
       "skillPath": "plugins/expo/skills/expo-dev-client/SKILL.md",
       "computedHash": "234e2633b7fbcef2d479f8fe8ab20d53d08ed3e4beec7c965da4aff5b43affe7"
     },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
+    },
     "hono": {
       "source": "yusukebe/hono-skill",
       "sourceType": "github",

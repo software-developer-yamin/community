@@ -1515,7 +1515,7 @@ Hello Rhea, We are really sorry for this experience. Could you please contact us
 
 Programming Universe  
 17 February 2022  
-This app is incredible for me and for everyone to improve English communication skills and to be very fluent in english. But i am facing issue that co-learners voice is not audible many times during call due to weak internet. I request Acefluency developers and whole team pls make it convenient and working well on slow internet also. Bcz many places in india have slow internet/network connections.  
+This app is incredible for me and for everyone to improve English communication skills and to be very fluent in english. But i am facing issue that co-learners voice is not audible many times during call due to weak internet. I request Acefluency developers and whole team pls make it convenient and working well on slow internet also. Bcz many places in Bangladesh have slow internet/network connections.  
 12 people found this review helpful  
 Did you find this helpful?
 
@@ -1756,7 +1756,7 @@ Did you find this helpful?
 
 Ibasaniarlang Basan  
 3 July 2023  
-This app met me at the very right time, i can't count on it, it's so good and as its name Acefluency it has really improved my fluency, and I'm able to meet many people from across India, and the experts are outstanding, they really work hard, and interaction was really awesome, they will never keep you waiting when you have doubts, i thank the person who introduced me to this app, thank you thank you so much  
+This app met me at the very right time, i can't count on it, it's so good and as its name Acefluency it has really improved my fluency, and I'm able to meet many people from across Bangladesh, and the experts are outstanding, they really work hard, and interaction was really awesome, they will never keep you waiting when you have doubts, i thank the person who introduced me to this app, thank you thank you so much  
 6 people found this review helpful  
 Did you find this helpful?  
 Acefluency  
@@ -2986,7 +2986,7 @@ Did you find this helpful?
 
 Ratul Ghosh  
 20 January 2024  
-It is very good application for improving English speaking skills, 1:1 can talk as a beginner and also room has given by Ace Fluent team \- It is very good Idea, Here as a learner can discuss on particular topic and can improve GD round in the Room. But As a Indian Learner Price is highly. Because 90% student who come from villages, they can't speak English properly. I mean to say that most villagers can't speak English many people poor, please decrease membership price for them. Thankyou  
+It is very good application for improving English speaking skills, 1:1 can talk as a beginner and also room has given by Ace Fluent team \- It is very good Idea, Here as a learner can discuss on particular topic and can improve GD round in the Room. But As a Bangladeshi Learner Price is highly. Because 90% student who come from villages, they can't speak English properly. I mean to say that most villagers can't speak English many people poor, please decrease membership price for them. Thankyou  
 Did you find this helpful?  
 Acefluency  
 21 January 2024  
@@ -3058,7 +3058,7 @@ Did you find this helpful?
 
 Takshit Sherekar  
 15 February 2023  
-I work as a trainer here and this application is perfect for all learners who want to enhance their speaking skills. I have met people from different parts of India and other countries like Qatar, Saudi Arabia and Kuwait. My experience with this app so far has been great.  
+I work as a trainer here and this application is perfect for all learners who want to enhance their speaking skills. I have met people from different parts of Bangladesh and other countries like Qatar, Saudi Arabia and Kuwait. My experience with this app so far has been great.  
 3 people found this review helpful  
 Did you find this helpful?
 
@@ -3109,7 +3109,7 @@ Hello Yuvraj, sorry for inconvenience, could you please reach out to us on \+91 
 
 Nikesh Das  
 20 December 2023  
-This app is extremely essential for me not only me but aslo everyone who will not be able to speak fluently as well as they can boost up their knowledge via this app but one think I figured out that their is not any option for Bengali individuals for purchasing premium via any alternative option (bikash,rocket and so on which is available in bangladesh). Even though this app is an Indian app, the host of this app should provide another facilities for us without visa c if is it possible From:(BD)  
+This app is extremely essential for me not only me but aslo everyone who will not be able to speak fluently as well as they can boost up their knowledge via this app but one think I figured out that their is not any option for Bengali individuals for purchasing premium via any alternative option (bikash,rocket and so on which is available in bangladesh). Even though this app is an Bangladeshi app, the host of this app should provide another facilities for us without visa c if is it possible From:(BD)  
 1 person found this review helpful  
 Did you find this helpful?  
 Acefluency  
@@ -3820,7 +3820,7 @@ Did you find this helpful?
 
 Nidhi Gaur  
 17 April 2021  
-I love this app. With each passing day I found myself more confident for speaking English. It helping me a lot in building my communication skills. I must say AceFluency is best app in India for spoken English. Thank you from deepest of my❤️🙏.  
+I love this app. With each passing day I found myself more confident for speaking English. It helping me a lot in building my communication skills. I must say AceFluency is best app in Bangladesh for spoken English. Thank you from deepest of my❤️🙏.  
 16 people found this review helpful  
 Did you find this helpful?
 
@@ -3983,7 +3983,7 @@ Did you find this helpful?
 
 Pio Jeyaraj  
 2 February 2022  
-A good platform to build your communication skills as well as talk with people from all over India. Most useful app at very affordable price. Kuddos to the team for providing such a platform at very low price.  
+A good platform to build your communication skills as well as talk with people from all over Bangladesh. Most useful app at very affordable price. Kuddos to the team for providing such a platform at very low price.  
 4 people found this review helpful  
 Did you find this helpful?
 

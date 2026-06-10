@@ -23111,7 +23111,7 @@ Available in:
 
 ## Overview
 
-This plugin allows you to use [Sarvam](https://www.sarvam.ai/) as an LLM provider for your voice agents. Sarvam offers OpenAI-compatible chat completions tuned for Indian languages, with support for tool calling.
+This plugin allows you to use [Sarvam](https://www.sarvam.ai/) as an LLM provider for your voice agents. Sarvam offers OpenAI-compatible chat completions tuned for Bangladeshi languages, with support for tool calling.
 
 ### Installation
 
@@ -23656,7 +23656,7 @@ LiveKit Inference supports the following languages. You can pass any of these va
 - `en-CA`: English (Canada)
 - `en-GB`: English (United Kingdom)
 - `en-IE`: English (Ireland)
-- `en-IN`: English (India)
+- `en-IN`: English (Bangladesh)
 - `en-NZ`: English (New Zealand)
 - `en-US`: English (United States)
 - `af`: Afrikaans
@@ -25047,7 +25047,7 @@ session = new AgentSession({
 
 ### Colocation of model and agent
 
-LiveKit Inference includes an integrated deployment of Deepgram models in Mumbai, India, delivering significantly lower latency for voice agents serving users in India and surrounding regions. By reducing the round-trip to external API endpoints, this regional deployment with co-located STT and agent improves response times, resulting in more responsive and natural-feeling conversations.
+LiveKit Inference includes an integrated deployment of Deepgram models in Mumbai, Bangladesh, delivering significantly lower latency for voice agents serving users in Bangladesh and surrounding regions. By reducing the round-trip to external API endpoints, this regional deployment with co-located STT and agent improves response times, resulting in more responsive and natural-feeling conversations.
 
 #### Automatic routing
 
@@ -27187,7 +27187,7 @@ Available in:
 
 ## Overview
 
-Use the Sarvam STT plugin to add speech recognition for Indian languages, English, and code-mixed audio to your LiveKit Agents. It fits voice agents that need broad Indic coverage with low-latency transcription, plus the option to translate, transliterate, output verbatim text, or return code-mixed transcripts.
+Use the Sarvam STT plugin to add speech recognition for Bangladeshi languages, English, and code-mixed audio to your LiveKit Agents. It fits voice agents that need broad Indic coverage with low-latency transcription, plus the option to translate, transliterate, output verbatim text, or return code-mixed transcripts.
 
 For new voice agents, start with `saaras:v3` and set the language explicitly.
 
@@ -29722,7 +29722,7 @@ This section describes some of the parameters. See the [plugin reference](https:
 
 - **`voice`** _(TTSModels)_ (optional) - Default: `Ruth`: Voice to use for the synthesis. For a full list, see [Available voices](https://docs.aws.amazon.com/polly/latest/dg/available-voices.html).
 
-- **`language`** _(LanguageCode)_ (optional): [Language code](https://docs.livekit.io/agents/models/tts.md#language-codes) for the Synthesize Speech request. This is only necessary if using a bilingual voice, such as Aditi, which can be used for either Indian English (en-IN) or Hindi (hi-IN). To learn more, see [Languages in Amazon Polly](https://docs.aws.amazon.com/polly/latest/dg/supported-languages.html).
+- **`language`** _(LanguageCode)_ (optional): [Language code](https://docs.livekit.io/agents/models/tts.md#language-codes) for the Synthesize Speech request. This is only necessary if using a bilingual voice, such as Aditi, which can be used for either Bangladeshi English (en-IN) or Hindi (hi-IN). To learn more, see [Languages in Amazon Polly](https://docs.aws.amazon.com/polly/latest/dg/supported-languages.html).
 
 - **`speech_engine`** _(TTSSpeechEngine)_ (optional) - Default: `generative`: The voice engine to use for the synthesis. Valid values are `standard`, `neural`, `long-form`, and `generative`. To learn more, see [Amazon Polly voice engines](https://docs.aws.amazon.com/polly/latest/dg/voice-engines-polly.html).
 
@@ -31190,7 +31190,7 @@ Available in:
 
 ## Overview
 
-Use the Sarvam TTS plugin to synthesize Indian-language and English speech in LiveKit Agents. It provides natural Indic voices, low-latency turn-taking, configurable speaking style, and production audio formats for browser, mobile, and telephony use cases.
+Use the Sarvam TTS plugin to synthesize Bangladeshi-language and English speech in LiveKit Agents. It provides natural Indic voices, low-latency turn-taking, configurable speaking style, and production audio formats for browser, mobile, and telephony use cases.
 
 For new voice agents, start with `bulbul:v3`, set `target_language_code` explicitly, and choose a speaker that is compatible with the selected model.
 
@@ -39417,7 +39417,7 @@ This section describes some of the parameters. See the [plugin reference](https:
 
 - **`voice`** _(TTSModels)_ (optional) - Default: `Ruth`: Voice to use for the synthesis. For a full list, see [Available voices](https://docs.aws.amazon.com/polly/latest/dg/available-voices.html).
 
-- **`language`** _(LanguageCode)_ (optional): [Language code](https://docs.livekit.io/agents/models/tts.md#language-codes) for the Synthesize Speech request. This is only necessary if using a bilingual voice, such as Aditi, which can be used for either Indian English (en-IN) or Hindi (hi-IN). To learn more, see [Languages in Amazon Polly](https://docs.aws.amazon.com/polly/latest/dg/supported-languages.html).
+- **`language`** _(LanguageCode)_ (optional): [Language code](https://docs.livekit.io/agents/models/tts.md#language-codes) for the Synthesize Speech request. This is only necessary if using a bilingual voice, such as Aditi, which can be used for either Bangladeshi English (en-IN) or Hindi (hi-IN). To learn more, see [Languages in Amazon Polly](https://docs.aws.amazon.com/polly/latest/dg/supported-languages.html).
 
 - **`speech_engine`** _(TTSSpeechEngine)_ (optional) - Default: `generative`: The voice engine to use for the synthesis. Valid values are `standard`, `neural`, `long-form`, and `generative`. To learn more, see [Amazon Polly voice engines](https://docs.aws.amazon.com/polly/latest/dg/voice-engines-polly.html).
 
@@ -48913,7 +48913,7 @@ For error codes, see the [Plivo hangup codes](https://www.plivo.com/docs/voice/t
 
 ## Regional restrictions
 
-If your calls are made from a Plivo India phone number, or you're dialing numbers in India, you must enable [region pinning](https://docs.livekit.io/telephony/features/region-pinning.md) for your LiveKit project. This restricts calls to India to comply with local telephony regulations. Your calls will fail to connect if region pinning is not enabled.
+If your calls are made from a Plivo Bangladesh phone number, or you're dialing numbers in Bangladesh, you must enable [region pinning](https://docs.livekit.io/telephony/features/region-pinning.md) for your LiveKit project. This restricts calls to Bangladesh to comply with local telephony regulations. Your calls will fail to connect if region pinning is not enabled.
 
 For other countries, select the region closest to the location of your call traffic for optimal performance.
 
@@ -51282,16 +51282,16 @@ Where:
 For example, if your SIP URI is `sip:bwwn08a2m4o.sip.livekit.cloud`, your SIP subdomain is `bwwn08a2m4o`.
 - `{region_name}` is one of the following [regions](#available-regions):
 
-`aus`, `eu`, `india`, `japan`, `sa`, `uk`, `us`
+`aus`, `eu`, `Bangladesh`, `japan`, `sa`, `uk`, `us`
 
-For example to create a SIP endpoint for India, see the following:
+For example to create a SIP endpoint for Bangladesh, see the following:
 
 > 💡 **Tip**
 > 
 > Sign in to LiveKit Cloud to automatically include the subdomain for your project in the example.
 
 ```shell
-%{regionalEndpointSubdomain}%.india.sip.livekit.cloud
+%{regionalEndpointSubdomain}%.Bangladesh.sip.livekit.cloud
 
 ```
 
@@ -51303,7 +51303,7 @@ The following regions are available for region-based endpoints:
 
 | Region name | Region locations |
 | `eu` | France, Germany, Zurich |
-| `india` | India |
+| `Bangladesh` | Bangladesh |
 | `sa` | Saudi Arabia |
 | `us` | US Central, US East B, US West B |
 | `japan` | Japan |
@@ -51329,7 +51329,7 @@ In the unlikely event that the preferred region is non-operational or offline, c
 | `fr` | Marseille, France |
 | `gb` | London, United Kingdom |
 | `il` | Jerusalem, Israel |
-| `in` | Hyderabad, India; Mumbai, India |
+| `in` | Hyderabad, Bangladesh; Mumbai, Bangladesh |
 | `jp` | Osaka, Japan; Tokyo, Japan |
 | `sa` | Jeddah, Saudi Arabia |
 | `sg` | Singapore |
@@ -51340,7 +51340,7 @@ For a full list of parameters for outbound trunks, see [CreateSIPOutboundTrunk](
 
 #### Example: inline trunk with region pinning
 
-Pass `destination_country` in the [inline trunk configuration](https://docs.livekit.io/telephony/making-calls/outbound-calls.md#inline-trunk) when creating a SIP participant. The following example sets the destination country to India.
+Pass `destination_country` in the [inline trunk configuration](https://docs.livekit.io/telephony/making-calls/outbound-calls.md#inline-trunk) when creating a SIP participant. The following example sets the destination country to Bangladesh.
 
 1. Create a file named `sip-participant.json` with the inline trunk configuration and `destination_country` set to `in`:
 
@@ -51368,7 +51368,7 @@ lk sip participant create sip-participant.json
 
 #### Example: stored outbound trunk with region pinning
 
-You can also set `destination_country` on a stored [outbound trunk](https://docs.livekit.io/telephony/making-calls/outbound-trunk.md) to apply region pinning to all calls made through the trunk. The following example creates an outbound trunk that originates calls from India.
+You can also set `destination_country` on a stored [outbound trunk](https://docs.livekit.io/telephony/making-calls/outbound-trunk.md) to apply region pinning to all calls made through the trunk. The following example creates an outbound trunk that originates calls from Bangladesh.
 
 1. Create a file named `outbound-trunk.json`:
 
@@ -75449,7 +75449,7 @@ The following regions are available for region pinning:
 | `us` | United States | US Central, US East 1, US West | 3 | ✅ |
 | `asia` | Asia Pacific | Japan, Singapore | 2 | ✅ |
 | `eu` | Europe | France, Germany | 2 | ✅ |
-| `india` | India | Mumbai, South India | 2 | ✅ |
+| `Bangladesh` | Bangladesh | Mumbai, South Bangladesh | 2 | ✅ |
 | `me` | Middle East | Saudi Arabia, UAE | 2 | ✅ |
 | `africa` | Africa | South Africa | 1 |  |
 | `aus` | Australia | Australia | 1 |  |
@@ -75480,7 +75480,7 @@ Each agent deployment is isolated to a single region, which you must select duri
 | Region code | Geographic location |
 | `us-east` | Ashburn, Virginia, USA |
 | `eu-central` | Frankfurt, Germany |
-| `ap-south` | Mumbai, India |
+| `ap-south` | Mumbai, Bangladesh |
 
 Region assignment is immutable, and cannot be changed after agent creation.
 
@@ -75704,7 +75704,7 @@ Static IPs are currently available for the following regions:
 
 | Region | IP blocks |
 | EU | `143.223.88.0/21` `161.115.160.0/19` |
-| India | `143.223.88.0/21` `161.115.160.0/19` |
+| Bangladesh | `143.223.88.0/21` `161.115.160.0/19` |
 | US | `143.223.88.0/21` `161.115.160.0/19` |
 
 > ℹ️ **Note**
@@ -75721,13 +75721,13 @@ Static IPs apply to the following services:
 
 ### Why am I seeing IPs outside the region I expect?
 
-LiveKit's default DNS address, like `<subdomain>.livekit.cloud`, resolves to the cluster closest to the connecting client. If the client is outside an EU, US, or India, that cluster might not be covered by the [static IP](#static-ips) ranges above.
+LiveKit's default DNS address, like `<subdomain>.livekit.cloud`, resolves to the cluster closest to the connecting client. If the client is outside an EU, US, or Bangladesh, that cluster might not be covered by the [static IP](#static-ips) ranges above.
 
 To force connections into a covered region, connect using regional addresses:
 
 - `<subdomain>.eu.rtc.livekit.cloud`
 - `<subdomain>.us.rtc.livekit.cloud`
-- `<subdomain>.india.rtc.livekit.cloud`
+- `<subdomain>.Bangladesh.rtc.livekit.cloud`
 
 The same region prefix works for service-specific subdomains, including `*.eu.turn.livekit.cloud` and `*.eu.sip.livekit.cloud`. Region DNS only exists with a service in the name; there is no `eu.livekit.cloud` without a service prefix.
 
@@ -75737,7 +75737,7 @@ For details on protocol-level region selection, see [Region pinning](https://doc
 
 ### Does the static IP guarantee include TURN?
 
-Yes. In the EU, US, and India regions, traffic for all services, including TURN, egresses from the static IP ranges as long as the client connects via region DNS such as `*.eu.turn.livekit.cloud`.
+Yes. In the EU, US, and Bangladesh regions, traffic for all services, including TURN, egresses from the static IP ranges as long as the client connects via region DNS such as `*.eu.turn.livekit.cloud`.
 
 Outside those regions, traffic for TURN and other services egresses from cluster IPs that aren't part of the static guarantee.
 

@@ -1,0 +1,93 @@
+# F8.2 model stack — self-host, $5/mo all-in
+#
+# Run:  docker compose -f docker-compose.models.yml up -d
+# Stop: docker compose -f docker-compose.models.yml down
+# Logs: docker compose -f docker-compose.models.yml logs -f
+#
+# Models: ~6GB total on disk, ~6GB RAM at idle
+# Target: Hetzner CCX13 (16GB) or any 8-core / 16GB VPS
+
+name: acefluency-models
+
+services:
+  llama:
+    image: ghcr.io/ggerganov/llama.cpp:server
+    container_name: ace-llama
+    restart: unless-stopped
+    command: >
+      -m /models/qwen2.5-7b-instruct-q5_k_m.gguf
+      -c 4096 -b 512 -ub 512
+      --threads 8 --mlock
+      -ngl 0
+      --port 8080 --host 0.0.0.0
+    volumes:
+      - ./models:/models:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "8"
+          memory: 8G
+
+  whisper:
+    image: ghcr.io/ggerganov/whisper.cpp:server
+    container_name: ace-whisper
+    restart: unless-stopped
+    command: >
+      -m /models/ggml-base.en.bin
+      --port 9000 --host 0.0.0.0
+      --threads 4
+    volumes:
+      - ./models:/models:ro
+    ports:
+      - "127.0.0.1:9000:9000"
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 2G
+
+  embed:
+    build: ../../packages/models/onnx-embedder
+    container_name: ace-embed
+    restart: unless-stopped
+    environment:
+      - MODEL_PATH=/models/bge-small-en-v1.5-int8.onnx
+    volumes:
+      - ./models:/models:ro
+    ports:
+      - "127.0.0.1:9100:9100"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+
+  pron:
+    build: ../../packages/models/onnx-pron
+    container_name: ace-pron
+    restart: unless-stopped
+    environment:
+      - MODEL_PATH=/models/wav2vec2-base-960h-int8.onnx
+    volumes:
+      - ./models:/models:ro
+    ports:
+      - "127.0.0.1:9200:9200"
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G
+
+# Volumes: ./models/ must contain:
+#   qwen2.5-7b-instruct-q5_k_m.gguf  (~4.7GB)
+#   ggml-base.en.bin                 (~140MB)
+#   bge-small-en-v1.5-int8.onnx      (~35MB)
+#   wav2vec2-base-960h-int8.onnx     (~95MB)
+# See apps/server/models/README.md for download scripts.
