@@ -1,6 +1,9 @@
 import { expoClient } from "@better-auth/expo/client";
 import { env } from "@community/env/native";
-import { inferAdditionalFields } from "better-auth/client/plugins";
+import {
+  inferAdditionalFields,
+  phoneNumberClient,
+} from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import Constants from "expo-constants";
 // biome-ignore lint/performance/noNamespaceImport: expoClient requires the SecureStore namespace as the storage adapter
@@ -14,6 +17,7 @@ export const authClient = createAuthClient({
       storagePrefix: Constants.expoConfig?.scheme as string,
       storage: SecureStore,
     }),
+    phoneNumberClient(),
     inferAdditionalFields({
       user: {
         role: {

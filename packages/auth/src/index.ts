@@ -9,6 +9,7 @@ import {
 import { env } from "@community/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { phoneNumber } from "better-auth/plugins";
 
 const schema = { user, session, account, verification };
 
@@ -31,6 +32,13 @@ export function createAuth() {
         },
       },
     },
+    socialProviders: {
+      google: {
+        clientId: env.GOOGLE_CLIENT_ID ?? "",
+        clientSecret: env.GOOGLE_CLIENT_SECRET ?? "",
+        enabled: !!env.GOOGLE_CLIENT_ID,
+      },
+    },
     trustedOrigins: [
       env.CORS_ORIGIN,
       "community://",
@@ -49,7 +57,20 @@ export function createAuth() {
         httpOnly: true,
       },
     },
-    plugins: [expo()],
+    plugins: [
+      expo(),
+      phoneNumber({
+        sendOTP: ({ phoneNumber: phone, code }) => {
+          // TODO: Integrate with SMS provider (e.g., Twilio, Vonage, SMS Gateway BD)
+          // For now, log the code for development/testing
+          console.log(`[DEV] OTP for ${phone}: ${code}`);
+        },
+        signUpOnVerification: {
+          getTempEmail: (phone) => `${phone}@community.app`,
+          getTempName: (phone) => phone,
+        },
+      }),
+    ],
   });
 }
 

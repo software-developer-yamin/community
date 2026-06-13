@@ -4,6 +4,8 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 
 import { Container } from "@/components/container";
+import { GoogleSignIn } from "@/components/google-sign-in";
+import { PhoneSignIn } from "@/components/phone-sign-in";
 import { SignIn } from "@/components/sign-in";
 import { SignUp } from "@/components/sign-up";
 import { authClient } from "@/lib/auth-client";
@@ -91,6 +93,8 @@ export default function Home() {
             <>
               <SignIn />
               <SignUp />
+              <PhoneSignIn />
+              <GoogleSignIn />
             </>
           )}
         </View>

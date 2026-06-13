@@ -49,3 +49,6 @@ coverage
 .cache
 tmp
 temp
+
+# OpenCode / agent session state
+.omo/run-continuation/
