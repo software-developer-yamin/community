@@ -1,0 +1,120 @@
+# generated: 2026-06-14T00:00:00+06:00
+# last_updated: 2026-06-14T00:00:00+06:00
+# project: community
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: /home/yamin/Documents/Yamin Company/community/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-06-14T00:00:00+06:00
+last_updated: 2026-06-14T00:00:00+06:00
+project: community
+project_key: NOKEY
+tracking_system: file-system
+story_location: /home/yamin/Documents/Yamin Company/community/_bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: backlog
+  1-1-persistent-session-with-secure-storage: backlog
+  1-2-silent-token-refresh: backlog
+  1-3-phone-number-authentication-with-otp: backlog
+  1-4-google-oauth-integration: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-server-managed-room-lifecycle: backlog
+  2-2-ice-restart-reconnection-1-5s-blips: backlog
+  2-3-full-reconnection-5-30s-blips: backlog
+  2-4-explicit-call-end: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-gender-filter-enforcement: backlog
+  3-2-native-language-field: backlog
+  3-3-match-timeout-with-honest-state: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-graduated-strike-system: backlog
+  4-2-skip-button-in-call-action: backlog
+  4-3-distinguish-victim-from-aggressor: backlog
+  4-4-visible-moderation-state: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-visible-subscription-state: backlog
+  5-2-in-app-support-ticket: backlog
+  5-3-refund-mechanism: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-state-preservation-across-backgrounding: backlog
+  6-2-crash-resilience: backlog
+  6-3-reinstall-account-preservation: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-post-call-rating-flow: backlog
+  7-2-rating-integration-with-matching: backlog
+  epic-7-retrospective: optional
+
+  epic-re-1: backlog
+  re-1-1-update-content-item: backlog
+  re-1-2-bulk-content-import: backlog
+  re-1-3-secure-content-creation: backlog
+  epic-re-1-retrospective: optional
+
+  epic-re-2: backlog
+  re-2-1-compute-content-embedding-on-creation: backlog
+  re-2-2-recompute-content-embedding-on-update: backlog
+  re-2-3-real-profile-embeddings-from-user-data: backlog
+  epic-re-2-retrospective: optional
+
+  epic-re-3: backlog
+  re-3-1-native-mobile-recommendation-feed-expo: backlog
+  re-3-2-recommendation-feed-empty-state-design: backlog
+  epic-re-3-retrospective: optional
+
+  epic-re-4: backlog
+  re-4-1-interaction-weighted-scoring-v2: backlog
+  epic-re-4-retrospective: optional
+
+  epic-re-5: backlog
+  re-5-1-user-preferences-native-ui: backlog
+  epic-re-5-retrospective: optional
+
+  epic-re-6: backlog
+  re-6-1-admin-content-analytics: backlog
+  epic-re-6-retrospective: optional
+
+  epic-re-7: backlog
+  re-7-1-secure-seed-endpoint-for-production: backlog
+  epic-re-7-retrospective: optional
