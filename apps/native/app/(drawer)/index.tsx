@@ -18,7 +18,7 @@ export default function Home() {
     <Container>
       <ScrollView>
         <View style={styles.pageContainer}>
-          <Text style={styles.headerTitle}>BETTER T STACK</Text>
+          <Text style={styles.headerTitle}>AceFluency</Text>
           {session?.user ? (
             <View style={styles.sessionInfoCard}>
               <View style={styles.sessionUserRow}>
@@ -78,13 +78,11 @@ export default function Home() {
             <View style={styles.callCard}>
               <Text style={styles.cardTitle}>Live Calls</Text>
               <Text style={styles.mutedText}>
-                Join a LiveKit room to start a video call.
+                Find a partner and practice English with live voice calls.
               </Text>
               <Link asChild href="/call/lobby">
                 <TouchableOpacity style={styles.joinCallButton}>
-                  <Text style={styles.joinCallButtonText}>
-                    Join room: lobby
-                  </Text>
+                  <Text style={styles.joinCallButtonText}>Start a Call</Text>
                 </TouchableOpacity>
               </Link>
             </View>

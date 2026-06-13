@@ -14,6 +14,11 @@ export const env = createEnv({
     // LiveKit server URL used by the server SDK (HTTP(S) form, not wss://).
     // The server SDK will automatically convert wss -> https when calling.
     LIVEKIT_URL: z.string().min(1),
+    MODEL_STACK_VERSION: z.string().optional(),
+    LLAMA_URL: z.string().url().optional(),
+    EMBED_URL: z.string().url().optional(),
+    PRON_URL: z.string().url().optional(),
+    SENTRY_DSN: z.string().url().optional(),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),

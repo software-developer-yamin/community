@@ -1,7 +1,7 @@
 ---
 title: AceFluency — Practice-English-with-Peers Rebuild
 created: 2026-06-09
-updated: 2026-06-09
+updated: 2026-06-13 (validation fixes applied)
 status: final
 ---
 
@@ -262,8 +262,8 @@ The dominant review-cluster personas are real names lifted from `ratings-and-rev
 - A user disconnecting 3 short calls in a row gets a non-blocking warning: "We noticed you ended 3 calls quickly. If partners aren't a good fit, use the 'Skip' button to find a new match."
 - 5 short disconnects in 24h → 1-hour cooldown (queue-blocked, not banned, can still chat / use free features). `[NOTE FOR PM: 1h vs. 2h, 24h vs. 48h are tuning parameters; current 48h ban is exactly the failure mode UJ-1 describes, so the new ceiling must be visibly shorter.]`
 - 10 short disconnects in 24h → 24-hour cooldown + automatic review by a human moderator.
-- A "short" disconnect is defined as <30s of audio before end. Disconnects after a real conversation do not count. `<30s threshold is a starting value; tune from data in v2.`
-- **Skip is a first-class in-call action**: ends the current call, returns the user to the queue, does not count as a strike. *Dependency: this FR assumes an in-call Skip button exists; the current codebase has no Skip affordance — the UX scope must add it (owned by `bmad-ux` downstream).*
+- A "short" disconnect is defined as **call duration <30s wall-clock time from both participants joining the Room to one disconnecting**. Disconnects after a real conversation (≥30s) do not count. `<30s threshold is a starting value; tune from data in v2.>`
+- **Skip is a first-class in-call action**: ends the current call, returns the user to the queue, does not count as a strike. See FR-21 for full Skip specification.
 
 #### FR-12: Distinguish victim from aggressor
 
@@ -326,23 +326,74 @@ The dominant review-cluster personas are real names lifted from `ratings-and-rev
 - All paid state changes (purchase, renewal, cancel, refund) are reflected in the app within 60s.
 - Refund requests for a non-working product are processed within 7 days (see FR-20).
 
+#### FR-21: Skip button (in-call action)
+
+[Learner] can [end the current call] [via a "Skip" button] [without counting as a strike, and return to the match queue]. Realizes UJ-1, UJ-4.
+
+**Consequences (testable):**
+- The Skip button is visible during an active call (same UI surface as "End call").
+- Tapping Skip ends the call immediately, shows "Finding a new partner…", and returns the user to the match queue within 3 seconds.
+- Skip does **not** increment the strike counter (FR-11).
+- The skipped partner is not notified that they were skipped; they see "Call ended by partner."
+- A 5-second cooldown between Skips prevents rapid abuse (user cannot Skip more than once per 5s).
+- After 3 Skips in a single session, the system shows: "We notice you're skipping partners. Try adjusting your filters or come back later." — this is a UX nudge, not a strike.
+
+**Out of Scope:** Skip reason collection (e.g., "partner didn't speak") is v2; skip-to-specific-filter is v2.
+
 #### FR-20: Refund mechanism for non-working product
 
 [Learner] can request [a refund] [for a non-working product] [via in-app flow with a defined decision rule]. Realizes review cluster: Mridu, Ajeet Kumar, preetam pawar, Sumit, Ushama — all describe paying for a product that did not work and being unable to recover the money.
 
 **Consequences (testable):**
 - "Subscription" → "Request refund" opens a flow that classifies the request into one of three paths:
-  - **Auto-approve**: triggers include (a) ≥3 critical app crashes in the user's first 7 days, (b) the user never connected to a call (no completed sessions), (c) reported login failure lasting >72 hours. Auto-approve refunds within 24 hours.
+  - **Auto-approve**: triggers include (a) ≥3 critical app crashes (force-close or ANR reported by the OS crash-reporting SDK) in the user's first 7 days, (b) the user never connected to a call (no completed sessions), (c) reported login failure lasting >72 hours. Auto-approve refunds within 24 hours.
   - **Auto-deny with explanation**: triggers include (a) refund requested >14 days after charge, (b) account has >5 completed sessions. The user gets a plain-language explanation, not a silent no.
   - **Human review**: everything else. SLA: 7 days for a decision.
 - Refund grants do not require a support email; the decision is shown in-app.
 - Cancelling auto-renew does not trigger a refund — it preserves access until period end (FR-15).
+- **Refund retry policy:** If SSLCommerz API returns an error, the system retries 3 times over 24 hours before falling through to human review. The user sees: "Refund approved — processing with payment provider." This prevents a PSP outage from converting every auto-approve refund into a 7-day human-review case.
 
 **Out of Scope:** Partial refunds, proration logic, refund for a free trial. Deferred to v2.
 
-**Notes:** Pricing tiers, payment provider, and the exact trigger thresholds belong to `addendum.md` and the Open Question 2 resolution. The shape — auto / deny-with-reason / human — is the requirement; the thresholds are tuning. **Refund execution uses the SSLCommerz Refund API** (sandbox at `https://sandbox.sslcommerz.com/validator/api/refund`; production at the live equivalent). All auto-approve refunds post a refund record to SSLCommerz first, then mark the user's billing record as refunded locally. Failed refund posts fall through to the human-review path.
+**Notes:** Pricing tiers, payment provider, and the exact trigger thresholds belong to `addendum.md` and the Open Question 2 resolution. The shape — auto / deny-with-reason / human — is the requirement; the thresholds are tuning. **Refund execution uses the SSLCommerz Refund API** (sandbox at `https://sandbox.sslcommerz.com/validator/api/refund`; production at the live equivalent). All auto-approve refunds post a refund record to SSLCommerz first, then mark the user's billing record as refunded locally. Failed refund posts fall through to the human-review path after the retry policy exhausts.
 
 **Notes:** Pricing, payment provider, and refund policy details move to `addendum.md` as they are design decisions, not core requirements.
+
+### 4.7 Regression Scope (Existing Features)
+
+**Description:** The live app has existing features that are not redesigned in this rebuild but depend on the infrastructure being changed (auth, calls, matching, moderation). These features must continue working unchanged after the rebuild ships.
+
+**Functional Requirements:**
+
+#### FR-22: Existing features continue working
+
+[System] ensures [the following existing features] [continue to function] [after the rebuild's infrastructure changes]:
+
+**Consequences (testable):**
+- **Voice Clubs** (group discussion rooms) — users can still join, speak, and leave. Call lifecycle changes (FR-5, FR-6) do not break group rooms.
+- **AI Speaking Test** — the on-device pronunciation model (`pronunciationScore`) continues to record and score clips. Auth changes (FR-1, FR-2) do not break the test flow.
+- **Recorded Courses** — users can browse and play recorded content. The native-language field addition (FR-9) does not corrupt course metadata.
+- **Tutor Marketplace** — users can view tutor profiles. Gender filter changes (FR-8) do not affect tutor filtering.
+- **Drama Tab** — users can browse and participate in drama practice. Moderation state changes (FR-11..FR-13) do not affect drama-specific moderation rules.
+- **Daily Speaking Streaks** — the streak counter and notification logic continue. Backgrounding changes (FR-17) do not reset streaks.
+- **Friend Graph / Communities** — users can view friend lists and community posts. Auth token format changes (FR-1) are backward-compatible.
+
+**Regression acceptance test:** A smoke test suite runs after each Phase 1 deploy that verifies: login → home → Voice Clubs → AI Speaking Test → Recorded Courses → Tutor Marketplace → Drama Tab → Daily Streaks → Friend Graph, all without errors.
+
+#### FR-23: Post-call rating
+
+[Learner] can [rate a partner after a call] [via a 1–5 star rating + optional comment] [and the rating feeds into the matching service]. Realizes OQ-7.
+
+**Consequences (testable):**
+- After a call ends, a "Rate your partner" screen appears (preserved from existing app).
+- Rating includes: 1–5 stars, optional text comment, and a new question: "Did this partner help you practice?" (yes/no).
+- Ratings are stored in a `call_rating` table with `userId`, `partnerId`, `callId`, `stars`, `comment`, `helpedPractice`.
+- The matching service (`matchPartners`) uses the average rating as a quality signal: partners with average < 2.5 stars surface lower in the queue.
+- Ratings are retained for 90 days; after 90 days they are anonymized and kept for aggregate quality metrics only.
+
+**Out of Scope:** Using ratings to trigger moderation actions (e.g., auto-ban low-rated users) is v2. Rating a partner before the call ends is not possible.
+
+---
 
 ### 4.6 Mobile-Specific Stability
 
@@ -355,8 +406,9 @@ The dominant review-cluster personas are real names lifted from `ratings-and-rev
 [Learner] who backgrounds the app [for up to 30 minutes] [returns to the same screen with the same call state if a call was active]. Realizes UJ-3.
 
 **Consequences (testable):**
-- Backgrounding during a call does not end the call.
+- Backgrounding during a call does not end the call, provided the app remains alive (not killed by the OS).
 - Backgrounding during matchmaking does not remove the user from the queue.
+- **OS-killed while backgrounded:** If the OS terminates the app to reclaim RAM (common on low-end Android devices), the call ends gracefully. The user returns to a "Call ended — connection lost" state (per FR-18). No strike is assessed for the disconnect.
 
 #### FR-18: Crash resilience
 
@@ -389,16 +441,29 @@ The dominant review-cluster personas are real names lifted from `ratings-and-rev
 
 ## 6. MVP Scope
 
-### 6.1 In Scope
+### 6.1 Phase 1 (≤8 weeks, core team: 3–4 engineers)
+
+Phase 1 ships the two highest-trust features: auth reliability and call reliability. These close the most 1-star reviews (UJ-2, UJ-3, UJ-1) and unblock every other feature.
 
 - §4.1: All four FRs (FR-1..FR-4) — persistent session, silent refresh, phone OTP, Google OAuth.
-- §4.2: All three FRs (FR-5..FR-7) — server-managed rooms, client reconnection UX, explicit call-end states. **[Phase-blocker: Open Question 6 must resolve before FR-6/SM-1 ship values are confirmed.]**
-- §4.3: All three FRs (FR-8..FR-10) — gender filter (with empty-pool fallback), native language field, match timeout with honest state.
-- §4.4: All three FRs (FR-11..FR-13) — graduated strikes, victim/aggressor distinction, visible moderation state. **[Dependency: Skip button UX is owned by `bmad-ux` downstream.]**
-- §4.5: All four FRs (FR-14..FR-16, FR-20) — visible subscription state, cancellation preserves access, in-app tickets with SLA, refund mechanism. **[Phase-blocker: Open Question 2 must resolve before FR-20 trigger thresholds are final.]**
-- §4.6: All three FRs (FR-17..FR-19) — backgrounding, crash resilience, reinstall account restore.
+- §4.2: All three FRs (FR-5..FR-7) — server-managed rooms, client reconnection UX, explicit call-end states.
+- §4.4: FR-11, FR-12, FR-13 — graduated strikes, victim/aggressor distinction, visible moderation state. **[Dependency: Skip button FR-21 must ship with Phase 1.]**
 
-### 6.2 Out of Scope for MVP
+**Phase 2 (subsequent 6–8 weeks):** §4.3 (FR-8..FR-10), §4.5 (FR-14..FR-16, FR-20), §4.6 (FR-17..FR-19), plus the regression scope (§4.7).
+
+**Market scope:** Phase 1 ships to **Bangladesh only**. India (INR, UPI, GST, RBI e-mandate) is Phase 2 gated on OQ-9 resolution. If Phase 2 India launch is cancelled, remove INR references from the app and scope the second PSP to a future v2.
+
+### 6.2 In Scope (Phase 1 + Phase 2)
+
+- §4.1: All four FRs (FR-1..FR-4) — persistent session, silent refresh, phone OTP, Google OAuth.
+- §4.2: All three FRs (FR-5..FR-7) — server-managed rooms, client reconnection UX, explicit call-end states.
+- §4.3: All three FRs (FR-8..FR-10) — gender filter (with empty-pool fallback), native language field, match timeout with honest state.
+- §4.4: All three FRs (FR-11..FR-13) — graduated strikes, victim/aggressor distinction, visible moderation state.
+- §4.5: All four FRs (FR-14..FR-16, FR-20) — visible subscription state, cancellation preserves access, in-app tickets with SLA, refund mechanism.
+- §4.6: All three FRs (FR-17..FR-19) — backgrounding, crash resilience, reinstall account restore.
+- §4.7: Regression scope (FR-22) — existing features must continue working unchanged.
+
+### 6.3 Out of Scope for MVP
 
 - **AI conversation partner / live pronunciation feedback during call** — defer to v2; pronunciation scoring (existing) stays for after-call review. `[NOTE FOR PM: keep on roadmap — review cluster (Raman Gupta, Keertika) requests this.]`
 - **Friend list / re-match-with-same-partner** — defer; conflict with anonymous matching. Tutan Das cluster. `[NON-GOAL for MVP]`
@@ -426,8 +491,12 @@ Each SM cross-references the FRs it validates. Counter-metrics prevent optimizin
 - **SM-6**: Match-wait-time p95 ≤ 45s for unfiltered queue, ≤ 90s for gender-filtered queue. Validates §4.3.
 - **SM-7**: Cold-start-to-home p95 ≤ 2.5s. Validates §4.1.
 - **SM-8**: Reconnect success rate (1s blip) ≥ 95%. Validates FR-6.
-- **SM-9**: Premium gender-filter fulfillment rate ≥ 90% (i.e., the filter is honored, not silently bypassed). Validates FR-8.
+- **SM-9**: Premium gender-filter fulfillment rate ≥ 90% (i.e., the filter is honored, not silently bypassed). Validates FR-8. **Counter-metric:** 0% of paid-filter matches should violate the filter; separately measure "% of gender-filtered queue sessions that result in no match within 90s" to track pool health.
 - **SM-10**: Cancellation flow completion (user reaches "your plan is paid until [date]") ≥ 95%. Validates FR-15.
+- **SM-11**: False-positive strike rate — % of strikes issued to users who reported a partner within 60s of the disconnect. Target: ≤ 1%. Validates FR-11, FR-12.
+- **SM-12**: Paid-filter violation rate — % of matches where a paid gender filter is not honored. Target: 0%. Validates FR-8.
+- **SM-13**: Auto-renew cancellation completion rate — % of users who start the cancellation flow and successfully turn off auto-renew. Target: ≥ 95%. Validates FR-15.
+- **SM-14**: D7 retention for users who complete ≥3 calls in first week. Target: ≥ 50%. Validates the "trust recovery" thesis: users who successfully practice keep returning.
 
 **Counter-metrics (do not optimize)**
 

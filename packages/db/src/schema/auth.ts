@@ -7,6 +7,7 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  role: text("role").default("user").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -77,6 +78,10 @@ export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
 }));
+
+// Extended profile fields (gender, nativeLanguage, tier, moderationState) are in
+// the `userProfile` table in `rebuild.ts` to keep the Better-Auth core schema
+// decoupled from app-specific fields.
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {

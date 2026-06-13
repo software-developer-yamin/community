@@ -15,7 +15,7 @@ export const livekitRouter = {
     .handler(async ({ input }) => {
       const at = new AccessToken(env.LIVEKIT_API_KEY, env.LIVEKIT_API_SECRET, {
         identity: input.username,
-        ttl: 60 * 60, // 1 hour
+        ttl: 5 * 60, // 5 minutes — short-lived tokens per LiveKit security best practices
       });
 
       at.addGrant({

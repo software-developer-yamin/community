@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>
+      PRD Validation: AceFluency Personalized Content Recommendation Engine
+    </title>
+    <style>
+    :root {
+      --bg: #fafaf9;
+      --surface: #ffffff;
+      --border: #e7e5e4;
+      --text: #1c1917;
+      --muted: #78716c;
+
+      --verdict-strong: #16a34a;
+      --verdict-adequate: #65a30d;
+      --verdict-thin: #d97706;
+      --verdict-broken: #dc2626;
+
+      --sev-low: #64748b;
+      --sev-medium: #ca8a04;
+      --sev-high: #ea580c;
+      --sev-critical: #dc2626;
+
+      --grade-exc: #16a34a;
+      --grade-good: #65a30d;
+      --grade-fair: #d97706;
+      --grade-poor: #dc2626;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    body {
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui,
+        sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .container {
+      max-width: 960px;
+      padding: 32px 24px 64px;
+      margin: 0 auto;
+    }
+
+    header.report-header {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .title h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .title .subtitle {
+      margin-top: 4px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .grade {
+      padding: 10px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      color: white;
+      white-space: nowrap;
+      border-radius: 8px;
+    }
+    .grade-excellent {
+      background: var(--grade-exc);
+    }
+    .grade-good {
+      background: var(--grade-good);
+    }
+    .grade-fair {
+      background: var(--grade-fair);
+    }
+    .grade-poor {
+      background: var(--grade-poor);
+    }
+
+    .synthesis {
+      padding: 18px 22px;
+      margin-bottom: 24px;
+      font-size: 15.5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--muted);
+      border-radius: 8px;
+    }
+    .synthesis p {
+      margin: 0 0 10px;
+    }
+    .synthesis p:last-child {
+      margin-bottom: 0;
+    }
+
+    .dimension-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .dim-card {
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .dim-card .dim-name {
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .dim-card .dim-verdict {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    section.dimension,
+    section.reviewer-section {
+      margin-bottom: 14px;
+    }
+    section.dimension details,
+    section.reviewer-section details {
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    section summary {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 20px;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+    }
+    section summary::-webkit-details-marker {
+      display: none;
+    }
+    section summary::before {
+      display: inline-block;
+      color: var(--muted);
+      content: "▸";
+      transition: transform 0.15s ease;
+    }
+    section details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    section summary h2 {
+      display: inline;
+      flex: 1;
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+    }
+    .verdict-pill {
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-radius: 999px;
+    }
+    .verdict-strong {
+      background: var(--verdict-strong);
+    }
+    .verdict-adequate {
+      background: var(--verdict-adequate);
+    }
+    .verdict-thin {
+      background: var(--verdict-thin);
+    }
+    .verdict-broken {
+      background: var(--verdict-broken);
+    }
+
+    .dim-body {
+      padding: 4px 20px 18px;
+    }
+    .dim-judgment {
+      font-size: 14.5px;
+      color: var(--text);
+    }
+    .dim-judgment p {
+      margin: 0 0 10px;
+    }
+
+    .findings-list {
+      padding: 0 20px 4px;
+    }
+    article.finding {
+      padding: 14px 0;
+      border-top: 1px solid var(--border);
+    }
+    article.finding:first-child {
+      border-top: none;
+    }
+    article.finding header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .badge {
+      padding: 3px 8px;
+      font-size: 10.5px;
+      font-weight: 600;
+      line-height: 1.4;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-radius: 4px;
+    }
+    .badge-sev-low {
+      color: var(--sev-low);
+      background: rgba(100, 116, 139, 0.12);
+    }
+    .badge-sev-medium {
+      color: var(--sev-medium);
+      background: rgba(202, 138, 4, 0.14);
+    }
+    .badge-sev-high {
+      color: var(--sev-high);
+      background: rgba(234, 88, 12, 0.14);
+    }
+    .badge-sev-critical {
+      color: var(--sev-critical);
+      background: rgba(220, 38, 38, 0.14);
+    }
+    .finding-title {
+      flex: 1;
+      min-width: 200px;
+      margin: 0;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .finding-location {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .finding-note,
+    .finding-fix {
+      margin-top: 6px;
+      font-size: 14px;
+    }
+    .finding-fix strong {
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .reviewer-source {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .mechanical {
+      padding: 16px 20px;
+      margin-top: 24px;
+      font-size: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .mechanical h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .mechanical ul {
+      padding-left: 20px;
+      margin: 0;
+    }
+    .mechanical li {
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    footer.report-footer {
+      padding-top: 16px;
+      margin-top: 40px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+    footer .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="report-header">
+        <div class="title">
+          <h1>AceFluency Recommendation Engine — Validation Report</h1>
+          <div class="subtitle">
+            prd-community-recommendation-engine-2026-06-12/prd.md
+          </div>
+        </div>
+        <div class="grade grade-good">Good — 7/7 Strong</div>
+      </header>
+
+      <div class="synthesis">
+        <p>
+          This is a genuinely strong companion PRD — one of the better
+          reverse-engineered-from-code specs. The feature inventory is
+          code-validated, gaps are called out with FR numbers and
+          priority/effort, the scoring algorithm is specified to testable
+          precision, and the success metrics actually measure the thesis. The
+          rubric review rates all 7 dimensions <strong>strong</strong>.
+        </p>
+        <p>
+          The adversarial review reveals a devastating gap the rubric would not
+          catch: the recommendation engine is
+          <strong>40% broken at the scoring layer</strong>. Content embeddings
+          are random placeholders, profile embeddings are hardcoded constants,
+          and no preferences UI exists — meaning 70% of the hybrid scoring
+          algorithm receives garbage or empty inputs. The system is currently a
+          CEFR filter with extra steps. Additionally, the recommendation feed
+          has no mobile surface despite 90%+ of users being on mobile.
+        </p>
+        <p>
+          <strong>Combined finding counts:</strong>
+          3 critical, 5 high, 6 medium, 5 low. The critical findings cluster
+          around the broken scoring pipeline (random embeddings on both sides)
+          and the missing mobile surface. The high findings target the
+          dead-weight preferences signal, unvalidatable success metrics, content
+          depletion spiral, security gaps, and the public seed endpoint.
+        </p>
+      </div>
+
+      <div class="dimension-summary">
+        <div class="dim-card">
+          <div class="dim-name">Decision-readiness</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Substance over theater</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Strategic coherence</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Done-ness clarity</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Scope honesty</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Downstream usability</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Shape fit</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+      </div>
+
+      <!-- Decision-readiness -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Decision-readiness</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                The PRD is structured so a PM or engineering lead can act
+                immediately. §6 MVP Scope splits cleanly into "already
+                implemented" (§6.1), "must complete before MVP done" (§6.2 gap
+                table with priority, effort, and blocker status), and "v2
+                roadmap" (§6.3). The gap table at §6.2 is the strongest element
+                — it names five specific gaps, maps each to an FR, assigns
+                priority and t-shirt effort, and flags whether each is a
+                blocker.
+              </p>
+              <p>
+                Trade-offs are surfaced honestly: §4.3 FR-9 documents the
+                "exclude all interacted content" choice and §10 immediately
+                flags the assumption that this may over-exclude bookmarked
+                content. The scoring weights are presented as starting values
+                with an explicit assumption tag.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  Decision log is vestigial — single entry, no intra-PRD
+                  trade-offs logged
+                </h3>
+                <span class="finding-location">§.decision-log.md</span>
+              </header>
+              <div class="finding-note">
+                The log has one entry from 2026-06-12. None of the weight
+                choices, filter widths, TTL values, or exclusion policy
+                decisions are recorded.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Backfill 3–5 key design decision entries or fold the
+                feature-selection rationale into §0 and remove the log.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  OQ-6 interaction weights are unsourced
+                </h3>
+                <span class="finding-location">§9, OQ-6</span>
+              </header>
+              <div class="finding-note">
+                OQ-6 proposes specific interaction weights ("like = +0.3,
+                dismiss = -0.2") labeled "proposed starting values" without
+                stating who proposed them or what evidence supports them.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Cite the source (PM intuition, competitor analysis, literature)
+                or reframe as "placeholder values to be validated."
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Substance over theater -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Substance over theater</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                Personas are functional, not decorative. Rina's "5–10 minute
+                windows" constraint motivates short-form content, her "travel
+                and food" interests appear in the scoring algorithm example, and
+                her "doesn't want to see the same video" need maps directly to
+                the exclusion filter. Arif forces the cold-start design
+                question. Yamin is the actual admin.
+              </p>
+              <p>
+                The scoring algorithm is fully specified with exact weights,
+                formulas, and edge-case behavior. NFRs are scoped to specific
+                features, not global boilerplate. Non-Goals do real exclusion
+                work — the <code>scoreType</code> enum entry is particularly
+                honest.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  §2.4 JTBD restates personas without adding new frame
+                </h3>
+                <span class="finding-location">§2.4</span>
+              </header>
+              <div class="finding-note">
+                Three bullets largely restate what §2.1–§2.3 established. No
+                "when I… I want to… so that I can…" structure or competing
+                alternatives.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Use proper JTBD syntax with context-switching triggers, or cut
+                §2.4 and let the personas carry the load.
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Strategic coherence -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Strategic coherence</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                The PRD has a clear thesis: the recommendation engine is the
+                "training program" that makes peer voice practice more effective
+                by filling between-session time with level-appropriate content.
+                Features serve the thesis, success metrics validate it, and
+                counter-metrics (SM-RC1 feed homogeneity, SM-RC2 CEFR level
+                lock-in) catch the failure modes.
+              </p>
+              <p>
+                The relationship to the parent PRD is well-articulated. The
+                recommendation engine and partner matching share the profile
+                embedding pipeline, CEFR placement, and BGE model — one user
+                model serving two surfaces.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  No metric validates the core thesis — rec-fed learners
+                  practice better
+                </h3>
+                <span class="finding-location">§7</span>
+              </header>
+              <div class="finding-note">
+                SM-R1–R4 measure recommendation engagement, but the strategic
+                claim is that recommendations improve the core product (voice
+                practice). No metric correlates feed engagement with call
+                completion rates or practice frequency.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a stretch metric: "Correlation between recommendation feed
+                engagement and voice practice frequency. Hypothesis: users who
+                interact with ≥3 recommended items per week have ≥15% higher
+                call completion rates."
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Done-ness clarity -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Done-ness clarity</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                Implemented FRs have "Consequences (testable)" blocks that an
+                engineer could translate directly into integration tests. FR-1
+                has exact validation rules, FR-8 specifies deterministic
+                scoring, FR-9 defines a 200-item candidate cap, FR-10 specifies
+                24h TTL, FR-12 specifies upsert on (userId, contentId, action).
+              </p>
+              <p>
+                The gap FRs are less precisely specified, which is appropriate
+                for unbuilt features but creates some risk for FR-23 (mobile
+                feed) which omits error states entirely.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  FR-23 (mobile feed) omits error states — network failure, no
+                  CEFR, empty pool
+                </h3>
+                <span class="finding-location">§4.8, FR-23</span>
+              </header>
+              <div class="finding-note">
+                FR-23 lists testable consequences but doesn't specify behavior
+                for network failure, missing CEFR placement, or exhausted
+                candidate pool — higher-risk omissions for mobile.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add consequences for: (a) network failure → cached/offline state
+                or error message, (b) no CEFR placement → CEFR-less scoring path
+                or onboarding redirect, (c) empty candidate pool → empty state
+                with action prompt.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  FR-4 and FR-5 gap FRs have no "Consequences (testable)" blocks
+                </h3>
+                <span class="finding-location">§4.1, FR-4, FR-5</span>
+              </header>
+              <div class="finding-note">
+                When an engineer picks up FR-4, they need to know: which fields
+                are updatable? Does changing cefr_level invalidate cached
+                scores?
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add skeleton consequence blocks for gap FRs, even if marked "[to
+                be refined during story creation]."
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  FR-6 "embedding pending" flag has no schema support
+                </h3>
+                <span class="finding-location">§4.2, FR-6</span>
+              </header>
+              <div class="finding-note">
+                FR-6 says content is "flagged as 'embedding pending'" but no
+                schema field supports this. The content_embedding table either
+                has a row or doesn't.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Clarify: does "embedding pending" mean "no row in
+                content_embedding" or does it require a status column?
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Scope honesty -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Scope honesty</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                This is the PRD's best dimension. The reverse-engineering
+                approach forces honesty: every feature is tagged with an
+                implementation status (✅/⚠️/❌). The gap FRs are called out
+                inline with implemented FRs. §6.2's gap table is a model of
+                scope honesty — it ranks gaps by priority, estimates effort, and
+                flags blockers.
+              </p>
+              <p>
+                The Assumptions Index (§10) is genuinely useful: 11 tagged
+                assumptions, each tied to a specific section, several with
+                "[ASSUMPTION: not validated]" honesty. The final entry about
+                hardcoded profile template values is particularly valuable.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  §4.7 and §4.8 are swapped — FR-23 before FR-22 in document
+                  order
+                </h3>
+                <span class="finding-location">§4.7, §4.8</span>
+              </header>
+              <div class="finding-note">
+                Section 4.8 (Native Mobile, FR-23) appears before §4.7 (Seed &
+                Demo, FR-22). This breaks both section numbering and FR
+                numbering expectations, confusing downstream consumers.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Reorder sections so §4.7 = Seed & Demo (FR-22), §4.8 = Native
+                Mobile (FR-23), and FR numbers are sequential in document order.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  §6.2 and §6.3 contradict on FR-4 — listed in both MVP and v2
+                </h3>
+                <span class="finding-location">§6.2, §6.3</span>
+              </header>
+              <div class="finding-note">
+                FR-4 (Update content item) appears in §6.2 as MVP gap and in
+                §6.3 as v2 roadmap, both at Medium priority. It cannot be both.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Pick one. If the delete-and-recreate workaround is acceptable
+                for MVP, move FR-4 entirely to §6.3.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  Non-Goals §5 contradicts itself on mobile feed scope
+                </h3>
+                <span class="finding-location">§5</span>
+              </header>
+              <div class="finding-note">
+                §5 first lists "Native mobile recommendation feed" as a non-goal
+                header, then walks it back by saying it's actually MVP-required.
+                A reader scanning §5 will conclude mobile is out of scope.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Remove the native feed from §5 entirely. It is not a non-goal.
+                Add a separate Non-Goal: "Admin tools on mobile — admin panel
+                remains web-only for MVP."
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Downstream usability -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Downstream usability</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                Glossary has 8 terms with schema table references. Cross-refs
+                are thorough: §0 references the parent PRD by ID, §1 references
+                parent PRD §4.3 and §5, §8.4 has a shared infrastructure table.
+                FRs cross-reference each other. Success metrics cross-reference
+                FRs. Codebase references in §0 give five specific file paths.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  Parent PRD dependency is unversioned
+                </h3>
+                <span class="finding-location">§0, §8.4</span>
+              </header>
+              <div class="finding-note">
+                References <code>prd-community-2026-06-09</code> without pinning
+                a version or hash. If the parent PRD is updated (CEFR placement
+                logic, matching weights), this PRD's §8.4 shared infrastructure
+                assumptions silently break.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a version/hash reference. Add a §10 assumption: "Parent PRD
+                §4.3 matchmaking algorithm and CEFR placement schema remain
+                stable."
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  Glossary omits "CEFR" — assumed reader knowledge
+                </h3>
+                <span class="finding-location">§3</span>
+              </header>
+              <div class="finding-note">
+                The PRD uses CEFR extensively and assumes the reader knows it.
+                For downstream consumers (designer, QA) this is a gap.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add glossary entry: "CEFR — Common European Framework of
+                Reference for Languages. Six levels: A1 (beginner) through C2
+                (proficient)."
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Shape fit -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Shape fit</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                This is explicitly a brownfield companion PRD reverse-engineered
+                from code. The shape is appropriate: implementation status tags
+                (✅/⚠️/❌) on every feature, code-validated architecture with
+                actual schemas and API surface, gap FRs inline with implemented
+                FRs, codebase references with file paths, and a clear parent PRD
+                relationship with shared infrastructure table.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  Decision log should backfill implementation choices
+                </h3>
+                <span class="finding-location">.decision-log.md</span>
+              </header>
+              <div class="finding-note">
+                For a reverse-engineered PRD, the decision log should capture
+                why the existing implementation made its choices — why BGE-small
+                instead of a larger model, why CEFR ±1, why 24h TTL. These were
+                real implementation decisions worth recording.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Interview the implementation record (git blame, commit messages)
+                and backfill 3–5 key implementation decisions.
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Adversarial review -->
+      <section class="reviewer-section">
+        <details open>
+          <summary>
+            <h2>Adversarial review</h2>
+            <span class="reviewer-source">review-adversarial.md</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                This PRD describes a recommendation engine that is
+                <strong>40% broken at the scoring layer</strong>
+                (random embeddings), invisible to
+                <strong>90%+ of users</strong>
+                (no mobile feed), and incapable of accepting the personalization
+                inputs it claims to use (no preferences UI). The document is
+                unusually honest about these gaps, but then contradicts itself
+                by labeling the system "fully implemented" in multiple places.
+                The MVP gap table is the real PRD — the rest is a spec for a
+                demo, not a product.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-critical">Critical</span>
+                <h3 class="finding-title">
+                  Scoring engine runs on random noise — 40% weight on
+                  placeholder embeddings
+                </h3>
+                <span class="finding-location">§4.2 FR-6, §8.3</span>
+              </header>
+              <div class="finding-note">
+                Content embeddings are "random 384-dim vectors (placeholder)"
+                yet the hybrid scoring pipeline weights cosine similarity at
+                40%. The system is making recommendations where nearly half the
+                scoring weight is mathematically random. Every success metric is
+                unmeasurable against noise-contaminated scores.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Reclassify FR-6 as a hard blocker. Add a feature flag to disable
+                the feed entirely until real embeddings are computed. No
+                recommendation feed should be user-facing until FR-6 is
+                resolved.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-critical">Critical</span>
+                <h3 class="finding-title">
+                  Profile embeddings are also fake — hardcoded placeholder
+                  values for all users
+                </h3>
+                <span class="finding-location">§10, last bullet</span>
+              </header>
+              <div class="finding-note">
+                <code>recomputeEmbedding</code>
+                uses hardcoded values ("CEFR: B1, interests: [], goals: [],
+                native: Bangla, age: 25") instead of real user data. Every user
+                gets the same profile embedding. Combined with random content
+                embeddings, the recommendation engine has
+                <strong>zero personalization from embeddings</strong>
+                on both sides.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add to §6.2 gap table as High/Blocker. The profile embedding
+                pipeline must read real user data before any embedding-based
+                scoring is meaningful.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-critical">Critical</span>
+                <h3 class="finding-title">
+                  No mobile surface for 90%+ of users
+                </h3>
+                <span class="finding-location">§4.8, §5</span>
+              </header>
+              <div class="finding-note">
+                The PRD acknowledges "90%+ of active users are on mobile," then
+                reveals the feed exists only on web. §5 Non-Goals contradicts
+                itself — first lists mobile feed as a non-goal, then says it's
+                MVP-required. A reader scanning §5 will conclude mobile is out
+                of scope.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Remove mobile feed from §5 entirely. It is not a non-goal; it is
+                a blocker. The §5 entry should only cover "admin tools on
+                mobile."
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  No preferences UI means 30% of scoring is dead weight
+                </h3>
+                <span class="finding-location">§4.5, FR-17</span>
+              </header>
+              <div class="finding-note">
+                Tag overlap (20%) and content type preference (10%) require user
+                preferences. No web or mobile UI exists. Combined with broken
+                embeddings (40%),
+                <strong
+                  >70% of the scoring algorithm receives garbage or empty inputs</strong
+                >. Only CEFR closeness (30%) works correctly.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Elevate FR-17 to blocker. Add a preferences onboarding flow to
+                the user's first session to ensure preference data is collected
+                proactively.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  Success metrics cannot validate thesis — no baseline
+                  comparison
+                </h3>
+                <span class="finding-location">§7</span>
+              </header>
+              <div class="finding-note">
+                SM-R1 targets "≥30% engagement" but with a broken scoring
+                engine, hitting 30% validates nothing about the algorithm — it
+                only proves users click on things when shown a list. No control
+                condition exists (random feed vs. hybrid-scored feed).
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a baseline comparison: measure engagement on a "newest
+                content at your CEFR level" feed vs. the hybrid-scored feed.
+                Without this, SM-R1–R4 are vanity metrics.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  Content depletion spiral — all interactions excluded from pool
+                </h3>
+                <span class="finding-location">§4.3 FR-9, §10</span>
+              </header>
+              <div class="finding-note">
+                The candidate filter excludes any interacted content. With 12
+                seed items (2 per CEFR level) and a ±1 filter, a B1 user has at
+                most 6 candidates. After viewing all 6, the feed is permanently
+                empty.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Exclude only <code>dismiss</code> and <code>complete</code>
+                interactions. Allow viewed/liked/bookmarked items to reappear
+                with a decay penalty. Add an explicit empty-state design with a
+                prompt to try a different CEFR level or content type.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  <code>createContent</code>
+                  is Protected, not Admin — security gap
+                </h3>
+                <span class="finding-location">§8.2</span>
+              </header>
+              <div class="finding-note">
+                The API table lists <code>createContent</code> as "Protected"
+                (any authenticated user), but §4.1 FR-1 says "[Admin] can
+                create." Any learner can create content items. A malicious user
+                could flood the library.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Gate <code>createContent</code> behind
+                <code>adminProcedure</code>. If user-generated content is
+                planned, make it a separate moderated endpoint.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  Public seed endpoint is a wipe-the-database button
+                </h3>
+                <span class="finding-location">§4.7 FR-22, §8.2</span>
+              </header>
+              <div class="finding-note">
+                The seed endpoint is <code>publicProcedure</code> with
+                <code>onConflictDoUpdate</code>. Anyone can call it and
+                overwrite content, preferences, and interactions with demo
+                values. The PRD classifies this as Medium — it is a critical
+                production safety issue.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Reclassify to High/Blocker. Remove the endpoint in production
+                builds or gate behind <code>adminProcedure</code> +
+                <code>NODE_ENV !== 'production'</code>.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  Scoring weights are hardcoded with no tuning mechanism
+                </h3>
+                <span class="finding-location">§4.3 FR-8, §10</span>
+              </header>
+              <div class="finding-note">
+                Weights (0.4/0.3/0.2/0.1) are "reasonable starting values" but
+                A/B testing is a non-goal, no config endpoint exists, and no
+                analytics correlate weight changes with engagement. The weights
+                are hardcoded with no path to optimization.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Externalize weights to environment variables or a config table.
+                Add a §9 Open Question about tuning methodology.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  "View" and "complete" interactions undefined — SM-R4 is
+                  meaningless
+                </h3>
+                <span class="finding-location">§4.4</span>
+              </header>
+              <div class="finding-note">
+                Content links to external source URLs. The system cannot know if
+                a user actually consumed the content or just saw the card.
+                "View" and "complete" are undefined. SM-R4 (like-to-view ratio)
+                is meaningless if "view" means "card appeared on screen."
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Define "view" (e.g., user clicked through to detail page or
+                opened source URL) and "complete" (user explicitly marked
+                complete). Add to §3 Glossary.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  Score cache goes stale on preference update — 24h delay
+                </h3>
+                <span class="finding-location">§4.3 FR-10, FR-16</span>
+              </header>
+              <div class="finding-note">
+                When a user updates preferences, cached scores (24h TTL) are not
+                invalidated. A user who sets interests for the first time sees
+                zero change until cache expires — contradicting the "feels like
+                the app knows me" JTBD.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Invalidate cached scores on preference change, or auto-trigger
+                recalculation after preference update.
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <div class="mechanical">
+        <h3>Mechanical notes</h3>
+        <ul>
+          <li>
+            <strong>Section order:</strong>
+            §4.7 and §4.8 are out of order — §4.8 (Native Mobile, FR-23) appears
+            before §4.7 (Seed & Demo, FR-22). Breaks both section and FR
+            numbering expectations.
+          </li>
+          <li>
+            <strong>FR-4 scope ambiguity:</strong>
+            FR-4 appears in both §6.2 (MVP gaps) and §6.3 (v2 roadmap) at Medium
+            priority. This is contradictory — it cannot be both MVP and v2
+            scoped.
+          </li>
+          <li>
+            <strong>API security mismatch:</strong>
+            <code>createContent</code>
+            in §8.2 is "Protected" (authenticated user) but §4.1 FR-1 says
+            "[Admin] can create." Likely uses
+            <code>protectedProcedure</code>
+            instead of
+            <code>adminProcedure</code>
+            — flag as security gap.
+          </li>
+          <li>
+            <strong>FR-8 signal 4 wording:</strong>
+            Says "Binary — 0.1 if the content type matches" but 0.1 is the
+            weight, not the signal value. Should read: "Binary signal (1.0 if
+            match, 0.0 otherwise) × 0.1 weight."
+          </li>
+          <li>
+            <strong>Frontmatter date:</strong>
+            <code>updated: 2026-06-13</code>
+            but no changelog or revision history explains what changed between
+            06-12 and 06-13.
+          </li>
+          <li>
+            <strong>No addendum.md:</strong>
+            Confirmed absent. PRD is self-contained — this is fine.
+          </li>
+          <li>
+            <strong>FR numbering in document order:</strong>
+            FR-1 through FR-22 exist, then FR-23 in §4.8 which appears before
+            §4.7 (FR-22). Reading top-to-bottom, FR-23 is encountered before
+            FR-22.
+          </li>
+        </ul>
+      </div>
+
+      <footer class="report-footer">
+        <div class="meta">
+          <span
+            >PRD: prd-community-recommendation-engine-2026-06-12/prd.md</span
+          >
+          <span>Rubric: review-rubric.md</span>
+          <span>Adversarial: review-adversarial.md</span>
+          <span>Generated: 2026-06-13T20:45:00+06:00</span>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

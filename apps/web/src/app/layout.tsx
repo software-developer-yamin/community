@@ -16,8 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "community",
-  description: "community",
+  title: "AceFluency - Practice English with Real People",
+  description:
+    "AceFluency connects you with real conversation partners to practice English speaking. Improve your fluency through 1-on-1 voice calls.",
 };
 
 export default function RootLayout({

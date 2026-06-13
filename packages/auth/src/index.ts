@@ -21,6 +21,16 @@ export function createAuth() {
 
       schema,
     }),
+    user: {
+      additionalFields: {
+        role: {
+          type: "string",
+          required: true,
+          defaultValue: "user",
+          input: false,
+        },
+      },
+    },
     trustedOrigins: [
       env.CORS_ORIGIN,
       "community://",

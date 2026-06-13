@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>
+      PRD Validation: AceFluency Practice-English-with-Peers Rebuild
+    </title>
+    <style>
+    :root {
+      --bg: #fafaf9;
+      --surface: #ffffff;
+      --border: #e7e5e4;
+      --text: #1c1917;
+      --muted: #78716c;
+
+      --verdict-strong: #16a34a;
+      --verdict-adequate: #65a30d;
+      --verdict-thin: #d97706;
+      --verdict-broken: #dc2626;
+
+      --sev-low: #64748b;
+      --sev-medium: #ca8a04;
+      --sev-high: #ea580c;
+      --sev-critical: #dc2626;
+
+      --grade-exc: #16a34a;
+      --grade-good: #65a30d;
+      --grade-fair: #d97706;
+      --grade-poor: #dc2626;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    body {
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui,
+        sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .container {
+      max-width: 960px;
+      padding: 32px 24px 64px;
+      margin: 0 auto;
+    }
+
+    header.report-header {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .title h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .title .subtitle {
+      margin-top: 4px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .grade {
+      padding: 10px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      color: white;
+      white-space: nowrap;
+      border-radius: 8px;
+    }
+    .grade-excellent {
+      background: var(--grade-exc);
+    }
+    .grade-good {
+      background: var(--grade-good);
+    }
+    .grade-fair {
+      background: var(--grade-fair);
+    }
+    .grade-poor {
+      background: var(--grade-poor);
+    }
+
+    .synthesis {
+      padding: 18px 22px;
+      margin-bottom: 24px;
+      font-size: 15.5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--muted);
+      border-radius: 8px;
+    }
+    .synthesis p {
+      margin: 0 0 10px;
+    }
+    .synthesis p:last-child {
+      margin-bottom: 0;
+    }
+
+    .dimension-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .dim-card {
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .dim-card .dim-name {
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .dim-card .dim-verdict {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    section.dimension,
+    section.reviewer-section {
+      margin-bottom: 14px;
+    }
+    section.dimension details,
+    section.reviewer-section details {
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    section summary {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 20px;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+    }
+    section summary::-webkit-details-marker {
+      display: none;
+    }
+    section summary::before {
+      display: inline-block;
+      color: var(--muted);
+      content: "▸";
+      transition: transform 0.15s ease;
+    }
+    section details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    section summary h2 {
+      display: inline;
+      flex: 1;
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+    }
+    .verdict-pill {
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-radius: 999px;
+    }
+    .verdict-strong {
+      background: var(--verdict-strong);
+    }
+    .verdict-adequate {
+      background: var(--verdict-adequate);
+    }
+    .verdict-thin {
+      background: var(--verdict-thin);
+    }
+    .verdict-broken {
+      background: var(--verdict-broken);
+    }
+
+    .dim-body {
+      padding: 4px 20px 18px;
+    }
+    .dim-judgment {
+      font-size: 14.5px;
+      color: var(--text);
+    }
+    .dim-judgment p {
+      margin: 0 0 10px;
+    }
+
+    .findings-list {
+      padding: 0 20px 4px;
+    }
+    article.finding {
+      padding: 14px 0;
+      border-top: 1px solid var(--border);
+    }
+    article.finding:first-child {
+      border-top: none;
+    }
+    article.finding header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .badge {
+      padding: 3px 8px;
+      font-size: 10.5px;
+      font-weight: 600;
+      line-height: 1.4;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-radius: 4px;
+    }
+    .badge-sev-low {
+      color: var(--sev-low);
+      background: rgba(100, 116, 139, 0.12);
+    }
+    .badge-sev-medium {
+      color: var(--sev-medium);
+      background: rgba(202, 138, 4, 0.14);
+    }
+    .badge-sev-high {
+      color: var(--sev-high);
+      background: rgba(234, 88, 12, 0.14);
+    }
+    .badge-sev-critical {
+      color: var(--sev-critical);
+      background: rgba(220, 38, 38, 0.14);
+    }
+    .finding-title {
+      flex: 1;
+      min-width: 200px;
+      margin: 0;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .finding-location {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .finding-note,
+    .finding-fix {
+      margin-top: 6px;
+      font-size: 14px;
+    }
+    .finding-fix strong {
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .reviewer-source {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .mechanical {
+      padding: 16px 20px;
+      margin-top: 24px;
+      font-size: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .mechanical h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .mechanical ul {
+      padding-left: 20px;
+      margin: 0;
+    }
+    .mechanical li {
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    footer.report-footer {
+      padding-top: 16px;
+      margin-top: 40px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+    footer .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="report-header">
+        <div class="title">
+          <h1>
+            AceFluency Practice-English-with-Peers Rebuild — Validation Report
+          </h1>
+          <div class="subtitle">
+            prd-community-2026-06-09/prd.md + addendum.md
+          </div>
+        </div>
+        <div class="grade grade-good">Good — 6/7 Strong</div>
+      </header>
+
+      <div class="synthesis">
+        <p>
+          This is a strong rebuild PRD. Every feature connects to a named user
+          complaint, the user journeys are drawn from real Play Store reviews,
+          and the counter-metrics show awareness of how incentive misalignment
+          destroys the product. The rubric review rates 6 of 7 dimensions
+          <strong>strong</strong>
+          and 1 (done-ness clarity)
+          <strong>adequate</strong>.
+        </p>
+        <p>
+          The adversarial review identifies three systemic risks the rubric
+          review's dimension-by-dimension walk would not catch: (1) the
+          aggregate scope is a new product, not a patch — 20 FRs across six
+          feature areas with no timeline, team size, or phasing; (2) success
+          metrics are disconnected from the user journeys that justify the
+          rebuild; and (3) the India market is acknowledged but treated as a
+          bolt-on afterthought, creating a silent second product surface. These
+          three issues must be resolved before this PRD can drive architecture
+          and story creation.
+        </p>
+        <p>
+          <strong>Combined finding counts:</strong>
+          3 critical, 8 high, 12 medium, 11 low. The critical and high findings
+          cluster around scope boundaries (unbounded MVP, India market
+          ambiguity), metric gaps (UJ validation, retention), and specification
+          vagueness (Skip button, FR-20 threshold contradiction,
+          crash/disconnect definitions).
+        </p>
+      </div>
+
+      <div class="dimension-summary">
+        <div class="dim-card">
+          <div class="dim-name">Decision-readiness</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Substance over theater</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Strategic coherence</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Done-ness clarity</div>
+          <div class="dim-verdict" style="color: var(--verdict-adequate)">
+            Adequate
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Scope honesty</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Downstream usability</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-name">Shape fit</div>
+          <div class="dim-verdict" style="color: var(--verdict-strong)">
+            Strong
+          </div>
+        </div>
+      </div>
+
+      <!-- Decision-readiness -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Decision-readiness</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                The PRD is structured for a decision-maker who needs to say "go"
+                or "no-go" on a rebuild. §0 names phase-blockers and their
+                resolution status. OQ-6 (LiveKit Cloud vs. self-hosted) is
+                resolved inline with rationale. OQ-1 (payment provider) is
+                resolved with a named provider and API endpoint. OQ-2 (refund
+                thresholds) is explicitly demoted from phase-blocker with honest
+                reasoning.
+              </p>
+              <p>
+                Trade-offs are surfaced where they matter: the
+                rejected-alternative section in addendum §A shows two paths
+                considered and discarded with reasons. The non-goals in §5 do
+                actual exclusion work.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  OQ-9 India PSP has no resolution path or owner timeline
+                </h3>
+                <span class="finding-location">§8, line 449</span>
+              </header>
+              <div class="finding-note">
+                "Revisit at Finalize before MVP ships India pricing" is vague.
+                The India PSP blocks FR-20 refund execution for roughly half the
+                user base if the app ships to both markets simultaneously.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Assign a hard deadline or gate MVP India launch on OQ-9
+                resolution; add to §6.1 as a conditional scope item.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  OQ-7 baseline may shift when weighting is implemented
+                </h3>
+                <span class="finding-location">§8 OQ-7</span>
+              </header>
+              <div class="finding-note">
+                OQ-7 (match quality measurement) is marked "PARTIALLY RESOLVED"
+                but the open piece — "exact weighting of rating in the matching
+                score" — is deferred to v2 while affecting SM-6 queue dynamics.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a note in SM-6 that the metric baseline may shift when
+                OQ-7's weighting is implemented.
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Substance over theater -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Substance over theater</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                The PRD passes the theater test across all four sub-dimensions.
+                Personas are real reviewer names drawn from
+                ratings-and-reviews.md. Innovation theater is absent — the
+                vision is deliberately anti-aspirational. NFR theater is absent
+                — every NFR is attached to a specific FR with a percentile and
+                device/network context. Vision theater is absent — §1 is three
+                paragraphs of substance.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">Vision anxiety claim unverified</h3>
+                <span class="finding-location">§1, line 32</span>
+              </header>
+              <div class="finding-note">
+                The "4 of 5 adults report spoken-English fluency anxiety" claim
+                is flagged in §9 as sourced from about.md, not independently
+                verified. The claim anchors the vision.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Soften to "a large majority" or add a verification action to the
+                Assumptions Index entry.
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Strategic coherence -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Strategic coherence</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                The PRD has a clear thesis: the product loses users because it
+                punishes them for infrastructure failures, and the rebuild's job
+                is to make every failure mode visible, honest, and
+                non-punishing. Every feature group maps to this thesis.
+                Counter-metrics are the strongest coherence signal — SM-C1
+                directly names the Goodhart's Law failure the current product
+                already exhibits.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">No retention or DAU/MAU metric</h3>
+                <span class="finding-location">§7</span>
+              </header>
+              <div class="finding-note">
+                The thesis is "trust recovery" but there is no metric that
+                measures trust directly. SM-2 (store rating) is a lagging proxy.
+                The rebuild lacks a leading indicator of whether churned users
+                return or new churn is prevented.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add one retention-focused SM that measures behavior
+                <em>after</em>
+                a failure event (reconnect, strike warning, refund denial) to
+                validate the "honest failure handling" thesis.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">SM-2 baseline unverified</h3>
+                <span class="finding-location">§7, §9</span>
+              </header>
+              <div class="finding-note">
+                SM-2 baseline is "currently 2.0–3.5 in sampled reviews" but §9
+                says the actual store rating is unknown.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Pull the actual Play Store rating at PRD-ship time and record it
+                as the baseline.
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Done-ness clarity -->
+      <section class="dimension">
+        <details open>
+          <summary>
+            <h2>Done-ness clarity</h2>
+            <span class="verdict-pill verdict-adequate">Adequate</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                Most FRs have testable consequences in the "[Subject] can
+                [action] [context] [outcome]" format. The weak spots are in
+                billing and moderation features, where the PRD correctly
+                identifies thresholds as "tuning parameters" but leaves some FRs
+                without a testable v1 definition.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  FR-20 "critical app crash" undefined
+                </h3>
+                <span class="finding-location">§4.5 FR-20, line 335</span>
+              </header>
+              <div class="finding-note">
+                What counts as a "critical app crash"? The addendum §B adds
+                "force-close or black-screen" but this clarification lives in
+                the addendum, not the FR itself. An engineer implementing the
+                crash-count trigger needs to know what telemetry event to count.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a parenthetical in FR-20's consequence: "critical app crash
+                (force-close or ANR reported by the OS crash-reporting SDK)."
+                Cross-ref addendum §B explicitly.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  FR-11 "short disconnect" ambiguous — wall-clock vs. speech
+                  time
+                </h3>
+                <span class="finding-location">§4.4 FR-11, line 265</span>
+              </header>
+              <div class="finding-note">
+                "Short disconnect = &lt;30s of audio before end" is ambiguous:
+                wall-clock time, active speech, or call duration? For a user
+                matched with a silent partner (UJ-1), the call duration could be
+                90s but audio content 0s. The distinction determines whether
+                Sumit's scenario triggers a strike.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Define "short disconnect" as call duration &lt;30s (wall-clock
+                time from both participants joining to one disconnecting). Note
+                that silence-detection-based tuning is v2.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  FR-17 backgrounding vs. OS-kill not distinguished
+                </h3>
+                <span class="finding-location">§4.6 FR-17, line 358</span>
+              </header>
+              <div class="finding-note">
+                The FR says "up to 30 minutes" but does not distinguish between
+                "app is backgrounded but alive" and "app was killed by the OS
+                while backgrounded" — a common event on low-RAM Android devices
+                (the primary market).
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Split the consequence: (a) backgrounded-but-alive: call
+                persists; (b) OS-killed while backgrounded: call ends, user
+                returns to "Call ended — connection lost" state, no strike
+                assessed.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  FR-3 OTP fallback timeout undefined
+                </h3>
+                <span class="finding-location">§4.1 FR-3, line 155</span>
+              </header>
+              <div class="finding-note">
+                "OTP delivery uses an SMS provider with a fallback to voice call
+                for unreachable numbers." "Unreachable" is undefined — after how
+                many failed SMS attempts? What timeout?
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add: "If SMS delivery is not confirmed within 60s, offer
+                voice-call fallback."
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  FR-4 Google OAuth failure mode unspecified
+                </h3>
+                <span class="finding-location">§4.1 FR-4</span>
+              </header>
+              <div class="finding-note">
+                No failure-mode consequence for when Google auth returns an
+                error.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add: "If Google OAuth fails, the user sees an error message with
+                a 'Try again' button and a fallback to email/password login."
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Scope honesty -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Scope honesty</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                The PRD is unusually honest about its own boundaries. ASSUMPTION
+                tags appear inline and are collected in §9 (17 entries). NOTE
+                FOR PM callouts appear at real tensions. Non-Goals do real
+                exclusion work. Out of Scope tags appear per-FR. Phase-blockers
+                are listed in §0 with resolution status.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  MVP market scope unstated — BD-only or BD+IN?
+                </h3>
+                <span class="finding-location">§6.1</span>
+              </header>
+              <div class="finding-note">
+                The dual-market scope (Bangladesh + India) is acknowledged in
+                §4.5 and OQ-9, but §6.1 (MVP Scope) does not say whether MVP
+                ships to both markets or BD-only. If BD-only, the India PSP is
+                not a blocker. If both, OQ-9 is a phase-blocker that is not
+                listed as one.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a "Market scope" line to §6.1: "MVP ships to [BD only / BD +
+                IN]. If BD + IN, OQ-9 (India PSP) is a phase-blocker."
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  Existing features not clearly preserved or removed
+                </h3>
+                <span class="finding-location">§5, Addendum §H</span>
+              </header>
+              <div class="finding-note">
+                The existing app has features not addressed by the rebuild
+                (Voice Clubs, AI Speaking Test, Recorded Courses, Tutor
+                Marketplace). The PRD does not state whether these continue to
+                work unchanged or are temporarily removed.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a "Preserve-as-is" section to §5 or §6 listing existing
+                features that ship unchanged.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  Empty-pool acknowledgment buried in wrong section
+                </h3>
+                <span class="finding-location">§4.3, line 216</span>
+              </header>
+              <div class="finding-note">
+                The "no partners online, waiting 20+ minutes" failure mode
+                acknowledgment is buried in §4.3's description, not in §5
+                (Non-Goals) or §6.2 (Out of Scope).
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a line to §6.2.
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Downstream usability -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Downstream usability</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                The PRD is well-structured for handoff to bmad-ux,
+                bmad-create-architecture, and bmad-create-epics-and-stories.
+                Glossary has 19 terms used consistently. FR/SM/UJ IDs are
+                globally numbered and unique. Cross-refs resolve cleanly.
+                Addendum §F maps PRD constructs to file paths — unusually good
+                for architecture handoff.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  FR numbering non-sequential in document order
+                </h3>
+                <span class="finding-location">§4.5–§4.6</span>
+              </header>
+              <div class="finding-note">
+                FR-14, FR-15, FR-16, FR-20 appear in §4.5, then FR-17, FR-18,
+                FR-19 in §4.6. An engineer scanning by number will mis-locate
+                FRs.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add an FR index table to §4 or §0, or renumber so document order
+                matches ID order.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">Glossary missing "Skip"</h3>
+                <span class="finding-location">§3</span>
+              </header>
+              <div class="finding-note">
+                "Skip" is used as a first-class in-call action in FR-11 and
+                called "the load-bearing piece" in addendum §C, but is absent
+                from the glossary.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add to §3: "<strong>Skip</strong>
+                — An in-call action that ends the current call and returns the
+                Learner to the match queue without counting as a strike."
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  Glossary orphan "Pronunciation Score"
+                </h3>
+                <span class="finding-location">§3</span>
+              </header>
+              <div class="finding-note">
+                Glossary defines "Pronunciation Score" but the term appears
+                nowhere else in the PRD body.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Remove from glossary or add a note in §6.2 that pronunciation
+                scoring is preserved as-is from the existing app.
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Shape fit -->
+      <section class="dimension">
+        <details>
+          <summary>
+            <h2>Shape fit</h2>
+            <span class="verdict-pill verdict-strong">Strong</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                The PRD is a rebuild spec for a live product with known
+                failures, and its shape matches that purpose. UJs drawn from
+                complaints (not personas), feature groups organized by failure
+                domain (not by screen), addendum as overflow (not appendix), and
+                screenshot-derived surface map to ground the rebuild in the
+                actual app.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  No build-order suggestion among feature groups
+                </h3>
+                <span class="finding-location">§6.1</span>
+              </header>
+              <div class="finding-note">
+                For a rebuild with 20 FRs, the architecture and epics workflows
+                would benefit from knowing which FRs are foundational (e.g.,
+                FR-1/FR-2 auth must ship before FR-5 rooms can be tested).
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a brief "Build order constraints" note to §6.1 or defer
+                explicitly to the architecture workflow.
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Adversarial review -->
+      <section class="reviewer-section">
+        <details open>
+          <summary>
+            <h2>Adversarial review</h2>
+            <span class="reviewer-source">review-adversarial.md</span>
+          </summary>
+          <div class="dim-body">
+            <div class="dim-judgment">
+              <p>
+                This PRD carries three systemic risks a rubric review would not
+                surface: (1) it scopes a full billing/refund/moderation system
+                from scratch inside a "rebuild" that also rewires auth, calls,
+                and matching — the aggregate scope is a new product, not a
+                patch; (2) its success metrics are disconnected from the user
+                journeys that justify the rebuild; and (3) the India market is
+                acknowledged in screenshots and pricing but treated as a bolt-on
+                afterthought.
+              </p>
+            </div>
+          </div>
+          <div class="findings-list">
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-critical">Critical</span>
+                <h3 class="finding-title">
+                  Scope is unbounded — no timeline, no team size, no phasing
+                </h3>
+                <span class="finding-location">§0, §6</span>
+              </header>
+              <div class="finding-note">
+                The PRD defines 20 FRs spanning six feature areas including two
+                greenfield subsystems, but never once states a delivery
+                timeline, team size, or phase boundary. §6 "MVP Scope" includes
+                every single FR. If everything is MVP, nothing is MVP.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Define a hard phase-1 that ships in ≤8 weeks with ≤5 FRs (e.g.,
+                auth + call reliability only), and a phase-2 for
+                billing/moderation. State team size and a date or sprint count.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-critical">Critical</span>
+                <h3 class="finding-title">
+                  India market silently in scope but unscoped
+                </h3>
+                <span class="finding-location">§4.5, OQ-9, Addendum §H</span>
+              </header>
+              <div class="finding-note">
+                The live app serves India with INR pricing and Indian tutors.
+                But no FR addresses India-specific requirements: UPI payment
+                flows, GST invoicing, RBI auto-debit mandate. The refund matrix
+                in Addendum §B is "written for SSLCommerz (BDT)" with a
+                hand-wave for India.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Explicitly declare India in-scope or out-of-scope for MVP. If
+                in, add FRs for UPI, e-mandate compliance, GST invoicing. If
+                out, remove INR references.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-critical">Critical</span>
+                <h3 class="finding-title">
+                  Success metrics do not validate the user journeys
+                </h3>
+                <span class="finding-location">§7 vs. §2.3</span>
+              </header>
+              <div class="finding-note">
+                UJ-1 (Sumit) — no metric for false-positive strike rate. UJ-4
+                (Hari) — SM-9 allows 10% violation rate on a paid feature. UJ-5
+                (Mridu) — no SM measures successful cancellation outcome. The
+                team can hit every SM and still not fix the problems that
+                motivated the rebuild.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add SM for false-positive moderation rate (target ≤1%),
+                paid-filter violation rate (target 0%), and cancellation
+                completion rate linked to actual billing outcome.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  Skip button has no FR — "load-bearing" with zero acceptance
+                  criteria
+                </h3>
+                <span class="finding-location">§4.4 FR-11, Addendum §C</span>
+              </header>
+              <div class="finding-note">
+                FR-11 says "Skip is a first-class in-call action… does not count
+                as a strike." Addendum §C says "The Skip button is the
+                load-bearing piece." But the PRD defers Skip to bmad-ux
+                downstream with no FR, no acceptance criteria, no behavior spec.
+                If bmad-ux deprioritizes or redesigns Skip, the entire
+                moderation system collapses.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Promote Skip to a full FR with testable consequences: what
+                happens to the current call, does the user re-enter the queue
+                automatically, is there a cooldown between Skips, does the
+                skipped partner get notified?
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  FR-20 refund auto-deny rule is self-contradictory
+                </h3>
+                <span class="finding-location">§4.5 FR-20 vs. Addendum §B</span>
+              </header>
+              <div class="finding-note">
+                FR-20 states auto-deny triggers include "account has >5
+                completed sessions." Addendum §B states auto-deny triggers
+                include "≥1 completed session." Under the addendum rule, Mridu's
+                refund (UJ-5) would be denied — exactly the failure mode the PRD
+                is trying to fix.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Reconcile. Auto-deny only if >5 completed sessions AND refund
+                requested >14 days after charge (both conditions).
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">No FR for post-call rating flow</h3>
+                <span class="finding-location"
+                  >§2.3, OQ-7, Addendum §D, §H</span
+                >
+              </header>
+              <div class="finding-note">
+                The addendum confirms the post-call rating flow exists in the
+                live app, OQ-7 says the rebuild "must preserve this flow," and
+                Addendum §D lists five quality inputs that depend on it. But
+                there is no FR — it is an orphaned dependency.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add FR-21 for post-call rating: preserve existing flow, add "Did
+                this partner help you practice?" question, feed rating into
+                matchPartners scoring, define retention policy.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  Existing features unaddressed for regression
+                </h3>
+                <span class="finding-location">§5, Addendum §H</span>
+              </header>
+              <div class="finding-note">
+                The live app has 6 call types, tutor marketplace, AI speaking
+                tests, recorded courses, drama tab, rooms/voice clubs, daily
+                speaking streaks, a friend graph, and communities. Every one
+                depends on auth, calls, or moderation being rebuilt. No
+                regression scope is defined.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add §4.7 "Regression Scope" FR that lists which existing
+                features must continue working unchanged and defines acceptance
+                tests for them.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-high">High</span>
+                <h3 class="finding-title">
+                  SSLCommerz refund API failure has no fallback besides 7-day
+                  SLA
+                </h3>
+                <span class="finding-location">§4.5 FR-20</span>
+              </header>
+              <div class="finding-note">
+                A SSLCommerz API outage converts every auto-approve refund into
+                a human-review case with a 7-day SLA, with no user communication
+                about the delay.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Define a retry policy (3 retries over 24h). Add a user-visible
+                state: "Refund approved — processing with payment provider."
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">SM-2 baseline is fabricated</h3>
+                <span class="finding-location">§7, §9</span>
+              </header>
+              <div class="finding-note">
+                SM-2 says the current rating is "2.0–3.5 in sampled reviews" and
+                targets ≥4.0. §9 says "the actual store rating is unknown." The
+                PRD set a success metric against a baseline it does not know.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Measure the actual current Play Store rating before finalizing
+                SM-2.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  FR-3 phone OTP has no cost model or abuse mitigation
+                </h3>
+                <span class="finding-location">§4.1 FR-3</span>
+              </header>
+              <div class="finding-note">
+                OTP via SMS in Bangladesh and India is not free. No FR addresses
+                rate-limiting OTP requests, CAPTCHA before OTP send, cost
+                ceiling per user, or abuse prevention.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add an FR or NFR for OTP rate-limiting (max 5 OTP requests per
+                phone per hour) and require architecture to define the cost
+                model.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  "Human review" appears in three places with no staffing
+                  definition
+                </h3>
+                <span class="finding-location"
+                  >§4.4 FR-11, §4.5 FR-16, §4.5 FR-20</span
+                >
+              </header>
+              <div class="finding-note">
+                Three separate systems require human review, but the PRD never
+                states: how many humans, what tools they use, what their working
+                hours are, or whether the team has committed to staffing this.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a cross-cutting organizational dependency section. State:
+                "This PRD requires N support/moderation staff or an AI triage
+                system."
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  SM-9 gender filter fulfillment at 90% formalizes partial
+                  failure
+                </h3>
+                <span class="finding-location">§7 SM-9</span>
+              </header>
+              <div class="finding-note">
+                A user who pays for gender filtering and gets a wrong-gender
+                match 10% of the time is experiencing UJ-4's exact failure. SM-9
+                at 90% is not success; it is formalized partial failure.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Redefine: 0% of matches should violate the filter. Separately
+                measure "% of gender-filtered queue sessions that result in no
+                match within 90s."
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  No accessibility requirements anywhere
+                </h3>
+                <span class="finding-location">§4, §6</span>
+              </header>
+              <div class="finding-note">
+                The PRD targets South Asian users on low-end Android devices. No
+                FR mentions text size, contrast ratios, screen reader support,
+                RTL text support (Urdu is listed), or localization.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a cross-cutting NFR for WCAG 2.1 AA compliance on primary
+                flows, and an FR for UI localization (English, Bangla, Hindi).
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  FR-8 empty-pool fallback creates a dark pattern risk
+                </h3>
+                <span class="finding-location">§4.3 FR-8</span>
+              </header>
+              <div class="finding-note">
+                If the pool is consistently empty for a gender preference, the
+                user will be asked to drop their paid filter every single
+                session — a de facto upsell-for-nothing.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add a metric for "% of gender-filtered sessions that resolve
+                without fallback prompt." If below 50% for 7 consecutive days,
+                trigger a PM review.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-medium">Medium</span>
+                <h3 class="finding-title">
+                  Addendum §B auto-deny for "≥1 completed session" is hostile to
+                  users
+                </h3>
+                <span class="finding-location">Addendum §B</span>
+              </header>
+              <div class="finding-note">
+                Under this rule, a user who completed one 5-minute call then
+                experienced 6 days of crashes would be auto-denied a refund —
+                the opposite of the PRD's stated philosophy.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Raise auto-deny threshold to ≥5 completed sessions, or make
+                conditional on absence of reported technical issues.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  CEFR placement accuracy never validated
+                </h3>
+                <span class="finding-location">§3, §4.3</span>
+              </header>
+              <div class="finding-note">
+                If CEFR placement is inaccurate (self-reported), the matching
+                system is filtering on noise regardless of new filter
+                infrastructure.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Acknowledge as known risk and add a v1 metric: "% of post-call
+                ratings where user selected 'partner was too advanced/too
+                basic'."
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  FR-12 report-voids-strike is exploitable
+                </h3>
+                <span class="finding-location">§4.4 FR-12</span>
+              </header>
+              <div class="finding-note">
+                A user who wants to serial-disconnect without consequence can
+                report every partner for "non-participation" within 60s. No
+                false-report abuse mitigation.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                If a user reports >50% of partners in a 24h window, flag the
+                user for review instead of voiding all strikes.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  No data migration plan for existing users
+                </h3>
+                <span class="finding-location">§4.5, §4.4</span>
+              </header>
+              <div class="finding-note">
+                The rebuild adds new schema fields and changes auth behavior. No
+                FR addresses how existing users get new fields populated or how
+                existing subscriptions are reconciled.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add an FR or architecture note for data migration: existing
+                users get a one-time onboarding prompt for new fields.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  "Pronunciation Score" glossary ghost
+                </h3>
+                <span class="finding-location">§3</span>
+              </header>
+              <div class="finding-note">
+                Glossary defines "Pronunciation Score" but no FR references it.
+                No SM validates it. It exists in the spec but has no functional
+                home.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Remove from glossary or add to §6.2 Out of Scope with a note
+                that it is preserved as-is.
+              </div>
+            </article>
+            <article class="finding">
+              <header>
+                <span class="badge badge-sev-low">Low</span>
+                <h3 class="finding-title">
+                  No error/edge-case handling for dual-PSP billing
+                </h3>
+                <span class="finding-location">§4.5, OQ-9</span>
+              </header>
+              <div class="finding-note">
+                No FR addresses what happens if a user switches countries, how
+                currency is determined, or how billing history displays
+                cross-currency transactions.
+              </div>
+              <div class="finding-fix">
+                <strong>Fix:</strong>
+                Add an FR or architecture constraint: currency is determined at
+                purchase time and locked for the billing period.
+              </div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <div class="mechanical">
+        <h3>Mechanical notes</h3>
+        <ul>
+          <li>
+            <strong>Glossary drift:</strong>
+            "Skip" used as a defined concept in FR-11 and addendum §C but absent
+            from §3 glossary. "Pronunciation Score" in glossary but unused in
+            PRD body.
+          </li>
+          <li>
+            <strong>ID continuity:</strong>
+            FR-1 through FR-20 unique but not sequential in document order
+            (FR-20 in §4.5 before FR-17..FR-19 in §4.6). SM and UJ IDs
+            contiguous.
+          </li>
+          <li>
+            <strong>Cross-ref integrity:</strong>
+            All FR→UJ, SM→FR, and addendum→FR references resolve correctly. No
+            broken cross-refs in main document.
+          </li>
+          <li>
+            <strong>Addendum §H cross-ref typo:</strong>
+            Line 168 references "FR-3 (gender filter)" but FR-3 is phone-number
+            auth; FR-8 is the gender filter.
+          </li>
+          <li>
+            <strong>Stale phase-blocker brackets in §6.1:</strong>
+            §0 marks OQ-6 as resolved; §6.1 still reads "[Phase-blocker: Open
+            Question 6...]" — should be updated or removed. Similarly, OQ-2 was
+            demoted from phase-blocker but §6.1 still marks it.
+          </li>
+          <li>
+            <strong>Auth NFR source FR mismatch:</strong>
+            Addendum §E attributes auth NFRs to "FR-1" but the auth failure-rate
+            NFR is stated under FR-4 in the PRD.
+          </li>
+          <li>
+            <strong>Assumptions Index roundtrip:</strong>
+            17 entries, spot-checked 5 — all roundtrip correctly.
+          </li>
+          <li>
+            <strong>UJ protagonist naming:</strong>
+            All five UJs have named protagonists with language, gender, tier,
+            and context. All names trace to ratings-and-reviews.md.
+          </li>
+        </ul>
+      </div>
+
+      <footer class="report-footer">
+        <div class="meta">
+          <span>PRD: prd-community-2026-06-09/prd.md</span>
+          <span>Rubric: review-rubric.md</span>
+          <span>Adversarial: review-adversarial.md</span>
+          <span>Generated: 2026-06-13T18:30:00+06:00</span>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
