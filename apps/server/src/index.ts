@@ -3,6 +3,9 @@ import { google } from "@ai-sdk/google";
 import { createContext } from "@community/api/context";
 import { appRouter } from "@community/api/routers/index";
 import { auth } from "@community/auth";
+import { db } from "@community/db";
+import { callRecord } from "@community/db/schema/call";
+import { callRoom } from "@community/db/schema/rebuild";
 import { env } from "@community/env/server";
 import { prometheus } from "@hono/prometheus";
 import { sentry } from "@hono/sentry";
@@ -14,6 +17,7 @@ import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { convertToModelMessages, streamText, wrapLanguageModel } from "ai";
+import { and, eq } from "drizzle-orm";
 import { initLogger, log } from "evlog";
 import { createAILogger, createEvlogIntegration } from "evlog/ai";
 import {
@@ -30,15 +34,21 @@ import { secureHeaders } from "hono/secure-headers";
 import { timeout } from "hono/timeout";
 import { type TimingVariables, timing } from "hono/timing";
 import { rateLimiter } from "hono-rate-limiter";
+import { WebhookReceiver } from "livekit-server-sdk";
 
 initLogger({
   env: { service: "community-server" },
 });
 
 const identifyUser = createAuthMiddleware(auth as BetterAuthInstance, {
-  exclude: ["/api/auth/**"],
+  exclude: ["/api/auth/**", "/livekit/webhook"],
   maskEmail: true,
 });
+
+const webhookReceiver = new WebhookReceiver(
+  env.LIVEKIT_WEBHOOK_SECRET,
+  env.LIVEKIT_API_SECRET
+);
 
 type AppEnv = EvlogVariables & {
   Variables: RequestIdVariables & TimingVariables;
@@ -135,6 +145,68 @@ app.use(
 
 // ── Tier 10: Payload limits ──────────────────────────────────────
 app.use("/ai", bodyLimit({ maxSize: 1024 * 1024 }));
+
+// ── LiveKit webhook handler ───────────────────────────────────────
+app.post("/livekit/webhook", async (c) => {
+  const body = await c.req.raw.text();
+  const authHeader = c.req.header("authorization");
+
+  if (!authHeader) {
+    return c.json({ error: "Missing authorization header" }, 401);
+  }
+
+  let event: {
+    event: string;
+    room?: { sid?: string; name?: string };
+  };
+  try {
+    event = await webhookReceiver.receive(body, authHeader);
+  } catch {
+    return c.json({ error: "Invalid webhook signature" }, 401);
+  }
+
+  log.info({
+    action: "livekit_webhook",
+    event: event.event,
+    room: event.room?.name,
+  });
+
+  if (event.event === "room.finished" && event.room?.name) {
+    const roomName = event.room.name;
+
+    const rooms = await db
+      .select()
+      .from(callRoom)
+      .where(
+        and(eq(callRoom.roomName, roomName), eq(callRoom.status, "active"))
+      )
+      .limit(1);
+
+    const room = rooms[0];
+    if (room) {
+      const durationSec = room.createdAt
+        ? Math.floor((Date.now() - room.createdAt.getTime()) / 1000)
+        : undefined;
+
+      const participantCount = 2; // 1:1 call, both participants exist
+
+      await db
+        .update(callRoom)
+        .set({ status: "ended", updatedAt: new Date() })
+        .where(eq(callRoom.id, room.id));
+
+      await db.insert(callRecord).values({
+        roomName: room.roomName,
+        matchId: room.matchId,
+        endReason: "disconnect",
+        participantCount,
+        durationSec,
+      });
+    }
+  }
+
+  return c.json({ received: true });
+});
 
 // ── Auth handler ─────────────────────────────────────────────────
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));

@@ -25,6 +25,7 @@
     "ai": "catalog:",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
     "evlog": "catalog:",
     "hono": "catalog:",
     "hono-rate-limiter": "^0.5.3",

@@ -21,6 +21,8 @@ export const env = createEnv({
     // LiveKit server URL used by the server SDK (HTTP(S) form, not wss://).
     // The server SDK will automatically convert wss -> https when calling.
     LIVEKIT_URL: z.string().min(1),
+    // LiveKit webhook secret for verifying webhook signatures.
+    LIVEKIT_WEBHOOK_SECRET: z.string().min(1),
     MODEL_STACK_VERSION: z.string().optional(),
     LLAMA_URL: z.string().url().optional(),
     EMBED_URL: z.string().url().optional(),

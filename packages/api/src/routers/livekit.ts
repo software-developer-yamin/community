@@ -1,4 +1,8 @@
+import { db } from "@community/db";
+import { callRecord } from "@community/db/schema/call";
+import { callRoom } from "@community/db/schema/rebuild";
 import { env } from "@community/env/server";
+import { and, eq } from "drizzle-orm";
 import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
 import z from "zod";
 
@@ -21,7 +25,7 @@ export const livekitRouter = {
     .handler(async ({ input }) => {
       const at = new AccessToken(env.LIVEKIT_API_KEY, env.LIVEKIT_API_SECRET, {
         identity: input.username,
-        ttl: 5 * 60, // 5 minutes — short-lived tokens per LiveKit security best practices
+        ttl: 5 * 60,
       });
 
       at.addGrant({
@@ -37,10 +41,6 @@ export const livekitRouter = {
       };
     }),
 
-  /**
-   * Create a new LiveKit call room. Any authenticated user can create one.
-   * Returns the room name so the caller can join immediately.
-   */
   createRoom: protectedProcedure
     .input(
       z.object({
@@ -59,9 +59,6 @@ export const livekitRouter = {
       return { name: room.name };
     }),
 
-  /**
-   * Close (delete) a LiveKit room. Admin only.
-   */
   closeRoom: adminProcedure
     .input(
       z.object({
@@ -74,9 +71,6 @@ export const livekitRouter = {
       return { success: true };
     }),
 
-  /**
-   * List all active LiveKit rooms with participant counts.
-   */
   listRooms: protectedProcedure.input(z.void()).handler(async () => {
     const rooms = await roomClient.listRooms();
 
@@ -88,4 +82,160 @@ export const livekitRouter = {
       createdAt: Number(room.creationTime),
     }));
   }),
+
+  createCallRoom: protectedProcedure
+    .input(
+      z.object({
+        matchId: z.string().min(1).max(100),
+        participantAId: z.string().min(1),
+        participantAName: z.string().min(1).max(100),
+        participantBId: z.string().min(1),
+        participantBName: z.string().min(1).max(100),
+      })
+    )
+    .handler(async ({ input, context }) => {
+      const callerId = context.session.user.id;
+
+      if (
+        callerId !== input.participantAId &&
+        callerId !== input.participantBId
+      ) {
+        throw new Error("FORBIDDEN: You are not a participant of this match");
+      }
+
+      const roomName = `call-${input.matchId}`;
+
+      const existing = await db
+        .select({ id: callRoom.id })
+        .from(callRoom)
+        .where(
+          and(
+            eq(callRoom.matchId, input.matchId),
+            eq(callRoom.status, "active")
+          )
+        )
+        .limit(1);
+
+      if (existing.length > 0) {
+        throw new Error(
+          `CONFLICT: Room already exists for match ${input.matchId}`
+        );
+      }
+
+      const liveRooms = await roomClient.listRooms([roomName]);
+      if (liveRooms.length > 0) {
+        throw new Error(`CONFLICT: Room ${roomName} already exists in LiveKit`);
+      }
+
+      await roomClient.createRoom({
+        name: roomName,
+        maxParticipants: 2,
+        emptyTimeout: 30,
+        metadata: JSON.stringify({
+          matchId: input.matchId,
+          participantAId: input.participantAId,
+          participantBId: input.participantBId,
+        }),
+      });
+
+      await db.insert(callRoom).values({
+        matchId: input.matchId,
+        roomName,
+        participantA: input.participantAId,
+        participantB: input.participantBId,
+        status: "active",
+      });
+
+      const tokenA = new AccessToken(
+        env.LIVEKIT_API_KEY,
+        env.LIVEKIT_API_SECRET,
+        {
+          identity: input.participantAName,
+          ttl: 5 * 60,
+        }
+      );
+      tokenA.addGrant({
+        roomJoin: true,
+        room: roomName,
+        canPublish: true,
+        canSubscribe: true,
+        canPublishData: true,
+      });
+
+      const tokenB = new AccessToken(
+        env.LIVEKIT_API_KEY,
+        env.LIVEKIT_API_SECRET,
+        {
+          identity: input.participantBName,
+          ttl: 5 * 60,
+        }
+      );
+      tokenB.addGrant({
+        roomJoin: true,
+        room: roomName,
+        canPublish: true,
+        canSubscribe: true,
+        canPublishData: true,
+      });
+
+      return {
+        roomName,
+        tokenA: await tokenA.toJwt(),
+        tokenB: await tokenB.toJwt(),
+      };
+    }),
+
+  endCall: protectedProcedure
+    .input(
+      z.object({
+        roomName: z.string().min(1).max(100),
+        endReason: z
+          .enum(["explicit", "disconnect", "timeout"])
+          .default("explicit"),
+      })
+    )
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+
+      const rooms = await db
+        .select()
+        .from(callRoom)
+        .where(
+          and(
+            eq(callRoom.roomName, input.roomName),
+            eq(callRoom.status, "active")
+          )
+        )
+        .limit(1);
+
+      if (rooms.length === 0) {
+        throw new Error("NOT_FOUND: No active room found with that name");
+      }
+
+      const room = rooms[0];
+
+      await roomClient.deleteRoom(input.roomName).catch(() => {
+        // Room already deleted or doesn't exist — nothing to clean up
+      });
+
+      const durationSec = room.createdAt
+        ? Math.floor((Date.now() - room.createdAt.getTime()) / 1000)
+        : undefined;
+
+      await db
+        .update(callRoom)
+        .set({ status: "ended", updatedAt: new Date() })
+        .where(eq(callRoom.id, room.id));
+
+      await db.insert(callRecord).values({
+        roomName: input.roomName,
+        matchId: room.matchId,
+        endedByUserId: userId,
+        endReason: input.endReason,
+        participantCount: 2,
+        durationSec,
+      });
+
+      return { success: true };
+    }),
 };
