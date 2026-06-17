@@ -8,6 +8,7 @@ import z from "zod";
 
 import { authClient } from "@/lib/auth-client";
 
+import GoogleSignIn from "./google-sign-in";
 import Loader from "./loader";
 
 export default function SignUpForm({
@@ -156,6 +157,20 @@ export default function SignUpForm({
       </form>
 
       <div className="mt-4 space-y-2 text-center">
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            Or continue with
+          </span>
+        </div>
+      </div>
+
+      <GoogleSignIn />
+
+      <div className="mt-4 text-center">
         <Button
           className="text-indigo-600 hover:text-indigo-800"
           onClick={onSwitchToSignIn}

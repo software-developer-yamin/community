@@ -9,8 +9,8 @@ development_status:
   epic-1: in-progress
   1-1-persistent-session-with-secure-storage: done
   1-2-silent-token-refresh: done
-  1-3-phone-number-authentication-with-otp: ready-for-dev
-  1-4-google-oauth-integration: backlog
+  1-3-phone-number-authentication-with-otp: in-review
+   1-4-google-oauth-integration: in-review
   epic-1-retrospective: optional
 
   epic-2: backlog
