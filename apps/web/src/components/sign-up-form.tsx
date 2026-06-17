@@ -156,6 +156,7 @@ export default function SignUpForm({
         </form.Subscribe>
       </form>
 
+      <div className="mt-4 space-y-2 text-center">
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
