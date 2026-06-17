@@ -1,8 +1,11 @@
 import "@/polyfills";
+import { TokenRefreshProvider } from "@community/ui/components/token-refresh-provider";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useUnistyles } from "react-native-unistyles";
+
+import { authClient } from "@/lib/auth-client";
 
 import { queryClient } from "@/utils/orpc";
 
@@ -16,7 +19,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <Stack
+        <TokenRefreshProvider authClient={authClient}><Stack
           screenOptions={{
             headerStyle: {
               backgroundColor: theme.colors.background,
@@ -36,7 +39,7 @@ export default function RootLayout() {
             name="modal"
             options={{ title: "Modal", presentation: "modal" }}
           />
-        </Stack>
+        </Stack></TokenRefreshProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>
   );
