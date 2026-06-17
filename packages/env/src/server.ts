@@ -10,6 +10,11 @@ export const env = createEnv({
     CORS_ORIGIN: z.url(),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
+    // SMS provider — used for phone OTP verification
+    SMS_PROVIDER: z.enum(["console", "http"]).default("console"),
+    SMS_API_KEY: z.string().optional(),
+    SMS_SENDER_ID: z.string().optional(),
+    SMS_API_URL: z.string().url().optional(),
     // LiveKit — required for token minting
     LIVEKIT_API_KEY: z.string().min(1),
     LIVEKIT_API_SECRET: z.string().min(1),

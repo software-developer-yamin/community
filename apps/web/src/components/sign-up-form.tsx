@@ -13,8 +13,10 @@ import Loader from "./loader";
 
 export default function SignUpForm({
   onSwitchToSignIn,
+  onSwitchToPhone,
 }: {
   onSwitchToSignIn: () => void;
+  onSwitchToPhone?: () => void;
 }) {
   const router = useRouter();
   const { isPending } = authClient.useSession();
@@ -154,6 +156,7 @@ export default function SignUpForm({
         </form.Subscribe>
       </form>
 
+      <div className="mt-4 space-y-2 text-center">
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
@@ -175,6 +178,17 @@ export default function SignUpForm({
         >
           Already have an account? Sign In
         </Button>
+        {onSwitchToPhone && (
+          <div>
+            <Button
+              className="text-gray-600 hover:text-gray-800"
+              onClick={onSwitchToPhone}
+              variant="link"
+            >
+              Sign in with Phone
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
