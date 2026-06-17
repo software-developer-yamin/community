@@ -229,6 +229,8 @@ Users can rate a partner after a call with a 1-5 star rating and an optional com
 
 ### Story 1.1: Persistent Session with Secure Storage
 
+**GH Issue:** [#1](https://github.com/software-developer-yamin/community/issues/1)
+
 As a Learner,
 I want my session to survive app restarts, OS reboots, and 7+ day idle periods,
 So that I never have to re-enter my credentials when I open the app.
@@ -251,6 +253,8 @@ So that I never have to re-enter my credentials when I open the app.
 
 ### Story 1.2: Silent Token Refresh
 
+**GH Issue:** [#2](https://github.com/software-developer-yamin/community/issues/2)
+
 As a Learner,
 I want my access token to refresh automatically in the background,
 So that I never see a login screen or get dropped from a call due to token expiry.
@@ -272,6 +276,8 @@ So that I never see a login screen or get dropped from a call due to token expir
 **And** only redirects to login if all retries fail
 
 ### Story 1.3: Phone Number Authentication with OTP
+
+**GH Issue:** [#3](https://github.com/software-developer-yamin/community/issues/3)
 
 As a Learner,
 I want to sign up and sign in using my phone number with a one-time password,
@@ -298,6 +304,8 @@ So that I can authenticate without relying on email or passwords.
 **Then** I can request a new OTP after a 60-second cooldown
 
 ### Story 1.4: Google OAuth Integration
+
+**GH Issue:** [#4](https://github.com/software-developer-yamin/community/issues/4)
 
 As a Learner,
 I want to sign in with my Google account,
@@ -333,6 +341,8 @@ So that I can skip the password step and authenticate quickly.
 
 ### Story 2.1: Server-Managed Room Lifecycle
 
+**GH Issue:** [#5](https://github.com/software-developer-yamin/community/issues/5)
+
 As a Learner,
 I want the system to create, manage, and clean up my call rooms,
 So that I don't have to worry about room management or stale connections.
@@ -361,6 +371,8 @@ So that I don't have to worry about room management or stale connections.
 
 ### Story 2.2: ICE Restart Reconnection (1-5s Blips)
 
+**GH Issue:** [#6](https://github.com/software-developer-yamin/community/issues/6)
+
 As a Learner,
 I want to survive 1-5 second network blips without losing my call,
 So that brief connectivity issues don't disrupt my practice session.
@@ -384,6 +396,8 @@ So that brief connectivity issues don't disrupt my practice session.
 **And** the call continues without requiring a new room or token
 
 ### Story 2.3: Full Reconnection (5-30s Blips)
+
+**GH Issue:** [#7](https://github.com/software-developer-yamin/community/issues/7)
 
 As a Learner,
 I want to survive longer network blips with a clear reconnection UI,
@@ -412,6 +426,8 @@ So that I know what's happening and can choose to wait or end the call.
 **And** no strike is issued for the disconnect
 
 ### Story 2.4: Explicit Call End
+
+**GH Issue:** [#8](https://github.com/software-developer-yamin/community/issues/8)
 
 As a Learner,
 I want to always see a clear "Call ended" screen with a reason,
@@ -448,6 +464,8 @@ So that I understand why the call ended and whether it was my choice, my partner
 
 ### Story 3.1: Gender Filter Enforcement
 
+**GH Issue:** [#9](https://github.com/software-developer-yamin/community/issues/9)
+
 As a premium learner,
 I want to set a gender preference for my matches,
 So that I only practice with partners I'm comfortable with.
@@ -475,6 +493,8 @@ So that I only practice with partners I'm comfortable with.
 
 ### Story 3.2: Native Language Field
 
+**GH Issue:** [#10](https://github.com/software-developer-yamin/community/issues/10)
+
 As a Learner,
 I want to set my native language during onboarding,
 So that matching and AI features are informed by my actual background.
@@ -497,6 +517,8 @@ So that matching and AI features are informed by my actual background.
 **And** the embedding recomputes on the next match
 
 ### Story 3.3: Match Timeout with Honest State
+
+**GH Issue:** [#11](https://github.com/software-developer-yamin/community/issues/11)
 
 As a Learner,
 I want to see real-time status while waiting for a match,
@@ -533,6 +555,8 @@ So that I know the system is working and I'm not stuck in an invisible queue.
 
 ### Story 4.1: Graduated Strike System
 
+**GH Issue:** [#12](https://github.com/software-developer-yamin/community/issues/12)
+
 As a Learner,
 I want to receive warnings and cooldowns before being banned,
 So that I understand my behavior and have a chance to correct it.
@@ -566,6 +590,8 @@ So that I understand my behavior and have a chance to correct it.
 
 ### Story 4.2: Skip Button (In-Call Action)
 
+**GH Issue:** [#13](https://github.com/software-developer-yamin/community/issues/13)
+
 As a Learner,
 I want to end a bad call and find a new partner without receiving a strike,
 So that I have a safe way to reject a mismatch.
@@ -595,6 +621,8 @@ So that I have a safe way to reject a mismatch.
 
 ### Story 4.3: Distinguish Victim from Aggressor
 
+**GH Issue:** [#14](https://github.com/software-developer-yamin/community/issues/14)
+
 As a Learner,
 I want to report a bad partner without receiving a strike myself,
 So that I'm not punished for someone else's behavior.
@@ -622,6 +650,8 @@ So that I'm not punished for someone else's behavior.
 **And** a human moderator can review it
 
 ### Story 4.4: Visible Moderation State
+
+**GH Issue:** [#15](https://github.com/software-developer-yamin/community/issues/15)
 
 As a Learner,
 I want to see my account standing and understand why,
@@ -659,6 +689,8 @@ So that I know my status and what I can do about it.
 
 ### Story 5.1: Visible Subscription State
 
+**GH Issue:** [#16](https://github.com/software-developer-yamin/community/issues/16)
+
 As a Learner,
 I want to see my current plan, next billing date, and auto-renew status,
 So that I always know what I'm paying for and when.
@@ -685,6 +717,8 @@ So that I always know what I'm paying for and when.
 **Then** the app reflects the change within 60 seconds
 
 ### Story 5.2: In-App Support Ticket
+
+**GH Issue:** [#17](https://github.com/software-developer-yamin/community/issues/17)
 
 As a Learner,
 I want to submit a support issue from the app and receive a ticket ID,
@@ -719,6 +753,8 @@ So that I know my issue is tracked and will be responded to.
 **And** I can reply to continue the conversation
 
 ### Story 5.3: Refund Mechanism
+
+**GH Issue:** [#18](https://github.com/software-developer-yamin/community/issues/18)
 
 As a Learner,
 I want to request a refund for a non-working product through a clear in-app flow,
@@ -764,6 +800,8 @@ So that I can recover my money when the product doesn't work.
 
 ### Story 6.1: State Preservation Across Backgrounding
 
+**GH Issue:** [#19](https://github.com/software-developer-yamin/community/issues/19)
+
 As a Learner,
 I want to return to my app after backgrounding it and still be in my call or queue,
 So that I don't lose my place when I switch apps briefly.
@@ -792,6 +830,8 @@ So that I don't lose my place when I switch apps briefly.
 
 ### Story 6.2: Crash Resilience
 
+**GH Issue:** [#20](https://github.com/software-developer-yamin/community/issues/20)
+
 As a Learner,
 I want the app to handle crashes gracefully,
 So that I don't see frozen UIs or lose my account standing.
@@ -819,6 +859,8 @@ So that I don't see frozen UIs or lose my account standing.
 **And** crashes are used for refund auto-approval only
 
 ### Story 6.3: Reinstall Account Preservation
+
+**GH Issue:** [#36](https://github.com/software-developer-yamin/community/issues/36)
 
 As a Learner,
 I want to reinstall the app and get my account back,
@@ -856,6 +898,8 @@ So that I don't lose my subscription, history, and progress.
 
 ### Story 7.1: Post-Call Rating Flow
 
+**GH Issue:** [#37](https://github.com/software-developer-yamin/community/issues/37)
+
 As a Learner,
 I want to rate my partner after a call,
 So that I can provide feedback and help improve matching quality.
@@ -883,6 +927,8 @@ So that I can provide feedback and help improve matching quality.
 **And** I can still rate later from my call history
 
 ### Story 7.2: Rating Integration with Matching
+
+**GH Issue:** [#38](https://github.com/software-developer-yamin/community/issues/38)
 
 As a Learner,
 I want ratings to improve my future matches,

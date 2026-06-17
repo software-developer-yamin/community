@@ -4,9 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useUnistyles } from "react-native-unistyles";
-
+import { SessionRestoreGuard } from "@/components/session-restore-guard";
 import { authClient } from "@/lib/auth-client";
-
 import { queryClient } from "@/utils/orpc";
 
 export const unstable_settings = {
@@ -19,27 +18,31 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <TokenRefreshProvider authClient={authClient}><Stack
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: theme.colors.background,
-            },
-            headerTitleStyle: {
-              color: theme.colors.foreground,
-            },
-            headerTintColor: theme.colors.foreground,
-          }}
-        >
-          <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="call/[room]"
-            options={{ title: "Call", headerShown: true }}
-          />
-          <Stack.Screen
-            name="modal"
-            options={{ title: "Modal", presentation: "modal" }}
-          />
-        </Stack></TokenRefreshProvider>
+        <TokenRefreshProvider authClient={authClient}>
+          <SessionRestoreGuard>
+            <Stack
+              screenOptions={{
+                headerStyle: {
+                  backgroundColor: theme.colors.background,
+                },
+                headerTitleStyle: {
+                  color: theme.colors.foreground,
+                },
+                headerTintColor: theme.colors.foreground,
+              }}
+            >
+              <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="call/[room]"
+                options={{ title: "Call", headerShown: true }}
+              />
+              <Stack.Screen
+                name="modal"
+                options={{ title: "Modal", presentation: "modal" }}
+              />
+            </Stack>
+          </SessionRestoreGuard>
+        </TokenRefreshProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>
   );

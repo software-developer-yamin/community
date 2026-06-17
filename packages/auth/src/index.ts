@@ -48,11 +48,16 @@ export function createAuth() {
     emailAndPassword: {
       enabled: true,
     },
+    session: {
+      expiresIn: 2_592_000, // 30 days (default: 604800 = 7 days)
+      updateAge: 86_400, // extend session on use within 1 day of expiry
+      freshAge: 0, // always check session from DB (no fresh cache)
+    },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     advanced: {
       defaultCookieAttributes: {
-        sameSite: "none",
+        sameSite: "strict",
         secure: true,
         httpOnly: true,
       },

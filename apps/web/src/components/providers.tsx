@@ -1,13 +1,13 @@
 "use client";
 
-import { TokenRefreshProvider } from "@community/ui/components/token-refresh-provider";
 import { Toaster } from "@community/ui/components/sonner";
+import { TokenRefreshProvider } from "@community/ui/components/token-refresh-provider";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
-import { queryClient } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
+import { queryClient } from "@/utils/orpc";
 
+import { SessionGuard } from "./session-guard";
 import { ThemeProvider } from "./theme-provider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -19,7 +19,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
     >
       <QueryClientProvider client={queryClient}>
-        <TokenRefreshProvider authClient={authClient}>{children}</TokenRefreshProvider>
+        <TokenRefreshProvider authClient={authClient}>
+          <SessionGuard>{children}</SessionGuard>
+        </TokenRefreshProvider>
         <ReactQueryDevtools />
       </QueryClientProvider>
       <Toaster richColors />
