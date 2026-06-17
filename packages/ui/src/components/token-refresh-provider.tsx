@@ -1,3 +1,5 @@
+import type { AuthClient } from "@community/auth/session-refresh";
+import { proactiveRefresh } from "@community/auth/session-refresh";
 import {
   createContext,
   useCallback,
@@ -7,20 +9,17 @@ import {
   useState,
 } from "react";
 
-import type { AuthClient } from "@community/auth/session-refresh";
-import { proactiveRefresh } from "@community/auth/session-refresh";
-
 const CHECK_INTERVAL_MS = 60_000; // check session expiry every 60s
 const BACKOFF_CHECK_MS = 10_000; // check sooner (10s) after a failed refresh
 
 interface TokenRefreshState {
   isRefreshing: boolean;
-  lastRefreshedAt: number | null;
   lastError: Error | null;
+  lastRefreshedAt: number | null;
   paused: boolean;
-  triggerRefresh: () => Promise<void>;
   pauseRefreshing: () => void;
   resumeRefreshing: () => void;
+  triggerRefresh: () => Promise<void>;
 }
 
 const TokenRefreshContext = createContext<TokenRefreshState | null>(null);
@@ -28,7 +27,9 @@ const TokenRefreshContext = createContext<TokenRefreshState | null>(null);
 export function useTokenRefresh(): TokenRefreshState {
   const ctx = useContext(TokenRefreshContext);
   if (!ctx) {
-    throw new Error("useTokenRefresh must be used within a TokenRefreshProvider");
+    throw new Error(
+      "useTokenRefresh must be used within a TokenRefreshProvider"
+    );
   }
   return ctx;
 }
@@ -69,7 +70,7 @@ export function TokenRefreshProvider({
       });
     } catch (error) {
       setLastError(
-        error instanceof Error ? error : new Error("Session refresh failed"),
+        error instanceof Error ? error : new Error("Session refresh failed")
       );
     } finally {
       setIsRefreshing(false);
@@ -92,7 +93,7 @@ export function TokenRefreshProvider({
       () => {
         refresh();
       },
-      lastError ? BACKOFF_CHECK_MS : CHECK_INTERVAL_MS,
+      lastError ? BACKOFF_CHECK_MS : CHECK_INTERVAL_MS
     );
     intervalRef.current = interval;
 

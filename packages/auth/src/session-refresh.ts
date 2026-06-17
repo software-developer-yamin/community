@@ -40,7 +40,7 @@ export interface AuthClient {
  */
 export async function proactiveRefresh(
   client: AuthClient,
-  options?: SessionRefresherOptions,
+  options?: SessionRefresherOptions
 ): Promise<boolean> {
   const sessionResult = await client.getSession();
 

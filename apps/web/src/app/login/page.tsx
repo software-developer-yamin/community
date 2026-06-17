@@ -2,15 +2,25 @@
 
 import { useState } from "react";
 
+import PhoneSignIn from "@/components/phone-sign-in";
 import SignInForm from "@/components/sign-in-form";
 import SignUpForm from "@/components/sign-up-form";
 
-export default function LoginPage() {
-  const [showSignIn, setShowSignIn] = useState(false);
+type AuthMode = "sign-in" | "sign-up" | "phone";
 
-  return showSignIn ? (
-    <SignInForm onSwitchToSignUp={() => setShowSignIn(false)} />
+export default function LoginPage() {
+  const [mode, setMode] = useState<AuthMode>("sign-up");
+
+  if (mode === "phone") {
+    return <PhoneSignIn onSwitchToEmail={() => setMode("sign-up")} />;
+  }
+
+  return mode === "sign-in" ? (
+    <SignInForm onSwitchToSignUp={() => setMode("sign-up")} />
   ) : (
-    <SignUpForm onSwitchToSignIn={() => setShowSignIn(true)} />
+    <SignUpForm
+      onSwitchToPhone={() => setMode("phone")}
+      onSwitchToSignIn={() => setMode("sign-in")}
+    />
   );
 }

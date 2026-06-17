@@ -11,10 +11,19 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { phoneNumber } from "better-auth/plugins";
 
+import { configureSms, sendSms } from "./sms";
+
 const schema = { user, session, account, verification };
 
 export function createAuth() {
   const db = createDb();
+
+  configureSms({
+    provider: env.SMS_PROVIDER,
+    apiKey: env.SMS_API_KEY,
+    senderId: env.SMS_SENDER_ID,
+    apiUrl: env.SMS_API_URL,
+  });
 
   return betterAuth({
     database: drizzleAdapter(db, {
@@ -65,10 +74,8 @@ export function createAuth() {
     plugins: [
       expo(),
       phoneNumber({
-        sendOTP: ({ phoneNumber: phone, code }) => {
-          // TODO: Integrate with SMS provider (e.g., Twilio, Vonage, SMS Gateway BD)
-          // For now, log the code for development/testing
-          console.log(`[DEV] OTP for ${phone}: ${code}`);
+        sendOTP: async ({ phoneNumber: phone, code }) => {
+          await sendSms(phone, code);
         },
         signUpOnVerification: {
           getTempEmail: (phone) => `${phone}@community.app`,
