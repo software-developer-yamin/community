@@ -208,11 +208,10 @@ export const livekitRouter = {
         )
         .limit(1);
 
-      if (rooms.length === 0) {
+      const room = rooms[0];
+      if (!room) {
         throw new Error("NOT_FOUND: No active room found with that name");
       }
-
-      const room = rooms[0];
 
       await roomClient.deleteRoom(input.roomName).catch(() => {
         // Room already deleted or doesn't exist — nothing to clean up
