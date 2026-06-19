@@ -12,8 +12,8 @@ import {
 } from "@livekit/react-native";
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Track } from "livekit-client";
-import { useEffect, useState } from "react";
+import { RoomEvent, Track } from "livekit-client";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -33,6 +33,7 @@ export default function CallScreen() {
   const { theme } = useUnistyles();
   const { data: session } = authClient.useSession();
   const [audioSessionActive, setAudioSessionActive] = useState(false);
+  const intentionalDisconnectRef = useRef(false);
 
   const username = session?.user?.name ?? session?.user?.email ?? "guest";
 
@@ -45,6 +46,17 @@ export default function CallScreen() {
       enabled: Boolean(roomName) && Boolean(session?.user),
     })
   );
+
+  // Track intentional disconnect so network blips don't navigate away.
+  const handleLeave = useCallback(() => {
+    intentionalDisconnectRef.current = true;
+  }, []);
+
+  const handleDisconnected = useCallback(() => {
+    if (intentionalDisconnectRef.current) {
+      router.back();
+    }
+  }, [router]);
 
   // Start audio session on mount, stop on unmount.
   useEffect(() => {
@@ -125,7 +137,7 @@ export default function CallScreen() {
       <LiveKitRoom
         audio
         connect
-        onDisconnected={() => router.back()}
+        onDisconnected={handleDisconnected}
         options={{
           adaptiveStream: { pixelDensity: "screen" },
           dynacast: true,
@@ -134,16 +146,41 @@ export default function CallScreen() {
         token={tokenQuery.data.token}
         video
       >
-        <RoomView roomName={roomName} />
+        <RoomView onLeave={handleLeave} roomName={roomName} />
       </LiveKitRoom>
     </View>
   );
 }
 
-function RoomView({ roomName }: { roomName: string }) {
+function RoomView({
+  roomName,
+  onLeave,
+}: {
+  roomName: string;
+  onLeave: () => void;
+}) {
+  const room = useRoomContext();
   const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare], {
     onlySubscribed: false,
   });
+  const [isReconnecting, setIsReconnecting] = useState(false);
+
+  // Track connection state for ICE restart reconnection handling.
+  useEffect(() => {
+    const onReconnecting = () => setIsReconnecting(true);
+    const onReconnected = () => setIsReconnecting(false);
+    const onDisconnected = () => setIsReconnecting(false);
+
+    room.on(RoomEvent.Reconnecting, onReconnecting);
+    room.on(RoomEvent.Reconnected, onReconnected);
+    room.on(RoomEvent.Disconnected, onDisconnected);
+
+    return () => {
+      room.off(RoomEvent.Reconnecting, onReconnecting);
+      room.off(RoomEvent.Reconnected, onReconnected);
+      room.off(RoomEvent.Disconnected, onDisconnected);
+    };
+  }, [room]);
 
   const renderItem: ListRenderItem<TrackReferenceOrPlaceholder> = ({
     item,
@@ -165,6 +202,8 @@ function RoomView({ roomName }: { roomName: string }) {
 
   return (
     <View style={styles.roomRoot}>
+      {isReconnecting && <ReconnectingBanner />}
+
       <View style={styles.headerBar}>
         <Text style={styles.headerTitle}>Room: {roomName}</Text>
         <Text style={styles.headerSubtitle}>
@@ -184,7 +223,7 @@ function RoomView({ roomName }: { roomName: string }) {
         renderItem={renderItem}
       />
 
-      <ControlsBar />
+      <ControlsBar onLeave={onLeave} />
     </View>
   );
 }
@@ -196,8 +235,9 @@ type CtrlIcon =
   | "videocam-off"
   | "camera-reverse";
 
-function ControlsBar() {
+function ControlsBar({ onLeave }: { onLeave?: () => void }) {
   const { theme } = useUnistyles();
+  const router = useRouter();
   const room = useRoomContext();
   const {
     localParticipant: local,
@@ -235,7 +275,9 @@ function ControlsBar() {
   };
 
   const leave = async () => {
+    onLeave?.();
     await room.disconnect();
+    router.back();
   };
 
   return (
@@ -313,6 +355,27 @@ function ControlButton({
         size={22}
       />
     </Pressable>
+  );
+}
+
+function ReconnectingBanner() {
+  const { theme } = useUnistyles();
+  return (
+    <View
+      style={[
+        styles.banner,
+        { backgroundColor: theme.colors.warning ?? "#F59E0B" },
+      ]}
+    >
+      <Text
+        style={[
+          styles.bannerText,
+          { color: theme.colors.warningForeground ?? "#FFFFFF" },
+        ]}
+      >
+        Reconnecting…
+      </Text>
+    </View>
   );
 }
 
@@ -412,6 +475,16 @@ const styles = StyleSheet.create((theme) => ({
   },
   leaveText: {
     fontSize: theme.fontSize.base,
+    fontWeight: "600",
+  },
+  banner: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bannerText: {
+    fontSize: theme.fontSize.sm,
     fontWeight: "600",
   },
 }));
