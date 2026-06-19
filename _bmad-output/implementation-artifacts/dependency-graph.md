@@ -10,7 +10,7 @@ _Last updated: 2026-06-20T12:00:00+06:00_
 | 1.3 | 1 | Phone Number Authentication with OTP | done | #3 | — | — | 1.1 | ✅ Yes (done) |
 | 1.4 | 1 | Google OAuth Integration | done | #4 | — | — | 1.1 | ✅ Yes (done) |
 | 2.1 | 2 | Server-Managed Room Lifecycle | done | #5 | — | — | Epic 1 | ✅ Yes (done) |
-| 2.2 | 2 | ICE Restart Reconnection (1-5s Blips) | backlog | #6 | — | — | 2.1 | ✅ Yes |
+| 2.2 | 2 | ICE Restart Reconnection (1-5s Blips) | done | #6 | #42 | merged | 2.1 | ✅ Yes (done) |
 | 2.3 | 2 | Full Reconnection (5-30s Blips) | backlog | #7 | — | — | 2.2 | ❌ No (2.2 not done) |
 | 2.4 | 2 | Explicit Call End | backlog | #8 | — | — | 2.2 | ❌ No (2.2 not done) |
 | 3.1 | 3 | Gender Filter Enforcement | backlog | #9 | — | — | Epic 1 | ✅ Yes (Epic 1 done) |

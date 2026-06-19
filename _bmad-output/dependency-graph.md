@@ -23,7 +23,7 @@ _Baseline commit: `81cc3c8205585c1852037ba57f59796698e7daa4`_
 | Story | Slug | GH Issue | PR | Status | Depends On |
 |-------|------|----------|----|--------|------------|
 | 2.1 | server-managed-room-lifecycle | [#5][i5] | — | **done** | Epic 1 |
-| 2.2 | ice-restart-reconnection-1-5s-blips | [#6][i6] | — | backlog | 2.1 |
+| 2.2 | ice-restart-reconnection-1-5s-blips | [#6][i6] | [#42][p42] | **done** | 2.1 |
 | 2.3 | full-reconnection-5-30s-blips | [#7][i7] | — | backlog | 2.2 |
 | 2.4 | explicit-call-end | [#8][i8] | — | backlog | 2.2 |
 

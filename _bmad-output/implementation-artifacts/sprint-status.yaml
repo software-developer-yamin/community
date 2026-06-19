@@ -15,7 +15,7 @@ development_status:
 
   epic-2: in-progress
   2-1-server-managed-room-lifecycle: done
-  2-2-ice-restart-reconnection-1-5s-blips: ready-for-dev
+  2-2-ice-restart-reconnection-1-5s-blips: done
   2-3-full-reconnection-5-30s-blips: backlog
   2-4-explicit-call-end: backlog
   epic-2-retrospective: optional
