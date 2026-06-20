@@ -32,7 +32,6 @@ const RECONNECTION_TIMEOUT_S = 30;
 
 export default function CallScreen() {
   const { room: roomName } = useLocalSearchParams<{ room: string }>();
-  const router = useRouter();
   const { theme } = useUnistyles();
   const { data: session } = authClient.useSession();
   const [audioSessionActive, setAudioSessionActive] = useState(false);
@@ -230,6 +229,7 @@ function RoomView({
   const [partnerReconnecting, setPartnerReconnecting] = useState(false);
 
   // Track connection state for reconnection handling.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionalDisconnectRef is a stable ref
   useEffect(() => {
     const onReconnecting = () => {
       setPhase("reconnecting");
@@ -270,7 +270,7 @@ function RoomView({
     };
 
     // Listen for partner's participant metadata changes (reconnect status)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: LiveKit event callback signature
     const onParticipantMetadata = (_participant: any, metadata: string) => {
       try {
         const parsed = JSON.parse(metadata) as {
