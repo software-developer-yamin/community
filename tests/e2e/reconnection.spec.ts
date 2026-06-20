@@ -16,7 +16,9 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     await page.goto("/call/test-room-101");
 
     // Verify we're in the call
-    await expect(page.getByTestId("call-active")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("call-active")).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Step 2: Simulate network blip by setting offline
     await context.setOffline(true);
@@ -25,16 +27,23 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     // EXPECTED: "Reconnecting... (0s)" increments each second
     // ACTUAL (red phase): Banner exists from Story 2.2 but no countdown → fails
     await expect(page.getByTestId("reconnecting-banner")).toBeVisible({
-      timeout: 5_000,
+      timeout: 5000,
     });
-    const countdownText = await page.getByTestId("reconnection-countdown").textContent();
+    const countdownText = await page
+      .getByTestId("reconnection-countdown")
+      .textContent();
     expect(countdownText).toMatch(/Reconnecting\.\.\. \(\d+s\)/);
 
     // Step 4: Countdown should increase
     await page.waitForTimeout(2000);
-    const laterText = await page.getByTestId("reconnection-countdown").textContent();
+    const laterText = await page
+      .getByTestId("reconnection-countdown")
+      .textContent();
     expect(laterText).toMatch(/Reconnecting\.\.\. \(\d+s\)/);
-    const currentSeconds = Number.parseInt(laterText?.match(/(\d+)s/)?.[1] ?? "0", 10);
+    const currentSeconds = Number.parseInt(
+      laterText?.match(/(\d+)s/)?.[1] ?? "0",
+      10
+    );
     expect(currentSeconds).toBeGreaterThanOrEqual(2);
   });
 
@@ -50,12 +59,14 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     // THIS TEST WILL FAIL — recovery flow not implemented
     // Step 1: Join call
     await page.goto("/call/test-room-102");
-    await expect(page.getByTestId("call-active")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("call-active")).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Step 2: Trigger blip
     await context.setOffline(true);
     await expect(page.getByTestId("reconnecting-banner")).toBeVisible({
-      timeout: 5_000,
+      timeout: 5000,
     });
 
     // Step 3: Restore network after 5s
@@ -66,9 +77,11 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     // EXPECTED: Banner hides within 2s of network recovery
     // ACTUAL (red phase): No recovery detection → banner stays → fails
     await expect(page.getByTestId("reconnecting-banner")).not.toBeVisible({
-      timeout: 5_000,
+      timeout: 5000,
     });
-    await expect(page.getByTestId("call-active")).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByTestId("call-active")).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   // =========================================================================
@@ -85,12 +98,14 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     // In CI this would use a faster timeout override via test configuration
 
     await page.goto("/call/test-room-103");
-    await expect(page.getByTestId("call-active")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("call-active")).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Simulate extended network loss
     await context.setOffline(true);
     await expect(page.getByTestId("reconnecting-banner")).toBeVisible({
-      timeout: 5_000,
+      timeout: 5000,
     });
 
     // Wait for timeout to trigger (use a test-only timeout override via URL param or localStorage)
@@ -117,7 +132,9 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
   }) => {
     // THIS TEST WILL FAIL — retry flow not implemented
     await page.goto("/call/test-room-104");
-    await expect(page.getByTestId("call-active")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("call-active")).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Trigger timeout via short timeout override
     await context.setOffline(true);
@@ -146,7 +163,9 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
   }) => {
     // THIS TEST WILL FAIL — endCall during reconnection not implemented
     await page.goto("/call/test-room-105");
-    await expect(page.getByTestId("call-active")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("call-active")).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Trigger connection lost prompt
     await context.setOffline(true);
@@ -162,7 +181,9 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     await expect(page.getByTestId("call-ended-screen")).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByTestId("end-reason")).toContainText("connection lost");
+    await expect(page.getByTestId("end-reason")).toContainText(
+      "connection lost"
+    );
   });
 
   // =========================================================================
@@ -176,12 +197,14 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
   }) => {
     // THIS TEST WILL FAIL — grace window logic not implemented
     await page.goto("/call/test-room-106");
-    await expect(page.getByTestId("call-active")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("call-active")).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Trigger timeout condition
     await context.setOffline(true);
     await expect(page.getByTestId("reconnecting-banner")).toBeVisible({
-      timeout: 5_000,
+      timeout: 5000,
     });
 
     // Wait until just after 30s timeout would trigger (use test override)
@@ -216,7 +239,9 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     // Partner sees a subtle indicator when the other user is reconnecting
     // This would be triggered by a server event or data channel message
     // For the red phase, we test that the UI element exists
-    await expect(page.getByTestId("partner-reconnecting-indicator")).toBeVisible({
+    await expect(
+      page.getByTestId("partner-reconnecting-indicator")
+    ).toBeVisible({
       timeout: 15_000,
     });
   });
@@ -228,17 +253,23 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     await page.goto("/call/test-room-108");
 
     // Partner sees reconnecting indicator
-    await expect(page.getByTestId("partner-reconnecting-indicator")).toBeVisible({
+    await expect(
+      page.getByTestId("partner-reconnecting-indicator")
+    ).toBeVisible({
       timeout: 15_000,
     });
 
     // After some time, partner should see user reconnect
     // EXPECTED: Call continues, partner stays on call screen
     // ACTUAL (red phase): Partner may navigate away → test fails
-    await expect(page.getByTestId("call-active")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("call-active")).toBeVisible({
+      timeout: 20_000,
+    });
 
     // Partner indicator should disappear
-    await expect(page.getByTestId("partner-reconnecting-indicator")).not.toBeVisible({
+    await expect(
+      page.getByTestId("partner-reconnecting-indicator")
+    ).not.toBeVisible({
       timeout: 10_000,
     });
   });

@@ -20,7 +20,9 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
     expect(endRes.status()).toBe(200);
 
     // 2. Verify end reason persisted
-    const recordRes = await request.get("/api/call/record?roomName=test-room-001");
+    const recordRes = await request.get(
+      "/api/call/record?roomName=test-room-001"
+    );
     expect(recordRes.status()).toBe(200);
     const record = await recordRes.json();
     expect(record).toHaveProperty("endReason");
@@ -40,7 +42,9 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
     });
 
     // 2. Verify no strike recorded
-    const strikeRes = await request.get("/api/moderation/strikes?roomName=test-room-002");
+    const strikeRes = await request.get(
+      "/api/moderation/strikes?roomName=test-room-002"
+    );
     expect(strikeRes.status()).toBe(200);
     const strikes = await strikeRes.json();
     // connection_lost should not count as a strike
@@ -48,7 +52,7 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
     // If call was the only activity, total should be 0
     // If other strikes exist, connection_lost reason should not be among them
     const connectionLostStrikes = (strikes.items ?? []).filter(
-      (s: { reason: string }) => s.reason === "connection_lost",
+      (s: { reason: string }) => s.reason === "connection_lost"
     );
     expect(connectionLostStrikes).toHaveLength(0);
   });
@@ -66,7 +70,9 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
     });
     expect(endRes.status()).toBe(200);
 
-    const recordRes = await request.get("/api/call/record?roomName=test-room-003");
+    const recordRes = await request.get(
+      "/api/call/record?roomName=test-room-003"
+    );
     expect(recordRes.status()).toBe(200);
     const record = await recordRes.json();
     expect(record.endReason).toBe("explicit");
@@ -151,7 +157,7 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
     const statusRes = await request.post("/api/call/reconnection-status", {
       data: {
         roomName: "test-room-006",
-        elapsedMs: 32000,
+        elapsedMs: 32_000,
         networkRecovered: true,
       },
     });
@@ -172,7 +178,7 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
     const statusRes = await request.post("/api/call/reconnection-status", {
       data: {
         roomName: "test-room-007",
-        elapsedMs: 36000,
+        elapsedMs: 36_000,
         networkRecovered: false,
       },
     });
@@ -241,7 +247,9 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   }) => {
     // THIS TEST WILL FAIL — backoff timing not implemented
     // Verify the server reports backoff schedule for retry attempts
-    const scheduleRes = await request.get("/api/call/retry-schedule?roomName=test-room-010");
+    const scheduleRes = await request.get(
+      "/api/call/retry-schedule?roomName=test-room-010"
+    );
     expect(scheduleRes.status()).toBe(200);
     const body = await scheduleRes.json();
     expect(body).toHaveProperty("backoffDelays");
@@ -262,7 +270,7 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
         roomName: "test-room-011",
         userId: "user-abc-123",
         partnerId: "user-def-456",
-        elapsedMs: 11000,
+        elapsedMs: 11_000,
       },
     });
 
