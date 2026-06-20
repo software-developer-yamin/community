@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { testRoom } from "../fixtures/reconnection-test-constants";
 
 test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", () => {
   // =========================================================================
@@ -9,11 +10,13 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P0] should end call with reason 'connection_lost' when timeout reached", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — end_reason not wired for connection_lost
     // 1. Simulate a call ending due to connection lost
     const endRes = await request.post("/api/call/end", {
       data: {
-        roomName: "test-room-001",
+        roomName,
         reason: "connection_lost",
       },
     });
@@ -21,7 +24,7 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
 
     // 2. Verify end reason persisted
     const recordRes = await request.get(
-      "/api/call/record?roomName=test-room-001"
+      `/api/call/record?roomName=${roomName}`
     );
     expect(recordRes.status()).toBe(200);
     const record = await recordRes.json();
@@ -32,18 +35,20 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P0] should NOT issue a strike when end reason is 'connection_lost'", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — strike suppression not implemented
     // 1. End call with connection_lost reason
     await request.post("/api/call/end", {
       data: {
-        roomName: "test-room-002",
+        roomName,
         reason: "connection_lost",
       },
     });
 
     // 2. Verify no strike recorded
     const strikeRes = await request.get(
-      "/api/moderation/strikes?roomName=test-room-002"
+      `/api/moderation/strikes?roomName=${roomName}`
     );
     expect(strikeRes.status()).toBe(200);
     const strikes = await strikeRes.json();
@@ -60,10 +65,12 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P0] should end call with explicit reason on user tap 'End Call' during reconnection", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — endCall during reconnecting not implemented
     const endRes = await request.post("/api/call/end", {
       data: {
-        roomName: "test-room-003",
+        roomName,
         reason: "explicit",
         userId: "user-abc-123",
       },
@@ -71,7 +78,7 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
     expect(endRes.status()).toBe(200);
 
     const recordRes = await request.get(
-      "/api/call/record?roomName=test-room-003"
+      `/api/call/record?roomName=${roomName}`
     );
     expect(recordRes.status()).toBe(200);
     const record = await recordRes.json();
@@ -89,11 +96,13 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P0] should refresh LiveKit token for active room after extended blip", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — token refresh endpoint not implemented
     // 1. Request a token refresh for an active room
     const refreshRes = await request.post("/api/livekit/refresh-token", {
       data: {
-        roomName: "test-room-004",
+        roomName,
         identity: "user-abc-123",
       },
     });
@@ -152,11 +161,13 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P0] should suppress 'connection lost' prompt if network recovers within 5s grace window", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — grace window logic not implemented
     // Simulate: 30s timeout → start grace window → network recovers at 32s
     const statusRes = await request.post("/api/call/reconnection-status", {
       data: {
-        roomName: "test-room-006",
+        roomName,
         elapsedMs: 32_000,
         networkRecovered: true,
       },
@@ -174,10 +185,12 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P1] should show 'connection lost' prompt if network remains down after grace window", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — combined grace+timeout not implemented
     const statusRes = await request.post("/api/call/reconnection-status", {
       data: {
-        roomName: "test-room-007",
+        roomName,
         elapsedMs: 36_000,
         networkRecovered: false,
       },
@@ -200,11 +213,13 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P0] should cap reconnection retries at 3 attempts with exponential backoff", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — retry cap not implemented
     // Request retry state for a failing reconnection
     const retryRes = await request.post("/api/call/retry", {
       data: {
-        roomName: "test-room-008",
+        roomName,
         attemptNumber: 4,
       },
     });
@@ -219,21 +234,23 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P1] should reset retry counter after manual retry", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — manual retry reset not implemented
     // 1. Exhaust automatic retries
     await request.post("/api/call/retry", {
-      data: { roomName: "test-room-009", attemptNumber: 1 },
+      data: { roomName, attemptNumber: 1 },
     });
     await request.post("/api/call/retry", {
-      data: { roomName: "test-room-009", attemptNumber: 2 },
+      data: { roomName, attemptNumber: 2 },
     });
     await request.post("/api/call/retry", {
-      data: { roomName: "test-room-009", attemptNumber: 3 },
+      data: { roomName, attemptNumber: 3 },
     });
 
     // 2. Manual retry should reset counter
     const manualRes = await request.post("/api/call/manual-retry", {
-      data: { roomName: "test-room-009" },
+      data: { roomName },
     });
 
     expect(manualRes.status()).toBe(200);
@@ -245,10 +262,12 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P1] should enforce exponential backoff delays (2s, 4s, 8s)", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — backoff timing not implemented
     // Verify the server reports backoff schedule for retry attempts
     const scheduleRes = await request.get(
-      "/api/call/retry-schedule?roomName=test-room-010"
+      `/api/call/retry-schedule?roomName=${roomName}`
     );
     expect(scheduleRes.status()).toBe(200);
     const body = await scheduleRes.json();
@@ -264,10 +283,12 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P1] should notify partner when user enters reconnecting state for >10s", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — partner notification not implemented
     const notifyRes = await request.post("/api/call/notify-reconnecting", {
       data: {
-        roomName: "test-room-011",
+        roomName,
         userId: "user-abc-123",
         partnerId: "user-def-456",
         elapsedMs: 11_000,
@@ -282,10 +303,12 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P1] should NOT notify partner for brief blips under 10s", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — notification threshold not implemented
     const notifyRes = await request.post("/api/call/notify-reconnecting", {
       data: {
-        roomName: "test-room-012",
+        roomName,
         userId: "user-abc-123",
         partnerId: "user-def-456",
         elapsedMs: 5000,
@@ -306,10 +329,12 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P1] should maintain correct state: active → reconnecting → active (recovery)", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — full state machine not implemented
     const stateRes = await request.post("/api/call/transition", {
       data: {
-        roomName: "test-room-013",
+        roomName,
         transitions: ["active", "reconnecting", "active"],
       },
     });
@@ -323,10 +348,12 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P1] should maintain correct state: reconnecting → connection_lost → ended", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — state machine coverage not complete
     const stateRes = await request.post("/api/call/transition", {
       data: {
-        roomName: "test-room-014",
+        roomName,
         transitions: ["reconnecting", "connection_lost", "ended"],
       },
     });
@@ -340,10 +367,12 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
   test.skip("[P1] should reject invalid state transition: active → connection_lost (skip reconnecting)", async ({
     request,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — state validation not implemented
     const stateRes = await request.post("/api/call/transition", {
       data: {
-        roomName: "test-room-015",
+        roomName,
         transitions: ["active", "connection_lost"],
       },
     });

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { testRoom } from "../fixtures/reconnection-test-constants";
 
 test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () => {
   // =========================================================================
@@ -11,9 +12,11 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     page,
     context,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — ReconnectingBanner countdown not implemented
     // Step 1: Navigate to call page
-    await page.goto("/call/test-room-101");
+    await page.goto(`/call/${roomName}`);
 
     // Verify we're in the call
     await expect(page.getByTestId("call-active")).toBeVisible({
@@ -35,6 +38,7 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     expect(countdownText).toMatch(/Reconnecting\.\.\. \(\d+s\)/);
 
     // Step 4: Countdown should increase
+    // FIXME: Replace waitForTimeout with deterministic wait during green phase
     await page.waitForTimeout(2000);
     const laterText = await page
       .getByTestId("reconnection-countdown")
@@ -56,9 +60,11 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     page,
     context,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — recovery flow not implemented
     // Step 1: Join call
-    await page.goto("/call/test-room-102");
+    await page.goto(`/call/${roomName}`);
     await expect(page.getByTestId("call-active")).toBeVisible({
       timeout: 10_000,
     });
@@ -69,7 +75,8 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
       timeout: 5000,
     });
 
-    // Step 3: Restore network after 5s
+    // Step 3: Restore network after brief blip
+    // FIXME: Replace waitForTimeout with deterministic wait during green phase
     await page.waitForTimeout(1000);
     await context.setOffline(false);
 
@@ -93,11 +100,13 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     page,
     context,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — ConnectionLostPrompt not implemented
     // Nota: 30s real time is slow; this test verifies the UI renders the prompt
     // In CI this would use a faster timeout override via test configuration
 
-    await page.goto("/call/test-room-103");
+    await page.goto(`/call/${roomName}`);
     await expect(page.getByTestId("call-active")).toBeVisible({
       timeout: 10_000,
     });
@@ -109,7 +118,7 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     });
 
     // Wait for timeout to trigger (use a test-only timeout override via URL param or localStorage)
-    // e.g. /call/test-room-103?reconnectTimeout=5000 for testing
+    // e.g. /call/${roomName}?reconnectTimeout=5000 for testing
     // EXPECTED: After timeout, ConnectionLostPrompt shows with retry + end buttons
     // ACTUAL (red phase): No prompt → test fails
     await expect(page.getByTestId("connection-lost-prompt")).toBeVisible({
@@ -130,8 +139,10 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     page,
     context,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — retry flow not implemented
-    await page.goto("/call/test-room-104");
+    await page.goto(`/call/${roomName}`);
     await expect(page.getByTestId("call-active")).toBeVisible({
       timeout: 10_000,
     });
@@ -161,8 +172,10 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     page,
     context,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — endCall during reconnection not implemented
-    await page.goto("/call/test-room-105");
+    await page.goto(`/call/${roomName}`);
     await expect(page.getByTestId("call-active")).toBeVisible({
       timeout: 10_000,
     });
@@ -195,8 +208,10 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     page,
     context,
   }) => {
+    const roomName = testRoom();
+
     // THIS TEST WILL FAIL — grace window logic not implemented
-    await page.goto("/call/test-room-106");
+    await page.goto(`/call/${roomName}`);
     await expect(page.getByTestId("call-active")).toBeVisible({
       timeout: 10_000,
     });
@@ -234,7 +249,7 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     // This test simulates the partner's view
     // In real E2E this would use two browser contexts; here we check the UI exists
 
-    await page.goto("/call/test-room-107");
+    await page.goto("/call/test-room-dynamic-107");
 
     // Partner sees a subtle indicator when the other user is reconnecting
     // This would be triggered by a server event or data channel message
@@ -250,7 +265,7 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     page,
   }) => {
     // THIS TEST WILL FAIL — partner does not navigate away on reconnect
-    await page.goto("/call/test-room-108");
+    await page.goto("/call/test-room-dynamic-108");
 
     // Partner sees reconnecting indicator
     await expect(
