@@ -2,11 +2,16 @@ import { db } from "@community/db";
 import { callRecord } from "@community/db/schema/call";
 import { callRoom } from "@community/db/schema/rebuild";
 import { env } from "@community/env/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
 import z from "zod";
 
 import { adminProcedure, protectedProcedure } from "../index";
+import {
+  IncrementReconnectionCountInput,
+  RefreshTokenInput,
+  UpdateParticipantStatusInput,
+} from "../validators/livekit";
 
 const roomClient = new RoomServiceClient(
   env.LIVEKIT_URL,
@@ -190,7 +195,7 @@ export const livekitRouter = {
       z.object({
         roomName: z.string().min(1).max(100),
         endReason: z
-          .enum(["explicit", "disconnect", "timeout"])
+          .enum(["explicit", "disconnect", "timeout", "connection_lost"])
           .default("explicit"),
       })
     )
@@ -234,6 +239,109 @@ export const livekitRouter = {
         participantCount: 2,
         durationSec,
       });
+
+      return { success: true };
+    }),
+
+  refreshToken: protectedProcedure
+    .input(RefreshTokenInput)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const username =
+        context.session.user.name ?? context.session.user.email ?? "guest";
+
+      // Verify user is a participant of this room
+      const rooms = await db
+        .select()
+        .from(callRoom)
+        .where(
+          and(
+            eq(callRoom.roomName, input.roomName),
+            eq(callRoom.status, "active")
+          )
+        )
+        .limit(1);
+
+      const room = rooms[0];
+      if (!room) {
+        throw new Error("NOT_FOUND: No active room found with that name");
+      }
+
+      if (room.participantA !== userId && room.participantB !== userId) {
+        throw new Error("FORBIDDEN: You are not a participant of this room");
+      }
+
+      const at = new AccessToken(env.LIVEKIT_API_KEY, env.LIVEKIT_API_SECRET, {
+        identity: username,
+        ttl: 5 * 60,
+      });
+
+      at.addGrant({
+        roomJoin: true,
+        room: input.roomName,
+        canPublish: true,
+        canSubscribe: true,
+        canPublishData: true,
+      });
+
+      return {
+        token: await at.toJwt(),
+      };
+    }),
+
+  updateParticipantStatus: protectedProcedure
+    .input(UpdateParticipantStatusInput)
+    .handler(async ({ input, context }) => {
+      // LiveKit participant identity is the username (name/email),
+      // not the DB user id — match how the token procedure creates identities
+      const identity =
+        context.session.user.name ?? context.session.user.email ?? "guest";
+
+      // Update participant metadata on the LiveKit room
+      await roomClient.updateParticipantMetadata(
+        input.roomName,
+        identity,
+        JSON.stringify({
+          reconnectStatus: input.status,
+        })
+      );
+
+      return { success: true };
+    }),
+
+  incrementReconnectionCount: protectedProcedure
+    .input(IncrementReconnectionCountInput)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+
+      const rooms = await db
+        .select()
+        .from(callRoom)
+        .where(
+          and(
+            eq(callRoom.roomName, input.roomName),
+            eq(callRoom.status, "active")
+          )
+        )
+        .limit(1);
+
+      const room = rooms[0];
+      if (!room) {
+        throw new Error("NOT_FOUND: No active room found with that name");
+      }
+
+      if (room.participantA !== userId && room.participantB !== userId) {
+        throw new Error("FORBIDDEN: You are not a participant of this room");
+      }
+
+      await db
+        .update(callRoom)
+        .set({
+          reconnectCount: sql`reconnect_count + 1`,
+          lastReconnectAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(callRoom.id, room.id));
 
       return { success: true };
     }),

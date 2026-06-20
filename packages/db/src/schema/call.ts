@@ -14,7 +14,7 @@ export const callRecord = pgTable("call_record", {
   matchId: text("match_id").notNull(),
   endedByUserId: text("ended_by_user_id").references(() => user.id),
   endReason: text("end_reason", {
-    enum: ["disconnect", "explicit", "timeout"],
+    enum: ["disconnect", "explicit", "timeout", "connection_lost"],
   }).notNull(),
   participantCount: integer("participant_count").notNull().default(0),
   durationSec: integer("duration_sec"),
