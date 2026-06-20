@@ -103,6 +103,8 @@ SIR-3: Replace hardcoded profile embeddings with real user data
 
 ### Story RE-1.1: Update Content Item
 
+**GH Issue:** [#43](https://github.com/software-developer-yamin/community/issues/43)
+
 As an Admin,  
 I want to update an existing content item's metadata,  
 So that I can correct mistakes or refresh content without losing all associated interactions and scores.
@@ -128,6 +130,8 @@ So that I can correct mistakes or refresh content without losing all associated 
 **Then** the update is rejected with a validation error
 
 ### Story RE-1.2: Bulk Content Import
+
+**GH Issue:** [#44](https://github.com/software-developer-yamin/community/issues/44)
 
 As an Admin,  
 I want to import multiple content items from a CSV or JSON file,  
@@ -156,6 +160,8 @@ So that I can populate the library efficiently without creating items one by one
 **And** the admin can choose to skip or create
 
 ### Story RE-1.3: Secure Content Creation
+
+**GH Issue:** [#45](https://github.com/software-developer-yamin/community/issues/45)
 
 As the System,  
 I want to ensure only admin users can create content items,  
@@ -190,6 +196,8 @@ So that the content library quality is maintained and unauthorized content is pr
 
 ### Story RE-2.1: Compute Content Embedding on Creation
 
+**GH Issue:** [#46](https://github.com/software-developer-yamin/community/issues/46)
+
 As the System,  
 I want to compute a real semantic embedding for every new content item using the BGE-small-en-v1.5 model,  
 So that the 40% weighted similarity component of the hybrid score is signal, not noise.
@@ -223,6 +231,8 @@ So that the 40% weighted similarity component of the hybrid score is signal, not
 
 ### Story RE-2.2: Recompute Content Embedding on Update
 
+**GH Issue:** [#47](https://github.com/software-developer-yamin/community/issues/47)
+
 As the System,  
 I want to recompute a content item's embedding when its title, description, or tags change,  
 So that the semantic representation stays accurate and recommendation quality is maintained.
@@ -246,6 +256,8 @@ So that the semantic representation stays accurate and recommendation quality is
 **And** the old embedding continues to be used until the new one is available
 
 ### Story RE-2.3: Real Profile Embeddings from User Data
+
+**GH Issue:** [#48](https://github.com/software-developer-yamin/community/issues/48)
 
 As the System,  
 I want to compute each learner's profile embedding from their actual user data (CEFR, interests, goals, native language, age, learning style),  
@@ -286,6 +298,8 @@ So that the recommendation engine and partner matching use real personalization 
 **FRs covered:** FR-8, FR-9, FR-10, FR-11, FR-23
 
 ### Story RE-3.1: Native Mobile Recommendation Feed (Expo)
+
+**GH Issue:** [#49](https://github.com/software-developer-yamin/community/issues/49)
 
 As a Learner,  
 I want to view my personalized recommendation feed in the native mobile app,  
@@ -333,6 +347,8 @@ So that I can discover content during my 5–10 minute idle windows between prac
 
 ### Story RE-3.2: Recommendation Feed Empty State Design
 
+**GH Issue:** [#50](https://github.com/software-developer-yamin/community/issues/50)
+
 As a Learner,  
 When I have exhausted all content at my level,  
 I want clear options to find more content,  
@@ -367,6 +383,8 @@ So that I don't feel stuck or abandoned.
 **FRs covered:** FR-12, FR-13, FR-14
 
 ### Story RE-4.1: Interaction-Weighted Scoring (v2)
+
+**GH Issue:** [#51](https://github.com/software-developer-yamin/community/issues/51)
 
 As the System,  
 I want to adjust future recommendation scores based on the learner's interaction patterns,  
@@ -415,6 +433,8 @@ So that content similar to liked items is boosted and content similar to dismiss
 **FRs covered:** FR-15, FR-16, FR-17
 
 ### Story RE-5.1: User Preferences Native UI
+
+**GH Issue:** [#52](https://github.com/software-developer-yamin/community/issues/52)
 
 As a Learner,  
 I want to view and edit my preferences in the native app settings,  
@@ -470,6 +490,8 @@ So that I can tell the recommendation engine what I like and how I learn.
 
 ### Story RE-6.1: Admin Content Analytics
 
+**GH Issue:** [#53](https://github.com/software-developer-yamin/community/issues/53)
+
 As an Admin,  
 I want to view engagement analytics for the content library,  
 So that I can understand what content is popular, what is ignored, and where the library has gaps.
@@ -511,6 +533,8 @@ So that I can understand what content is popular, what is ignored, and where the
 **FRs covered:** FR-22, SIR-1, SIR-2
 
 ### Story RE-7.1: Secure Seed Endpoint for Production
+
+**GH Issue:** [#54](https://github.com/software-developer-yamin/community/issues/54)
 
 As the System,  
 I want the seed endpoint to be either removed or gated to admin-only in production,  
