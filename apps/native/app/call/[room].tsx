@@ -60,10 +60,10 @@ export default function CallScreen() {
   }, []);
 
   const handleDisconnected = useCallback(() => {
-    if (intentionalDisconnectRef.current) {
-      router.replace("call/ended");
-    }
-  }, [router]);
+    // Intentional disconnects are handled by the caller (ControlsBar.leave, handleEndCall).
+    // Network-blip disconnects are handled inside RoomView.
+    // Navigation races avoided — no router.replace here.
+  }, []);
 
   // Start audio session on mount, stop on unmount.
   useEffect(() => {
@@ -199,17 +199,24 @@ function RoomView({
   const reconnectStartRef = useRef<number | null>(null);
   const prevReconnectingRef = useRef(false);
   const retryInProgressRef = useRef(false);
+  const mountedRef = useRef(false);
   const userId = authClient.useSession().data?.user?.id ?? "";
 
   // Token refresh mutation
   const refreshTokenMutation = useMutation(
     orpc.livekit.refreshToken.mutationOptions()
   );
+  // Stable ref to avoid regenerating handleRetry on every render
+  const refreshTokenRef = useRef(refreshTokenMutation);
+  refreshTokenRef.current = refreshTokenMutation;
 
   // Update participant status mutation
   const updateStatusMutation = useMutation(
     orpc.livekit.updateParticipantStatus.mutationOptions()
   );
+  // Stable ref to avoid re-registering effect on mutation object change
+  const updateStatusRef = useRef(updateStatusMutation);
+  updateStatusRef.current = updateStatusMutation;
 
   // Increment reconnection count mutation
   const incrementReconnectMutation = useMutation(
@@ -247,8 +254,11 @@ function RoomView({
       if (retryInProgressRef.current) {
         return;
       }
-      // Intentional disconnects are handled by CallScreen's
-      // handleDisconnected callback which calls router.replace("call/ended").
+      // Intentional disconnects navigate via ControlsBar.leave or
+      // handleEndCall; skip UI banner on screen reader path.
+      if (intentionalDisconnectRef.current) {
+        return;
+      }
       // For network blips without a Reconnecting event, surface the
       // connection_lost banner so the user can retry or end.
       setPhase("connection_lost");
@@ -331,27 +341,29 @@ function RoomView({
 
   // Notify partner via metadata when reconnecting >10s, and clear on reconnect
   useEffect(() => {
+    if (!mountedRef.current) {
+      // Skip initial mount — participant hasn't joined yet
+      return;
+    }
+
     if (phase === "reconnecting" && elapsedSeconds === 10) {
-      updateStatusMutation.mutate({
+      updateStatusRef.current.mutate({
         roomName,
         status: "reconnecting",
       });
     }
-    if (
-      phase === "connected" &&
-      elapsedSeconds === 0 &&
-      reconnectStartRef.current === null
-    ) {
-      // Skip initial mount — participant hasn't joined yet
-      return;
-    }
     if (phase === "connected") {
-      updateStatusMutation.mutate({
+      updateStatusRef.current.mutate({
         roomName,
         status: "connected",
       });
     }
-  }, [phase, elapsedSeconds, roomName, updateStatusMutation]);
+  }, [phase, elapsedSeconds, roomName]);
+
+  // Set mounted flag after first render — participant should be joined by now
+  useEffect(() => {
+    mountedRef.current = true;
+  }, []);
 
   const handleRetry = useCallback(async () => {
     if (!roomName) {
@@ -382,7 +394,7 @@ function RoomView({
 
       if (elapsedMs > 4 * 60 * 1000) {
         // Token expired — get a fresh one
-        const result = await refreshTokenMutation.mutateAsync({ roomName });
+        const result = await refreshTokenRef.current.mutateAsync({ roomName });
         tokenToUse = result.token;
         // Update the ref so subsequent retries use the new token
         originalTokenRef.current = result.token;
@@ -391,7 +403,9 @@ function RoomView({
         tokenToUse = originalTokenRef.current ?? "";
         if (!tokenToUse) {
           // Fallback: try to refresh anyway
-          const result = await refreshTokenMutation.mutateAsync({ roomName });
+          const result = await refreshTokenRef.current.mutateAsync({
+            roomName,
+          });
           tokenToUse = result.token;
           originalTokenRef.current = result.token;
         }
@@ -400,6 +414,8 @@ function RoomView({
       await room.connect(env.EXPO_PUBLIC_LIVEKIT_URL, tokenToUse);
       // Reset connect time so subsequent retries don't eagerly refresh
       connectTimeRef.current = Date.now();
+      // Increment reconnection count (manual retry won't fire RoomEvent.Reconnected)
+      incrementReconnectRef.current.mutate({ roomName });
       setPhase("connected");
     } catch (err) {
       console.warn("Retry reconnection failed", err);
@@ -407,7 +423,7 @@ function RoomView({
     } finally {
       retryInProgressRef.current = false;
     }
-  }, [roomName, room, connectTimeRef, originalTokenRef, refreshTokenMutation]);
+  }, [roomName, room, connectTimeRef, originalTokenRef]);
 
   const handleEndCall = useCallback(() => {
     intentionalDisconnectRef.current = true;
