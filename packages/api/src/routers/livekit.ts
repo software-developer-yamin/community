@@ -2,7 +2,7 @@ import { db } from "@community/db";
 import { callRecord } from "@community/db/schema/call";
 import { callRoom } from "@community/db/schema/rebuild";
 import { env } from "@community/env/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
 import z from "zod";
 
@@ -337,7 +337,7 @@ export const livekitRouter = {
       await db
         .update(callRoom)
         .set({
-          reconnectCount: (room.reconnectCount ?? 0) + 1,
+          reconnectCount: sql`reconnect_count + 1`,
           lastReconnectAt: new Date(),
           updatedAt: new Date(),
         })

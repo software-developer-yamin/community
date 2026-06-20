@@ -1,5 +1,5 @@
 generated: 2026-06-14T00:00:00+06:00
-last_updated: 2026-06-20T23:20:00+06:00
+last_updated: 2026-06-20T23:35:00+06:00
 project: community
 project_key: NOKEY
 tracking_system: file-system
@@ -16,7 +16,7 @@ development_status:
   epic-2: in-progress
   2-1-server-managed-room-lifecycle: done
   2-2-ice-restart-reconnection-1-5s-blips: done
-  2-3-full-reconnection-5-30s-blips: review
+  2-3-full-reconnection-5-30s-blips: done
   2-4-explicit-call-end: backlog
   epic-2-retrospective: optional
 

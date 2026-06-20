@@ -1,10 +1,21 @@
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
+
+const END_REASON_MESSAGES: Record<string, string> = {
+  connection_lost: "The connection was lost.",
+  explicit: "You left the call.",
+  disconnect: "The call was disconnected.",
+  timeout: "The call timed out.",
+};
 
 export default function CallEndedScreen() {
   const router = useRouter();
   const { theme } = useUnistyles();
+  const { reason } = useLocalSearchParams<{ reason?: string }>();
+
+  const subtitle =
+    (reason && END_REASON_MESSAGES[reason]) ?? "The call has ended.";
 
   const handleBackToLobby = () => {
     router.replace("call/lobby");
@@ -15,13 +26,20 @@ export default function CallEndedScreen() {
       style={[styles.centered, { backgroundColor: theme.colors.background }]}
     >
       <Stack.Screen options={{ title: "Call Ended" }} />
-      <Text style={[styles.title, { color: theme.colors.typography }]}>
+      <Text
+        nativeID="call-ended-title"
+        style={[styles.title, { color: theme.colors.typography }]}
+      >
         Call Ended
       </Text>
-      <Text style={[styles.subtitle, { color: theme.colors.mutedForeground }]}>
-        The connection was lost.
+      <Text
+        nativeID="call-ended-reason"
+        style={[styles.subtitle, { color: theme.colors.mutedForeground }]}
+      >
+        {subtitle}
       </Text>
       <Pressable
+        nativeID="back-to-lobby-button"
         onPress={handleBackToLobby}
         style={[styles.button, { backgroundColor: theme.colors.primary }]}
       >

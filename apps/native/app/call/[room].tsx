@@ -215,6 +215,12 @@ function RoomView({
   const incrementReconnectMutation = useMutation(
     orpc.livekit.incrementReconnectionCount.mutationOptions()
   );
+  // Stable ref to avoid re-registering room event listeners on mutation object change
+  const incrementReconnectRef = useRef(incrementReconnectMutation);
+  incrementReconnectRef.current = incrementReconnectMutation;
+
+  // Track partner reconnection status from ParticipantMetadata events
+  const [partnerReconnecting, setPartnerReconnecting] = useState(false);
 
   // Track connection state for reconnection handling.
   useEffect(() => {
@@ -233,7 +239,7 @@ function RoomView({
       setElapsedSeconds(0);
 
       // Increment reconnection count for observability
-      incrementReconnectMutation.mutate({ roomName });
+      incrementReconnectRef.current.mutate({ roomName });
     };
     const onDisconnected = () => {
       // If a retry is in progress, don't override the phase — the
@@ -241,7 +247,11 @@ function RoomView({
       if (retryInProgressRef.current) {
         return;
       }
-      setPhase("connected");
+      // Intentional disconnects are handled by CallScreen's
+      // handleDisconnected callback which calls router.replace("call/ended").
+      // For network blips without a Reconnecting event, surface the
+      // connection_lost banner so the user can retry or end.
+      setPhase("connection_lost");
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -249,19 +259,38 @@ function RoomView({
       setElapsedSeconds(0);
     };
 
+    // Listen for partner's participant metadata changes (reconnect status)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const onParticipantMetadata = (_participant: any, metadata: string) => {
+      try {
+        const parsed = JSON.parse(metadata) as {
+          reconnectStatus?: string;
+        };
+        if (parsed.reconnectStatus === "reconnecting") {
+          setPartnerReconnecting(true);
+        } else if (parsed.reconnectStatus === "connected") {
+          setPartnerReconnecting(false);
+        }
+      } catch {
+        // Non-JSON metadata or unknown format — ignore
+      }
+    };
+
     room.on(RoomEvent.Reconnecting, onReconnecting);
     room.on(RoomEvent.Reconnected, onReconnected);
     room.on(RoomEvent.Disconnected, onDisconnected);
+    room.on(RoomEvent.ParticipantMetadata, onParticipantMetadata);
 
     return () => {
       room.off(RoomEvent.Reconnecting, onReconnecting);
       room.off(RoomEvent.Reconnected, onReconnected);
       room.off(RoomEvent.Disconnected, onDisconnected);
+      room.off(RoomEvent.ParticipantMetadata, onParticipantMetadata);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [room, roomName, incrementReconnectMutation]);
+  }, [room, roomName]);
 
   // Start/stop elapsed timer based on reconnection phase
   useEffect(() => {
@@ -283,22 +312,38 @@ function RoomView({
     }
 
     prevReconnectingRef.current = isNowReconnecting;
+
+    // Cleanup on unmount — clear interval
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [phase]);
 
   // Check for 30s timeout
   useEffect(() => {
-    if (phase === "reconnecting" && elapsedSeconds >= RECONNECTION_TIMEOUT_S) {
-      setPhase("connection_lost");
+    if (elapsedSeconds >= RECONNECTION_TIMEOUT_S) {
+      setPhase((prev) => (prev === "reconnecting" ? "connection_lost" : prev));
     }
-  }, [phase, elapsedSeconds]);
+  }, [elapsedSeconds]);
 
-  // Notify partner via metadata when reconnecting >5s, and clear on reconnect
+  // Notify partner via metadata when reconnecting >10s, and clear on reconnect
   useEffect(() => {
-    if (phase === "reconnecting" && elapsedSeconds === 5) {
+    if (phase === "reconnecting" && elapsedSeconds === 10) {
       updateStatusMutation.mutate({
         roomName,
         status: "reconnecting",
       });
+    }
+    if (
+      phase === "connected" &&
+      elapsedSeconds === 0 &&
+      reconnectStartRef.current === null
+    ) {
+      // Skip initial mount — participant hasn't joined yet
+      return;
     }
     if (phase === "connected") {
       updateStatusMutation.mutate({
@@ -313,6 +358,11 @@ function RoomView({
       return;
     }
 
+    // Guard: prevent concurrent retry attempts
+    if (retryInProgressRef.current) {
+      return;
+    }
+
     retryInProgressRef.current = true;
     setPhase("reconnecting");
     setElapsedSeconds(0);
@@ -321,13 +371,16 @@ function RoomView({
     try {
       // Disconnect from current room — the onDisconnected handler
       // skips phase reset when retryInProgressRef is true.
-      room.disconnect();
+      await room.disconnect().catch(() => {
+        // Room may already be disconnected — swallow
+      });
 
-      // Determine if token is expired (>5min since original connect)
+      // Determine if token is expired (>4min since original connect —
+      // use 4min buffer against 5min token TTL to account for network latency)
       const elapsedMs = Date.now() - connectTimeRef.current;
       let tokenToUse: string;
 
-      if (elapsedMs > 5 * 60 * 1000) {
+      if (elapsedMs > 4 * 60 * 1000) {
         // Token expired — get a fresh one
         const result = await refreshTokenMutation.mutateAsync({ roomName });
         tokenToUse = result.token;
@@ -345,8 +398,11 @@ function RoomView({
       }
 
       await room.connect(env.EXPO_PUBLIC_LIVEKIT_URL, tokenToUse);
+      // Reset connect time so subsequent retries don't eagerly refresh
+      connectTimeRef.current = Date.now();
       setPhase("connected");
-    } catch {
+    } catch (err) {
+      console.warn("Retry reconnection failed", err);
       setPhase("connection_lost");
     } finally {
       retryInProgressRef.current = false;
@@ -364,7 +420,7 @@ function RoomView({
         // Fire-and-forget: room cleanup best-effort
       });
 
-    router.replace("call/ended");
+    router.replace("call/ended?reason=connection_lost");
   }, [roomName, room, router, intentionalDisconnectRef]);
 
   // Animated pulse for reconnecting banner
@@ -404,9 +460,15 @@ function RoomView({
               {item.participant.name ?? item.participant.identity}
             </Text>
             {/* Show "Connection unstable" for partner during reconnect */}
-            {item.participant.identity !== userId && phase !== "connected" && (
-              <Text style={styles.unstableText}>Connection unstable</Text>
-            )}
+            {item.participant.identity !== userId &&
+              (phase !== "connected" || partnerReconnecting) && (
+                <Text
+                  nativeID="partner-reconnecting-indicator"
+                  style={styles.unstableText}
+                >
+                  Connection unstable
+                </Text>
+              )}
           </View>
         </View>
       );
@@ -500,7 +562,7 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
   const leave = async () => {
     onLeave?.();
     await room.disconnect();
-    router.replace("call/ended");
+    router.replace("call/ended?reason=explicit");
   };
 
   return (
@@ -591,6 +653,7 @@ function ReconnectingBanner({
   const { theme } = useUnistyles();
   return (
     <Animated.View
+      nativeID="reconnecting-banner"
       style={[
         styles.banner,
         {
@@ -600,6 +663,7 @@ function ReconnectingBanner({
       ]}
     >
       <Text
+        nativeID="reconnection-countdown"
         style={[
           styles.bannerText,
           { color: theme.colors.warningForeground ?? "#FFFFFF" },
@@ -622,6 +686,7 @@ function ConnectionLostBanner({
   return (
     <View>
       <View
+        nativeID="connection-lost-prompt"
         style={[
           styles.banner,
           {
@@ -630,6 +695,7 @@ function ConnectionLostBanner({
         ]}
       >
         <Text
+          nativeID="connection-lost-text"
           style={[
             styles.bannerText,
             { color: theme.colors.destructiveForeground ?? "#FFFFFF" },
@@ -638,8 +704,9 @@ function ConnectionLostBanner({
           Connection lost.
         </Text>
       </View>
-      <View style={styles.ctaRow}>
+      <View nativeID="connection-lost-actions" style={styles.ctaRow}>
         <Pressable
+          nativeID="retry-button"
           onPress={onRetry}
           style={[
             styles.ctaBtn,
@@ -656,6 +723,7 @@ function ConnectionLostBanner({
           </Text>
         </Pressable>
         <Pressable
+          nativeID="end-call-button"
           onPress={onEndCall}
           style={[
             styles.ctaBtn,
@@ -795,7 +863,6 @@ const styles = StyleSheet.create((theme) => ({
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: theme.colors.destructive ?? "#DC2626",
   },
   ctaBtn: {
     flex: 1,
