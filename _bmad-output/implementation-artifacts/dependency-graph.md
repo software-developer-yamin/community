@@ -1,5 +1,5 @@
 # Story Dependency Graph
-_Last updated: 2026-06-20T22:45:00+06:00_
+_Last updated: 2026-06-21T12:00:00+06:00_
 
 ## Stories
 
@@ -11,7 +11,7 @@ _Last updated: 2026-06-20T22:45:00+06:00_
 | 1.4 | 1 | Google OAuth Integration | done | #4 | #41 | merged | 1.1 | ✅ Yes (done) |
 | 2.1 | 2 | Server-Managed Room Lifecycle | done | #5 | — | — | Epic 1 | ✅ Yes (done) |
 | 2.2 | 2 | ICE Restart Reconnection (1-5s Blips) | done | #6 | #42 | merged | 2.1 | ✅ Yes (done) |
-| 2.3 | 2 | Full Reconnection (5-30s Blips) | backlog | #7 | — | — | 2.2 | ✅ Yes (2.2 done) |
+| 2.3 | 2 | Full Reconnection (5-30s Blips) | done | #7 | #55 | merged | 2.2 | ✅ Yes (done) |
 | 2.4 | 2 | Explicit Call End | backlog | #8 | — | — | 2.2 | ✅ Yes (2.2 done) |
 | 3.1 | 3 | Gender Filter Enforcement | backlog | #9 | — | — | Epic 1 | ✅ Yes (Epic 1 done) |
 | 3.2 | 3 | Native Language Field | backlog | #10 | — | — | Epic 1 | ✅ Yes (Epic 1 done) |
@@ -81,8 +81,8 @@ _Last updated: 2026-06-20T22:45:00+06:00_
 ## Notes
 
 - **Epic 1 fully complete** — all stories (1.1-1.4) merged into master.
-- **Epic 2: 2.1 + 2.2 done**. 2.3 and 2.4 dep-unblocked (2.2 PR #42 merged).
-- **Epics 3-7** blocked until Epic 2 fully complete (2.3 + 2.4).
+- **Epic 2: 2.1 + 2.2 + 2.3 done**. 2.4 dep-unblocked (2.2 done, 2.3 PR #55 merged).
+- **Epics 3-7** blocked until Epic 2 fully complete (2.4 remaining).
 - **RE-* epics are separate track** — recommendation engine independent of voice calling (Epics 2-7). Only depends on Epic 1 (auth/session, done).
 - **max_parallel_stories=1**
 - Default branch: `master`
