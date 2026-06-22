@@ -1,12 +1,81 @@
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 
 import { Container } from "@/components/container";
 import { authClient } from "@/lib/auth-client";
-import { queryClient } from "@/utils/orpc";
+import { orpc, queryClient } from "@/utils/orpc";
+
+const GENDER_OPTIONS = ["male", "female", "nonbinary", "undisclosed"] as const;
 
 export default function ProfileScreen() {
   const { data: session } = authClient.useSession();
+  const { data: profile } = useQuery(orpc.rebuild.getProfile.queryOptions());
+  const { mutateAsync: updateProfile } = useMutation(
+    orpc.rebuild.updateProfile.mutationOptions()
+  );
+
+  const [gender, setGender] = useState<string | undefined>(undefined);
+  const [genderPreference, setGenderPreference] = useState<string | undefined>(
+    undefined
+  );
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  if (profile && !loaded) {
+    setGender(profile.gender ?? undefined);
+    setGenderPreference(profile.genderPreference ?? undefined);
+    setLoaded(true);
+  }
+
+  const tier = session?.user?.role === "premium_plus" ? "premium_plus" : null;
+
+  const handleSave = async (
+    field: "gender" | "genderPreference",
+    value: string | undefined
+  ) => {
+    setSaving(true);
+    try {
+      await updateProfile({ [field]: value ?? null });
+      queryClient.invalidateQueries({
+        queryKey: orpc.rebuild.getProfile.key(),
+      });
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to save"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const renderOption = (
+    field: "gender" | "genderPreference",
+    label: string,
+    current: string | undefined,
+    onSelect: (value: string | undefined) => void
+  ) => {
+    const selected = current === label;
+    return (
+      <TouchableOpacity
+        key={`${field}-${label}`}
+        onPress={() => {
+          const next = selected ? undefined : label;
+          onSelect(next);
+          handleSave(field, next);
+        }}
+        style={[styles.optionChip, selected && styles.optionChipSelected]}
+      >
+        <Text
+          style={[styles.optionText, selected && styles.optionTextSelected]}
+        >
+          {label.charAt(0).toUpperCase() + label.slice(1)}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <Container>
@@ -14,26 +83,84 @@ export default function ProfileScreen() {
         <Text style={styles.title}>Profile</Text>
 
         {session?.user ? (
-          <View style={styles.section}>
-            <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Name</Text>
-              <Text style={styles.infoValue}>{session.user.name}</Text>
-            </View>
-
-            <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>
-                {session.user.email}
-                {session.user.emailVerified ? " (verified)" : ""}
-              </Text>
-            </View>
-
-            {session.user.role !== "user" && (
+          <>
+            <View style={styles.section}>
               <View style={styles.infoCard}>
-                <Text style={styles.infoLabel}>Role</Text>
-                <Text style={styles.infoValue}>{session.user.role}</Text>
+                <Text style={styles.infoLabel}>Name</Text>
+                <Text style={styles.infoValue}>{session.user.name}</Text>
               </View>
-            )}
+
+              <View style={styles.infoCard}>
+                <Text style={styles.infoLabel}>Email</Text>
+                <Text style={styles.infoValue}>
+                  {session.user.email}
+                  {session.user.emailVerified ? " (verified)" : ""}
+                </Text>
+              </View>
+
+              {session.user.role !== "user" && (
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoLabel}>Role</Text>
+                  <Text style={styles.infoValue}>{session.user.role}</Text>
+                </View>
+              )}
+            </View>
+
+            <Text style={styles.sectionTitle}>Gender Identity</Text>
+            <View style={styles.section}>
+              <View style={styles.chipRow}>
+                {GENDER_OPTIONS.map((option) =>
+                  renderOption("gender", option, gender, setGender)
+                )}
+              </View>
+              {saving && <Text style={styles.savingText}>Saving...</Text>}
+            </View>
+
+            <Text style={styles.sectionTitle}>Partner Gender Preference</Text>
+            <View style={styles.section}>
+              {tier === "premium_plus" ? (
+                <>
+                  <View style={styles.chipRow}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setGenderPreference(undefined);
+                        handleSave("genderPreference", undefined);
+                      }}
+                      style={[
+                        styles.optionChip,
+                        genderPreference === undefined &&
+                          styles.optionChipSelected,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.optionText,
+                          genderPreference === undefined &&
+                            styles.optionTextSelected,
+                        ]}
+                      >
+                        No preference
+                      </Text>
+                    </TouchableOpacity>
+                    {GENDER_OPTIONS.map((option) =>
+                      renderOption(
+                        "genderPreference",
+                        option,
+                        genderPreference,
+                        setGenderPreference
+                      )
+                    )}
+                  </View>
+                  {saving && <Text style={styles.savingText}>Saving...</Text>}
+                </>
+              ) : (
+                <View style={styles.lockedCard}>
+                  <Text style={styles.lockedText}>
+                    Gender preference is available with Premium+ tier.
+                  </Text>
+                </View>
+              )}
+            </View>
 
             <TouchableOpacity
               onPress={() => {
@@ -44,7 +171,7 @@ export default function ProfileScreen() {
             >
               <Text style={styles.signOutButtonText}>Sign Out</Text>
             </TouchableOpacity>
-          </View>
+          </>
         ) : (
           <View style={styles.section}>
             <Text style={styles.mutedText}>Sign in to view your profile.</Text>
@@ -104,6 +231,46 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: theme.fontSize.base,
     color: theme.colors.mutedForeground,
     lineHeight: 22,
+  },
+  optionChip: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
+  },
+  optionChipSelected: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  optionText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.foreground,
+  },
+  optionTextSelected: {
+    color: theme.colors.primaryForeground,
+  },
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.sm,
+  },
+  savingText: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.mutedForeground,
+    marginTop: theme.spacing.sm,
+  },
+  lockedCard: {
+    padding: theme.spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderStyle: "dashed",
+  },
+  lockedText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.mutedForeground,
   },
   signOutButton: {
     marginTop: theme.spacing.lg,
