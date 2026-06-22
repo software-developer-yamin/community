@@ -4,7 +4,7 @@ baseline_commit: e374cad
 
 # Story 2.4: Explicit Call End
 
-Status: ready-for-dev
+Status: in-progress
 
 ## Story
 
@@ -28,29 +28,29 @@ So that I understand why the call ended and whether it was my choice, my partner
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add `partner_ended` end reason to schema and server
-  - [ ] 1.1 Add `partner_ended` to the `end_reason` enum in `packages/db/src/schema/call.ts`
-  - [ ] 1.2 Add `partner_ended` to the `endCall` input validator enum in `packages/api/src/routers/livekit.ts`
-  - [ ] 1.3 Generate and apply DB migration for the new enum value
+- [x] Task 1: Add `partner_ended` end reason to schema and server
+  - [x] 1.1 Add `partner_ended` to the `end_reason` enum in `packages/db/src/schema/call.ts`
+  - [x] 1.2 Add `partner_ended` to the `endCall` input validator enum in `packages/api/src/routers/livekit.ts`
+  - [x] 1.3 Generate and apply DB migration for the new enum value
 
-- [ ] Task 2: Server-side partner disconnect notification
-  - [ ] 2.1 Add `notifyPartnerEndReason` procedure to livekit router — when a user calls `endCall`, update the remaining partner's participant metadata with `{ callEndReason: "partner_ended" }`
-  - [ ] 2.2 Wire `endCall` to call `notifyPartnerEndReason` before deleting the room (the room must still exist for metadata updates)
-  - [ ] 2.3 Add a brief delay (500ms) between metadata update and room deletion to ensure partner receives the notification
+- [x] Task 2: Server-side partner disconnect notification
+  - [x] 2.1 Add `notifyPartnerEndReason` procedure to livekit router — when a user calls `endCall`, update the remaining partner's participant metadata with `{ callEndReason: "partner_ended" }`
+  - [x] 2.2 Wire `endCall` to call `notifyPartnerEndReason` before deleting the room (the room must still exist for metadata updates)
+  - [x] 2.3 Add a brief delay (500ms) between metadata update and room deletion to ensure partner receives the notification
 
-- [ ] Task 3: Client-side partner end detection
-  - [ ] 3.1 In `RoomView`, listen for `RoomEvent.ParticipantDisconnected` — when partner leaves, check participant metadata for `callEndReason`
-  - [ ] 3.2 If `callEndReason === "partner_ended"` → navigate to `ended?reason=partner_ended`
-  - [ ] 3.3 If no `callEndReason` metadata → navigate to `ended?reason=connection_lost` (network issue, not intentional)
-  - [ ] 3.4 Add a 10-second delay before showing the ended screen when partner ends (AC2: "waiting..." window) — show "Your partner ended the call. Returning to lobby..." countdown
+- [x] Task 3: Client-side partner end detection
+  - [x] 3.1 In `RoomView`, listen for `RoomEvent.ParticipantDisconnected` — when partner leaves, check participant metadata for `callEndReason`
+  - [x] 3.2 If `callEndReason === "partner_ended"` → navigate to `ended?reason=partner_ended`
+  - [x] 3.3 If no `callEndReason` metadata → navigate to `ended?reason=connection_lost` (network issue, not intentional)
+  - [x] 3.4 Add a 10-second delay before showing the ended screen when partner ends (AC2: "waiting..." window) — show "Your partner ended the call. Returning to lobby..." countdown
 
-- [ ] Task 4: Enhanced call ended screen
-  - [ ] 4.1 Update `END_REASON_MESSAGES` in `ended.tsx` to include `partner_ended: "Your partner ended the call."`
-  - [ ] 4.2 Add "Rejoin queue" button that navigates to `call/lobby`
-  - [ ] 4.3 Add "Report an issue" button (placeholder — opens a toast/alert "Coming in a future update")
-  - [ ] 4.4 Add "Return home" button that navigates to `/` (home tab)
-  - [ ] 4.5 Add post-call rating placeholder: show "Rate your partner" section with disabled 1-5 star UI and "Coming soon" label (Epic 7 will implement)
-  - [ ] 4.6 Style per UX-DR: elevated background, foreground text, lg radius for the card, md radius for buttons
+- [x] Task 4: Enhanced call ended screen
+  - [x] 4.1 Update `END_REASON_MESSAGES` in `ended.tsx` to include `partner_ended: "Your partner ended the call."`
+  - [x] 4.2 Add "Rejoin queue" button that navigates to `call/lobby`
+  - [x] 4.3 Add "Report an issue" button (placeholder — opens a toast/alert "Coming in a future update")
+  - [x] 4.4 Add "Return home" button that navigates to `/` (home tab)
+  - [x] 4.5 Add post-call rating placeholder: show "Rate your partner" section with disabled 1-5 star UI and "Coming soon" label (Epic 7 will implement)
+  - [x] 4.6 Style per UX-DR: elevated background, foreground text, lg radius for the card, md radius for buttons
 
 - [ ] Task 5: Update ControlsBar "End Call" flow
   - [ ] 5.1 Rename "Leave" button to "End Call" (text + semantics)

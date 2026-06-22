@@ -195,7 +195,13 @@ export const livekitRouter = {
       z.object({
         roomName: z.string().min(1).max(100),
         endReason: z
-          .enum(["explicit", "disconnect", "timeout", "connection_lost"])
+          .enum([
+            "explicit",
+            "disconnect",
+            "timeout",
+            "connection_lost",
+            "partner_ended",
+          ])
           .default("explicit"),
       })
     )
@@ -216,6 +222,31 @@ export const livekitRouter = {
       const room = rooms[0];
       if (!room) {
         throw new Error("NOT_FOUND: No active room found with that name");
+      }
+
+      if (input.endReason === "explicit") {
+        try {
+          const participants = await roomClient.listParticipants(
+            input.roomName
+          );
+          const partner = participants.find(
+            (p) =>
+              p.identity !== context.session.user.name &&
+              p.identity !== context.session.user.email
+          );
+          if (partner) {
+            await roomClient.updateParticipant(
+              input.roomName,
+              partner.identity,
+              JSON.stringify({
+                callEndReason: "partner_ended",
+              })
+            );
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          }
+        } catch (err) {
+          console.warn("Failed to notify partner of end reason:", err);
+        }
       }
 
       await roomClient.deleteRoom(input.roomName).catch(() => {
@@ -298,7 +329,7 @@ export const livekitRouter = {
         context.session.user.name ?? context.session.user.email ?? "guest";
 
       // Update participant metadata on the LiveKit room
-      await roomClient.updateParticipantMetadata(
+      await roomClient.updateParticipant(
         input.roomName,
         identity,
         JSON.stringify({

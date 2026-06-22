@@ -5,7 +5,8 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": [],
     "paths": {
-      "@community/ui/*": ["./src/*"]
+      "@community/ui/*": ["./src/*"],
+      "@community/auth/*": ["../auth/src/*"]
     },
     "strictNullChecks": true
   },

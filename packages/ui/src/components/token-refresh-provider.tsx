@@ -1,4 +1,4 @@
-import type { AuthClient } from "@community/auth/session-refresh";
+import type { AuthClient, RefreshEvent } from "@community/auth/session-refresh";
 import { proactiveRefresh } from "@community/auth/session-refresh";
 import {
   createContext,
@@ -58,7 +58,7 @@ export function TokenRefreshProvider({
     setIsRefreshing(true);
     try {
       await proactiveRefresh(authClient, {
-        onEvent: (event) => {
+        onEvent: (event: RefreshEvent) => {
           if (event === "refreshed") {
             setLastRefreshedAt(Date.now());
             setLastError(null);

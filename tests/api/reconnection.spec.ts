@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "../fixtures/livekit-fixture";
 import { testRoom } from "../fixtures/reconnection-test-constants";
 
 test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", () => {
@@ -9,8 +10,9 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
 
   test.skip("[P0] should end call with reason 'connection_lost' when timeout reached", async ({
     request,
+    livekitRoom,
   }) => {
-    const roomName = testRoom();
+    const roomName = livekitRoom;
 
     // THIS TEST WILL FAIL — end_reason not wired for connection_lost
     // 1. Simulate a call ending due to connection lost
@@ -34,8 +36,9 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
 
   test.skip("[P0] should NOT issue a strike when end reason is 'connection_lost'", async ({
     request,
+    livekitRoom,
   }) => {
-    const roomName = testRoom();
+    const roomName = livekitRoom;
 
     // THIS TEST WILL FAIL — strike suppression not implemented
     // 1. End call with connection_lost reason
@@ -64,8 +67,9 @@ test.describe("Full Reconnection — API/Integration Tests (ATDD, RED PHASE)", (
 
   test.skip("[P0] should end call with explicit reason on user tap 'End Call' during reconnection", async ({
     request,
+    livekitRoom,
   }) => {
-    const roomName = testRoom();
+    const roomName = livekitRoom;
 
     // THIS TEST WILL FAIL — endCall during reconnecting not implemented
     const endRes = await request.post("/api/call/end", {

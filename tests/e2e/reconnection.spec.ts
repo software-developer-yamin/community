@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { testRoom } from "../fixtures/reconnection-test-constants";
 
+const RECONNECTING_COUNTDOWN_REGEX = /Reconnecting\.\.\. \(\d+s\)/;
+const SECONDS_MATCH_REGEX = /(\d+)s/;
+
 test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () => {
   // =========================================================================
   // AC1: 10s blip — countdown visible
@@ -35,7 +38,7 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     const countdownText = await page
       .getByTestId("reconnection-countdown")
       .textContent();
-    expect(countdownText).toMatch(/Reconnecting\.\.\. \(\d+s\)/);
+    expect(countdownText).toMatch(RECONNECTING_COUNTDOWN_REGEX);
 
     // Step 4: Countdown should increase
     // FIXME: Replace waitForTimeout with deterministic wait during green phase
@@ -43,9 +46,9 @@ test.describe("Full Reconnection — E2E User Journeys (ATDD, RED PHASE)", () =>
     const laterText = await page
       .getByTestId("reconnection-countdown")
       .textContent();
-    expect(laterText).toMatch(/Reconnecting\.\.\. \(\d+s\)/);
+    expect(laterText).toMatch(RECONNECTING_COUNTDOWN_REGEX);
     const currentSeconds = Number.parseInt(
-      laterText?.match(/(\d+)s/)?.[1] ?? "0",
+      laterText?.match(SECONDS_MATCH_REGEX)?.[1] ?? "0",
       10
     );
     expect(currentSeconds).toBeGreaterThanOrEqual(2);

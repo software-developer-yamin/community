@@ -36,7 +36,6 @@ export default function CallScreen() {
   const { data: session } = authClient.useSession();
   const [audioSessionActive, setAudioSessionActive] = useState(false);
   const intentionalDisconnectRef = useRef(false);
-
   const username = session?.user?.name ?? session?.user?.email ?? "guest";
 
   const tokenQuery = useQuery(
@@ -188,6 +187,7 @@ function RoomView({
   connectTimeRef: React.MutableRefObject<number>;
 }) {
   const room = useRoomContext();
+  const { theme } = useUnistyles();
   const router = useRouter();
   const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare], {
     onlySubscribed: false,
@@ -227,6 +227,9 @@ function RoomView({
 
   // Track partner reconnection status from ParticipantMetadata events
   const [partnerReconnecting, setPartnerReconnecting] = useState(false);
+  const [partnerEndedCountdown, setPartnerEndedCountdown] = useState<
+    number | null
+  >(null);
 
   // Track connection state for reconnection handling.
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionalDisconnectRef is a stable ref
@@ -275,6 +278,7 @@ function RoomView({
       try {
         const parsed = JSON.parse(metadata) as {
           reconnectStatus?: string;
+          callEndReason?: string;
         };
         if (parsed.reconnectStatus === "reconnecting") {
           setPartnerReconnecting(true);
@@ -286,21 +290,69 @@ function RoomView({
       }
     };
 
+    // biome-ignore lint/suspicious/noExplicitAny: LiveKit event callback signature
+    const onParticipantDisconnected = (participant: any) => {
+      if (participant.identity === room.localParticipant.identity) {
+        return;
+      }
+
+      let reason = "connection_lost";
+      if (participant.metadata) {
+        try {
+          const parsed = JSON.parse(participant.metadata) as {
+            callEndReason?: string;
+          };
+          if (parsed.callEndReason === "partner_ended") {
+            reason = "partner_ended";
+          }
+        } catch {
+          const err = new Error("Failed to parse metadata");
+          console.warn(err.message);
+        }
+      }
+
+      if (reason === "partner_ended") {
+        setPartnerEndedCountdown(10);
+      } else {
+        intentionalDisconnectRef.current = true;
+        room.disconnect();
+        router.replace("call/ended?reason=connection_lost");
+      }
+    };
+
     room.on(RoomEvent.Reconnecting, onReconnecting);
     room.on(RoomEvent.Reconnected, onReconnected);
     room.on(RoomEvent.Disconnected, onDisconnected);
     room.on(RoomEvent.ParticipantMetadata, onParticipantMetadata);
+    room.on(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
 
     return () => {
       room.off(RoomEvent.Reconnecting, onReconnecting);
       room.off(RoomEvent.Reconnected, onReconnected);
       room.off(RoomEvent.Disconnected, onDisconnected);
       room.off(RoomEvent.ParticipantMetadata, onParticipantMetadata);
+      room.off(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
   }, [room, roomName]);
+
+  useEffect(() => {
+    if (partnerEndedCountdown === null) {
+      return;
+    }
+    if (partnerEndedCountdown <= 0) {
+      intentionalDisconnectRef.current = true;
+      room.disconnect();
+      router.replace("call/ended?reason=partner_ended");
+      return;
+    }
+    const timer = setTimeout(() => {
+      setPartnerEndedCountdown((prev) => (prev === null ? null : prev - 1));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [partnerEndedCountdown, room, router, intentionalDisconnectRef]);
 
   // Start/stop elapsed timer based on reconnection phase
   useEffect(() => {
@@ -501,6 +553,29 @@ function RoomView({
         />
       )}
 
+      {partnerEndedCountdown !== null && (
+        <View
+          nativeID="partner-ended-banner"
+          style={[
+            styles.banner,
+            {
+              backgroundColor: theme.colors.warning ?? "#F59E0B",
+            },
+          ]}
+        >
+          <Text
+            nativeID="partner-ended-countdown"
+            style={[
+              styles.bannerText,
+              { color: theme.colors.warningForeground ?? "#FFFFFF" },
+            ]}
+          >
+            Your partner ended the call. Returning to lobby in{" "}
+            {partnerEndedCountdown}s...
+          </Text>
+        </View>
+      )}
+
       {phase === "connection_lost" && (
         <ConnectionLostBanner onEndCall={handleEndCall} onRetry={handleRetry} />
       )}
@@ -575,9 +650,15 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
     }
   };
 
-  const leave = async () => {
+  const leave = () => {
     onLeave?.();
-    await room.disconnect();
+    const roomName = room.name;
+    room.disconnect();
+    orpc.livekit.endCall
+      .mutate({ roomName, endReason: "explicit" })
+      .catch(() => {
+        // Fire-and-forget: room cleanup best-effort
+      });
     router.replace("call/ended?reason=explicit");
   };
 
@@ -622,7 +703,7 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
             { color: theme.colors.destructiveForeground },
           ]}
         >
-          Leave
+          End Call
         </Text>
       </Pressable>
     </View>
