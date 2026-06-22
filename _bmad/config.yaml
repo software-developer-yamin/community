@@ -20,3 +20,4 @@ bad:
   model_quality: oc/deepseek-v4-flash-free
   api_five_hour_threshold: "80"
   api_seven_day_threshold: "95"
+  solo_mode: true
