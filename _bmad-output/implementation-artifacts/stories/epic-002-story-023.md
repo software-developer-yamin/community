@@ -111,3 +111,10 @@ Token refresh:
 - `apps/server/src/index.ts` — Webhook handler (verify blips don't trigger room.finished)
 - `apps/server/src/livekit/webhook.ts` — Webhook event processing
 - `packages/db/src/schema/call-record.ts` — end_reason field for connection_lost
+
+### ATDD Artifacts
+
+- **Checklist:** [atdd-checklist-epic-002-story-023](file:///home/yamin/Documents/Yamin Company/community/_bmad-output/test-artifacts/atdd-checklist-epic-002-story-023.md)
+- **API Tests:** [reconnection.spec.ts](file:///home/yamin/Documents/Yamin Company/community/tests/api/reconnection.spec.ts)
+- **E2E Tests:** [reconnection.spec.ts](file:///home/yamin/Documents/Yamin Company/community/tests/e2e/reconnection.spec.ts)
+- **Fixtures:** [livekit-fixture.ts](file:///home/yamin/Documents/Yamin Company/community/tests/fixtures/livekit-fixture.ts)

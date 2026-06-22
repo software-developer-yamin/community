@@ -37,6 +37,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
     "@community/config": "workspace:*",
+    "@playwright/test": "^1.61.0",
     "@types/bun": "catalog:",
     "husky": "latest",
     "turbo": "^2.8.12",
