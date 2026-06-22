@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1782166512698,
+      "tag": "0000_sturdy_medusa",
+      "breakpoints": true
+    }
+  ]
+}

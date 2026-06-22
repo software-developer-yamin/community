@@ -7,6 +7,7 @@ import {
   pronunciationScore,
   userProfileEmbedding,
 } from "@community/db/schema/models";
+import { userProfile } from "@community/db/schema/rebuild";
 import { env } from "@community/env/server";
 import { and, cosineDistance, desc, eq, gt, sql } from "drizzle-orm";
 import z from "zod";
@@ -277,16 +278,23 @@ export const modelsRouter = {
   matchPartners: protectedProcedure
     .input(z.object({ limit: z.number().int().min(1).max(20).default(10) }))
     .handler(async ({ input, context }) => {
-      // Load self embedding + CEFR
+      // Load self embedding + CEFR + gender profile
       const self = await db
         .select({
           embedding: userProfileEmbedding.embedding,
           cefr: cefrPlacement.level,
+          gender: userProfile.gender,
+          genderPreference: userProfile.genderPreference,
+          tier: userProfile.tier,
         })
         .from(userProfileEmbedding)
         .leftJoin(
           cefrPlacement,
           eq(cefrPlacement.userId, userProfileEmbedding.userId)
+        )
+        .leftJoin(
+          userProfile,
+          eq(userProfile.userId, userProfileEmbedding.userId)
         )
         .where(eq(userProfileEmbedding.userId, context.session.user.id))
         .orderBy(desc(cefrPlacement.createdAt))
@@ -298,6 +306,8 @@ export const modelsRouter = {
       }
       const myVec = self[0].embedding;
       const myCefr = self[0].cefr ?? "A2";
+      const myGender = self[0].gender;
+      const myGenderPref = self[0].genderPreference;
       const cefrOrder = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 } as const;
       const myLevel = cefrOrder[myCefr as keyof typeof cefrOrder] ?? 2;
 
@@ -315,12 +325,19 @@ export const modelsRouter = {
           image: user.image,
           cefr: cefrPlacement.level,
           sim: similarity,
+          gender: userProfile.gender,
+          genderPreference: userProfile.genderPreference,
+          tier: userProfile.tier,
         })
         .from(userProfileEmbedding)
         .innerJoin(user, eq(user.id, userProfileEmbedding.userId))
         .leftJoin(
           cefrPlacement,
           eq(cefrPlacement.userId, userProfileEmbedding.userId)
+        )
+        .leftJoin(
+          userProfile,
+          eq(userProfile.userId, userProfileEmbedding.userId)
         )
         .where(
           and(
@@ -331,14 +348,31 @@ export const modelsRouter = {
         .orderBy(desc(similarity))
         .limit(input.limit * 2); // over-fetch then filter
 
-      // Apply CEFR ±1 filter + recency in JS
-      const partners = nearby
+      // Apply CEFR ±1 filter + mutual gender filter + recency in JS
+      let genderFilteredCount = 0;
+      const cefrFiltered = nearby.filter((p) => {
+        if (!p.cefr) {
+          return true;
+        }
+        const lvl = cefrOrder[p.cefr as keyof typeof cefrOrder];
+        return Math.abs(lvl - myLevel) <= 1;
+      });
+
+      const partners = cefrFiltered
         .filter((p) => {
-          if (!p.cefr) {
-            return true; // unknown = allow
+          if (myGenderPref && p.gender && myGenderPref !== p.gender) {
+            genderFilteredCount++;
+            return false;
           }
-          const lvl = cefrOrder[p.cefr as keyof typeof cefrOrder];
-          return Math.abs(lvl - myLevel) <= 1;
+          if (
+            p.genderPreference &&
+            myGender &&
+            p.genderPreference !== myGender
+          ) {
+            genderFilteredCount++;
+            return false;
+          }
+          return true;
         })
         .slice(0, input.limit)
         .map((p) => ({
@@ -348,6 +382,10 @@ export const modelsRouter = {
           cefr: p.cefr,
           sim: p.sim,
         }));
+
+      console.log(
+        `[matchPartners] user=${context.session.user.id} cefrCandidates=${cefrFiltered.length} genderFiltered=${genderFilteredCount} returned=${partners.length} totalNearby=${nearby.length}`
+      );
 
       return { partners, reason: "ok" as const };
     }),

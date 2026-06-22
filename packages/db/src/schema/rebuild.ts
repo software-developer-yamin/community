@@ -75,6 +75,7 @@ export const userProfile = pgTable("user_profile", {
     .primaryKey()
     .references(() => user.id, { onDelete: "cascade" }),
   gender: genderEnum("gender"),
+  genderPreference: genderEnum("gender_preference"), // null = no filter; values match genderEnum
   nativeLanguage: text("native_language").default("bn").notNull(), // bn | hi | ur | en | ta | te
   tier: tierEnum("tier").default("free").notNull(),
   tierExpiresAt: timestamp("tier_expires_at"),

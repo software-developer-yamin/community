@@ -33,12 +33,26 @@ export const rebuildRouter = {
         gender: z
           .enum(["male", "female", "nonbinary", "undisclosed"])
           .optional(),
+        genderPreference: z
+          .enum(["male", "female", "nonbinary", "undisclosed"])
+          .optional(),
         nativeLanguage: z.string().max(30).optional(),
         tier: z.enum(["free", "premium", "premium_plus"]).optional(),
         phoneNumber: z.string().max(20).optional(),
       })
     )
     .handler(async ({ input, context }) => {
+      if (input.genderPreference !== undefined) {
+        const profile = await db
+          .select({ tier: userProfile.tier })
+          .from(userProfile)
+          .where(eq(userProfile.userId, context.session.user.id))
+          .limit(1);
+        if (profile[0]?.tier !== "premium_plus") {
+          throw new Error("Gender preference requires premium_plus tier");
+        }
+      }
+
       await db
         .insert(userProfile)
         .values({
