@@ -13,15 +13,15 @@ development_status:
   1-4-google-oauth-integration: done
   epic-1-retrospective: optional
 
-  epic-2: in-progress
+  epic-2: done
   2-1-server-managed-room-lifecycle: done
   2-2-ice-restart-reconnection-1-5s-blips: done
   2-3-full-reconnection-5-30s-blips: done
-  2-4-explicit-call-end: in-progress
+  2-4-explicit-call-end: done
   epic-2-retrospective: optional
 
-  epic-3: backlog
-  3-1-gender-filter-enforcement: backlog
+  epic-3: in-progress
+  3-1-gender-filter-enforcement: done
   3-2-native-language-field: backlog
   3-3-match-timeout-with-honest-state: backlog
   epic-3-retrospective: optional

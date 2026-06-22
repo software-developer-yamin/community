@@ -1,6 +1,6 @@
 # Dependency Graph
 
-_Generated: 2026-06-20_
+_Generated: 2026-06-23_
 _Repo: `software-developer-yamin/community`_
 _Default branch: `master`_
 _Baseline commit: `81cc3c8205585c1852037ba57f59796698e7daa4`_
@@ -18,14 +18,14 @@ _Baseline commit: `81cc3c8205585c1852037ba57f59796698e7daa4`_
 | 1.3 | phone-number-authentication-with-otp | [#3][i3] | — | **done** | 1.1 |
 | 1.4 | google-oauth-integration | [#4][i4] | — | **done** | 1.1 |
 
-### Epic 2: Call Reliability & Reconnection (in-progress)
+### Epic 2: Call Reliability & Reconnection (done)
 
 | Story | Slug | GH Issue | PR | Status | Depends On |
 |-------|------|----------|----|--------|------------|
 | 2.1 | server-managed-room-lifecycle | [#5][i5] | — | **done** | Epic 1 |
 | 2.2 | ice-restart-reconnection-1-5s-blips | [#6][i6] | [#42][p42] | **done** | 2.1 |
-| 2.3 | full-reconnection-5-30s-blips | [#7][i7] | — | backlog | 2.2 |
-| 2.4 | explicit-call-end | [#8][i8] | — | backlog | 2.2 |
+| 2.3 | full-reconnection-5-30s-blips | [#7][i7] | [#55][p55] | **done** | 2.2 |
+| 2.4 | explicit-call-end | [#8][i8] | [#56][p56] | **done** | 2.2 |
 
 ### Epic 3: Matchmaking & Filtering (backlog)
 
@@ -96,22 +96,19 @@ Rules: a story is Ready to Work when:
 
 | Rank | Story | Slug | Epic | Why Ready |
 |------|-------|------|------|-----------|
-| 1 | **2.2** | ice-restart-reconnection-1-5s-blips | Epic 2 | Depends on 2.1 (done). Epic 1 complete (all merged). |
-| 2 | 2.3 | full-reconnection-5-30s-blips | Epic 2 | Depends on 2.2 (will be ready after 2.2 is done). |
-| 3 | 2.4 | explicit-call-end | Epic 2 | Depends on 2.2 (will be ready after 2.2 is done). |
-
-### Pragmatic Assessment (if 1.3/1.4 merge)
-
-| Rank | Story | Slug | Epic | Why Ready |
-|------|-------|------|------|-----------|
-| 1 | **2.2** | ice-restart-reconnection-1-5s-blips | Epic 2 | Depends on 2.1 (done). Epic 1 would be complete. |
+| 1 | **3.1** | gender-filter-enforcement | Epic 3 | Depends on Epic 1 (done). Epics 1-2 fully complete. |
+| 2 | 3.2 | native-language-field | Epic 3 | Depends on Epic 1 (done). Epics 1-2 fully complete. |
+| 3 | 3.3 | match-timeout-with-honest-state | Epic 3 | Depends on 3.1, 3.2 (ready after those done). |
 
 ### Notes
 
 - **Story 1.1** was completed manually (outside BAD pipeline): code exists, configs verified. No PR was created. Treated as completed for dependency purposes.
 - **Story 2.1** was marked done while 1.3/1.4 were still in-review — dependency on Epic 1 satisfied by core auth foundation (1.1, 1.2).
 - **MAX_PARALLEL_STORIES=1**, so only one story will be picked per batch.
-- Epic 1 is now fully complete — 1.3 and 1.4 have been merged into master.
+- Epic 1 (Auth) fully complete — 1.3 and 1.4 merged into master.
+- Epic 2 (Call Reliability) fully complete — 2.3 (PR #55) and 2.4 (PR #56) merged into master.
+- Epics 1-2 done → Epics 3-7 now unblocked.
+- Epic 3 (Matchmaking) is the next epic in sequence.
 
 ---
 
@@ -153,3 +150,6 @@ Rules: a story is Ready to Work when:
 [i36]: https://github.com/software-developer-yamin/community/issues/36
 [i37]: https://github.com/software-developer-yamin/community/issues/37
 [i38]: https://github.com/software-developer-yamin/community/issues/38
+[p42]: https://github.com/software-developer-yamin/community/pull/42
+[p55]: https://github.com/software-developer-yamin/community/pull/55
+[p56]: https://github.com/software-developer-yamin/community/pull/56
