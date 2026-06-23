@@ -22,6 +22,8 @@ export type CallDurationClass = "short" | "normal";
 export type EndReason =
   | "disconnect"
   | "explicit"
+  | "skip"
+  | "partner_skipped"
   | "timeout"
   | "connection_lost"
   | "partner_ended";

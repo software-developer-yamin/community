@@ -17,6 +17,8 @@ export const callRecord = pgTable("call_record", {
     enum: [
       "disconnect",
       "explicit",
+      "skip",
+      "partner_skipped",
       "timeout",
       "connection_lost",
       "partner_ended",

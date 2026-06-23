@@ -1,13 +1,20 @@
 import { db } from "@community/db";
-import { strikeEvent, userProfile } from "@community/db/schema/rebuild";
+import { callRecord } from "@community/db/schema/call";
+import {
+  callRoom,
+  strikeEvent,
+  userProfile,
+} from "@community/db/schema/rebuild";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { protectedProcedure } from "../index";
+import { recordSkip } from "../lib/skip-tracker";
 import {
   computeActiveStrikes24h,
   STRIKE_DECAY_DAYS,
 } from "../lib/strike-logic";
+import { roomClient } from "./livekit";
 
 // ─── Helpers ───────────────────────────────────────────────────────────
 
@@ -114,6 +121,113 @@ export const moderationRouter = {
         state,
         cooldownUntil,
         flaggedForReview,
+      };
+    }),
+
+  /**
+   * Skip the current call.
+   *
+   * Rate-limited (max 1 skip per 5s per user). After 3 skips in a session a
+   * `showNudge` flag is returned so the client can show a gentle reminder.
+   * The partner is notified via LiveKit participant metadata with
+   * `callEndReason: "partner_skipped"`.
+   *
+   * Does NOT create a strike — skipping is allowed but monitored.
+   */
+  skipCall: protectedProcedure
+    .input(z.object({ roomName: z.string().min(1).max(100) }))
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+
+      // ── Find the active room ──────────────────────────────────
+      const rooms = await db
+        .select()
+        .from(callRoom)
+        .where(
+          and(
+            eq(callRoom.roomName, input.roomName),
+            eq(callRoom.status, "active")
+          )
+        )
+        .limit(1);
+
+      const room = rooms[0];
+      if (!room) {
+        throw new Error("NOT_FOUND: No active room found with that name");
+      }
+
+      // ── Verify participant ────────────────────────────────────
+      if (room.participantA !== userId && room.participantB !== userId) {
+        throw new Error("FORBIDDEN: You are not a participant of this room");
+      }
+
+      // ── Rate-limit check ──────────────────────────────────────
+      const skipResult = recordSkip(userId);
+      if (skipResult.isRateLimited) {
+        return {
+          success: false,
+          isRateLimited: true,
+          showNudge: false,
+          count: skipResult.count,
+        };
+      }
+
+      // ── Notify partner via LiveKit metadata ───────────────────
+      try {
+        const participants = await roomClient.listParticipants(input.roomName);
+        const partnerIdentity = participants.find(
+          (p) =>
+            p.identity !== context.session.user.name &&
+            p.identity !== context.session.user.email
+        );
+        if (partnerIdentity) {
+          await roomClient.updateParticipant(
+            input.roomName,
+            partnerIdentity.identity,
+            JSON.stringify({ callEndReason: "partner_skipped" })
+          );
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      } catch (err) {
+        console.warn("Failed to notify partner of skip:", err);
+      }
+
+      // ── Delete the LiveKit room ──────────────────────────────
+      await roomClient.deleteRoom(input.roomName).catch(() => {
+        // Room already deleted or doesn't exist — nothing to clean up
+      });
+
+      // ── Record in DB ─────────────────────────────────────────
+      const durationSec = room.createdAt
+        ? Math.floor((Date.now() - room.createdAt.getTime()) / 1000)
+        : undefined;
+
+      await db
+        .update(callRoom)
+        .set({
+          status: "ended",
+          endReason: "skip",
+          endedBy: userId,
+          duration: durationSec,
+          endedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(callRoom.id, room.id));
+
+      await db.insert(callRecord).values({
+        roomName: input.roomName,
+        matchId: room.matchId,
+        endedByUserId: userId,
+        endReason: "skip",
+        participantCount: 2,
+        durationSec,
+      });
+
+      return {
+        success: true,
+        isRateLimited: false,
+        showNudge: skipResult.showNudge,
+        count: skipResult.count,
       };
     }),
 };
