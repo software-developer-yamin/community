@@ -1,10 +1,15 @@
+import { NATIVE_LANG_MAP } from "@community/api/lib/native-lang";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { StyleSheet } from "react-native-unistyles";
-
-import { NATIVE_LANG_MAP } from "@community/api/lib/native-lang";
 
 import { Container } from "@/components/container";
 import { GoogleSignIn } from "@/components/google-sign-in";
@@ -92,10 +97,7 @@ export default function Home() {
                         ]}
                       >
                         {updateProfile.isPending && selected ? (
-                          <ActivityIndicator
-                            color="#fff"
-                            size="small"
-                          />
+                          <ActivityIndicator color="#fff" size="small" />
                         ) : (
                           <Text
                             style={[

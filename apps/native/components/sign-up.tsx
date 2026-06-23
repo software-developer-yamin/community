@@ -1,3 +1,4 @@
+import { NATIVE_LANG_MAP } from "@community/api/lib/native-lang";
 import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import {
@@ -9,8 +10,6 @@ import {
 } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 import z from "zod";
-
-import { NATIVE_LANG_MAP } from "@community/api/lib/native-lang";
 
 import { authClient } from "@/lib/auth-client";
 import { orpc, queryClient } from "@/utils/orpc";
@@ -191,7 +190,9 @@ export function SignUp() {
                     return (
                       <TouchableOpacity
                         key={lang.key}
-                        onPress={() => setNativeLanguage(selected ? "" : lang.value)}
+                        onPress={() =>
+                          setNativeLanguage(selected ? "" : lang.value)
+                        }
                         style={[
                           styles.langChip,
                           selected && styles.langChipSelected,

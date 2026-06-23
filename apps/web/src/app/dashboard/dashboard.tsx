@@ -65,13 +65,12 @@ export default function Dashboard({ session }: DashboardProps) {
   ) => {
     try {
       await updateProfile({ [field]: value ?? null });
-      toast.success(
-        field === "gender"
-          ? "Gender identity updated"
-          : field === "nativeLanguage"
-            ? "Native language updated"
-            : "Gender preference updated"
-      );
+      const messages: Record<string, string> = {
+        gender: "Gender identity updated",
+        nativeLanguage: "Native language updated",
+        genderPreference: "Gender preference updated",
+      };
+      toast.success(messages[field] ?? "Profile updated");
       queryClient.invalidateQueries({
         queryKey: orpc.rebuild.getProfile.key(),
       });
@@ -137,12 +136,12 @@ export default function Dashboard({ session }: DashboardProps) {
         <CardContent>
           <select
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            value={nativeLanguage}
             onChange={(e) => {
               const value = e.target.value;
               setNativeLanguage(value);
               handleSave("nativeLanguage", value);
             }}
+            value={nativeLanguage}
           >
             {NATIVE_LANG_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

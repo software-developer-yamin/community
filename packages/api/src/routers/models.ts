@@ -244,11 +244,10 @@ export const modelsRouter = {
       }
 
       // Stored value (e.g. "bangla") → display name for embedding prompt (e.g. "Bangla")
-      const nativeDisplay =
-        profileRow?.nativeLanguage
-          ? profileRow.nativeLanguage.charAt(0).toUpperCase() +
-            profileRow.nativeLanguage.slice(1)
-          : "Bangla";
+      const nativeDisplay = profileRow?.nativeLanguage
+        ? profileRow.nativeLanguage.charAt(0).toUpperCase() +
+          profileRow.nativeLanguage.slice(1)
+        : "Bangla";
 
       const profileText = PROFILE_TEMPLATE({
         cefr: "B1", // TODO: load from cefrPlacement table

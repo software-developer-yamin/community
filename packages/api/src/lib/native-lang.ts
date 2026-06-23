@@ -55,13 +55,15 @@ const COUNTRY_LANG_MAP: Record<string, string> = {
  * Returns the normalized value (e.g. "bangla") or null if unknown.
  */
 export function detectDefaultLang(phoneNumber: string | null): string | null {
-  if (!phoneNumber) return null;
+  if (!phoneNumber) {
+    return null;
+  }
 
   const normalized = phoneNumber.replace(/\s+/g, "");
   // Sort prefixes longest-first so "+880" wins before "+88"
-  const prefix = Object.keys(COUNTRY_LANG_MAP).sort(
-    (a, b) => b.length - a.length
-  ).find((p) => normalized.startsWith(p));
+  const prefix = Object.keys(COUNTRY_LANG_MAP)
+    .sort((a, b) => b.length - a.length)
+    .find((p) => normalized.startsWith(p));
 
   return prefix ? (COUNTRY_LANG_MAP[prefix] ?? null) : null;
 }

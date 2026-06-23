@@ -49,9 +49,7 @@ test.describe("Native Language Field — API Contract Tests (ATDD, RED PHASE)", 
       });
       expect(res.ok()).toBeTruthy();
 
-      const profileRes = await request.post(
-        `${API_BASE}/rebuild/getProfile`
-      );
+      const profileRes = await request.post(`${API_BASE}/rebuild/getProfile`);
       const profile = await profileRes.json();
       expect(profile).toHaveProperty("nativeLanguage", lang);
     }

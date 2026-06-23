@@ -21,9 +21,9 @@ development_status:
   epic-2-retrospective: optional
 
   epic-3: in-progress
-  3-1-gender-filter-enforcement: done
-  3-2-native-language-field: atdd-done
-  3-3-match-timeout-with-honest-state: backlog
+   3-1-gender-filter-enforcement: done
+   3-2-native-language-field: done
+   3-3-match-timeout-with-honest-state: backlog
   epic-3-retrospective: optional
 
   epic-4: backlog

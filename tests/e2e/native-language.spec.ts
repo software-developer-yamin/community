@@ -1,10 +1,24 @@
 import { expect, test } from "@playwright/test";
 
-const LANGUAGE_OPTIONS = ["বাংলা", "English", "हिन्दी", "العربية", "Español", "Français"];
-const LANGUAGE_PICKER_HEADING = /select your native language|what.is.your.native.language/i;
+const LANGUAGE_OPTIONS = [
+  "বাংলা",
+  "English",
+  "हिन्दी",
+  "العربية",
+  "Español",
+  "Français",
+];
+const LANGUAGE_PICKER_HEADING =
+  /select your native language|what.is.your.native.language/i;
 const LANGUAGE_FIELD_LABEL = /native language|language/i;
 const CONTINUE_BUTTON = /continue|next/i;
 const SAVE_BUTTON = /save|update/i;
+const PASSWORD_FIELD = /password/i;
+const EMAIL_FIELD = /email/i;
+const SIGN_IN_BUTTON = /sign in|log in/i;
+const DASHBOARD_OR_HOME = /dashboard|home/;
+const SAVED_OR_UPDATED = /saved|updated|success/i;
+const SAVED_MATCH = /saved|updated/i;
 
 test.describe("Native Language Field — E2E User Journeys (ATDD, RED PHASE)", () => {
   // =========================================================================
@@ -47,7 +61,7 @@ test.describe("Native Language Field — E2E User Journeys (ATDD, RED PHASE)", (
     // Step 3: Complete onboarding
     // EXPECTED: Selected language saved via updateProfile API
     // ACTUAL (red phase): No API call made → language not persisted → fails
-    await expect(page).toHaveURL(/dashboard|home/);
+    await expect(page).toHaveURL(DASHBOARD_OR_HOME);
   });
 
   // =========================================================================
@@ -64,10 +78,10 @@ test.describe("Native Language Field — E2E User Journeys (ATDD, RED PHASE)", (
     // Step 1: Login and go to profile settings
     await page.goto("/login");
     await page
-      .getByRole("textbox", { name: /email/i })
+      .getByRole("textbox", { name: EMAIL_FIELD })
       .fill("learner@example.com");
-    await page.getByLabel(/password/i).fill("TestPass123!");
-    await page.getByRole("button", { name: /sign in|log in/i }).click();
+    await page.getByLabel(PASSWORD_FIELD).fill("TestPass123!");
+    await page.getByRole("button", { name: SIGN_IN_BUTTON }).click();
 
     // Step 2: Navigate to settings
     await page.goto("/settings/profile");
@@ -87,10 +101,10 @@ test.describe("Native Language Field — E2E User Journeys (ATDD, RED PHASE)", (
     // Step 1: Login and go to settings
     await page.goto("/login");
     await page
-      .getByRole("textbox", { name: /email/i })
+      .getByRole("textbox", { name: EMAIL_FIELD })
       .fill("learner@example.com");
-    await page.getByLabel(/password/i).fill("TestPass123!");
-    await page.getByRole("button", { name: /sign in|log in/i }).click();
+    await page.getByLabel(PASSWORD_FIELD).fill("TestPass123!");
+    await page.getByRole("button", { name: SIGN_IN_BUTTON }).click();
     await page.goto("/settings/profile");
 
     // Step 2: Change language
@@ -99,15 +113,13 @@ test.describe("Native Language Field — E2E User Journeys (ATDD, RED PHASE)", (
     await page.getByRole("button", { name: SAVE_BUTTON }).click();
 
     // Step 3: Verify save confirmation
-    await expect(page.getByText(/saved|updated|success/i)).toBeVisible({
-      timeout: 5_000,
+    await expect(page.getByText(SAVED_OR_UPDATED)).toBeVisible({
+      timeout: 5000,
     });
 
     // Step 4: Reload and verify persistence
     await page.reload();
-    await expect(
-      page.getByLabel(LANGUAGE_FIELD_LABEL)
-    ).toHaveValue("Français");
+    await expect(page.getByLabel(LANGUAGE_FIELD_LABEL)).toHaveValue("Français");
     // EXPECTED: Language change persists across reloads
     // ACTUAL (red phase): No save handler → fails
   });
@@ -150,10 +162,10 @@ test.describe("Native Language Field — E2E User Journeys (ATDD, RED PHASE)", (
     // Step 1: Login and go to settings
     await page.goto("/login");
     await page
-      .getByRole("textbox", { name: /email/i })
+      .getByRole("textbox", { name: EMAIL_FIELD })
       .fill("learner@example.com");
-    await page.getByLabel(/password/i).fill("TestPass123!");
-    await page.getByRole("button", { name: /sign in|log in/i }).click();
+    await page.getByLabel(PASSWORD_FIELD).fill("TestPass123!");
+    await page.getByRole("button", { name: SIGN_IN_BUTTON }).click();
 
     // Step 2: Navigate to settings and change language
     await page.goto("/settings/profile");
@@ -161,8 +173,8 @@ test.describe("Native Language Field — E2E User Journeys (ATDD, RED PHASE)", (
     await page.getByRole("button", { name: SAVE_BUTTON }).click();
 
     // Step 3: Check success — language saved
-    await expect(page.getByText(/saved|updated/i)).toBeVisible({
-      timeout: 5_000,
+    await expect(page.getByText(SAVED_MATCH)).toBeVisible({
+      timeout: 5000,
     });
 
     // Step 4: Verify embedding was recomputed
