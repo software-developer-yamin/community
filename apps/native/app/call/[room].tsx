@@ -624,6 +624,8 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
   const [camEnabled, setCamEnabled] = useState(isCameraEnabled);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
 
+  const skipMutation = useMutation(orpc.moderation.skipCall.mutationOptions());
+
   useEffect(() => {
     setMicEnabled(isMicrophoneEnabled);
     setCamEnabled(isCameraEnabled);
@@ -662,6 +664,19 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
     router.replace("call/ended?reason=explicit");
   };
 
+  const handleSkip = () => {
+    const roomName = room.name;
+    room.disconnect();
+    skipMutation
+      .mutateAsync({ roomName })
+      .then(() => {
+        router.replace("call/matching");
+      })
+      .catch(() => {
+        router.replace("call/ended?reason=explicit");
+      });
+  };
+
   return (
     <View style={[styles.controls, { borderTopColor: theme.colors.border }]}>
       <ControlButton
@@ -688,6 +703,21 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
         onColor={theme.colors.primary}
         onPress={flipCam}
       />
+      <Pressable
+        onPress={handleSkip}
+        style={[styles.skipBtn, { borderColor: theme.colors.border }]}
+      >
+        <Ionicons
+          color={theme.colors.mutedForeground}
+          name="play-forward"
+          size={22}
+        />
+        <Text
+          style={[styles.skipText, { color: theme.colors.mutedForeground }]}
+        >
+          Skip
+        </Text>
+      </Pressable>
       <Pressable
         onPress={leave}
         style={[styles.leaveBtn, { backgroundColor: theme.colors.destructive }]}
@@ -944,6 +974,19 @@ const styles = StyleSheet.create((theme) => ({
   leaveText: {
     fontSize: theme.fontSize.base,
     fontWeight: "600",
+  },
+  skipBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    height: 48,
+    borderWidth: 1,
+    borderRadius: 24,
+  },
+  skipText: {
+    fontSize: theme.fontSize.base,
+    fontWeight: "500",
   },
   banner: {
     paddingVertical: 8,

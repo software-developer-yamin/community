@@ -18,7 +18,7 @@ import {
   UpdateParticipantStatusInput,
 } from "../validators/livekit";
 
-const roomClient = new RoomServiceClient(
+export const roomClient = new RoomServiceClient(
   env.LIVEKIT_URL,
   env.LIVEKIT_API_KEY,
   env.LIVEKIT_API_SECRET
