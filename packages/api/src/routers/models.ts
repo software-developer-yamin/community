@@ -225,21 +225,36 @@ export const modelsRouter = {
     .input(z.object({ profileId: z.string().optional() }))
     .handler(async ({ input, context }) => {
       const userId = input.profileId ?? context.session.user.id;
-      // Load profile (assumes userProfile table exists from F8.1 — fall back to user.name)
-      const u = await db
-        .select()
-        .from(user)
-        .where(eq(user.id, userId))
-        .limit(1);
-      if (u.length === 0) {
+      const [u, profileRow] = await Promise.all([
+        db
+          .select()
+          .from(user)
+          .where(eq(user.id, userId))
+          .limit(1)
+          .then((r) => r[0]),
+        db
+          .select({ nativeLanguage: userProfile.nativeLanguage })
+          .from(userProfile)
+          .where(eq(userProfile.userId, userId))
+          .limit(1)
+          .then((r) => r[0]),
+      ]);
+      if (!u) {
         throw new Error("user not found");
       }
+
+      // Stored value (e.g. "bangla") → display name for embedding prompt (e.g. "Bangla")
+      const nativeDisplay =
+        profileRow?.nativeLanguage
+          ? profileRow.nativeLanguage.charAt(0).toUpperCase() +
+            profileRow.nativeLanguage.slice(1)
+          : "Bangla";
 
       const profileText = PROFILE_TEMPLATE({
         cefr: "B1", // TODO: load from cefrPlacement table
         interests: [], // TODO: load from userInterests
         goals: [], // TODO: load from userGoals
-        native: "Bangla",
+        native: nativeDisplay,
         age: 25,
         style: "gentle correction, slow pace",
       });

@@ -1,7 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "expo-router";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
+
+import { NATIVE_LANG_MAP } from "@community/api/lib/native-lang";
 
 import { Container } from "@/components/container";
 import { GoogleSignIn } from "@/components/google-sign-in";
@@ -15,6 +18,27 @@ export default function Home() {
   const healthCheck = useQuery(orpc.healthCheck.queryOptions());
   const privateData = useQuery(orpc.privateData.queryOptions());
   const { data: session } = authClient.useSession();
+  const profile = useQuery(orpc.rebuild.getProfile.queryOptions());
+
+  const [pendingLang, setPendingLang] = useState<string | null>(null);
+
+  const updateProfile = useMutation(
+    orpc.rebuild.updateProfile.mutationOptions({
+      async onSuccess() {
+        setPendingLang(null);
+        profile.refetch();
+
+        // Trigger embedding recompute on language change
+        try {
+          await orpc.models.recomputeEmbedding({});
+        } catch {
+          // Non-critical; old embedding remains until next interaction
+        }
+      },
+    })
+  );
+
+  const currentLang = profile.data?.nativeLanguage ?? "";
 
   return (
     <Container>
@@ -40,6 +64,53 @@ export default function Home() {
               >
                 <Text style={styles.signOutButtonText}>Sign Out</Text>
               </TouchableOpacity>
+            </View>
+          ) : null}
+
+          {session?.user ? (
+            <View style={styles.settingsCard}>
+              <Text style={styles.cardTitle}>Profile Settings</Text>
+
+              <View style={styles.settingRow}>
+                <Text style={styles.settingLabel}>Native Language</Text>
+                <View style={styles.langRow}>
+                  {NATIVE_LANG_MAP.map((lang) => {
+                    const selected =
+                      (pendingLang ?? currentLang) === lang.value;
+                    return (
+                      <TouchableOpacity
+                        key={lang.key}
+                        onPress={() => {
+                          setPendingLang(lang.value);
+                          updateProfile.mutate({
+                            nativeLanguage: lang.value,
+                          });
+                        }}
+                        style={[
+                          styles.langChip,
+                          selected && styles.langChipSelected,
+                        ]}
+                      >
+                        {updateProfile.isPending && selected ? (
+                          <ActivityIndicator
+                            color="#fff"
+                            size="small"
+                          />
+                        ) : (
+                          <Text
+                            style={[
+                              styles.langChipText,
+                              selected && styles.langChipTextSelected,
+                            ]}
+                          >
+                            {lang.label}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
             </View>
           ) : null}
           <View style={styles.apiStatusCard}>
@@ -231,5 +302,50 @@ const styles = StyleSheet.create((theme) => ({
   joinCallButtonText: {
     color: theme?.colors?.primaryForeground,
     fontWeight: "500",
+  },
+  settingsCard: {
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme?.colors?.border,
+  },
+  settingRow: {
+    marginBottom: 8,
+  },
+  settingLabel: {
+    color: theme?.colors?.mutedForeground,
+    fontSize: 13,
+    fontWeight: "500",
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  langRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  langChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: theme?.colors?.border,
+    minWidth: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  langChipSelected: {
+    backgroundColor: theme?.colors?.primary,
+    borderColor: theme?.colors?.primary,
+  },
+  langChipText: {
+    fontSize: 14,
+    color: theme?.colors?.typography,
+  },
+  langChipTextSelected: {
+    color: theme?.colors?.primaryForeground,
+    fontWeight: "600",
   },
 }));

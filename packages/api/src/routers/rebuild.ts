@@ -14,6 +14,7 @@ import {
 import { and, desc, eq } from "drizzle-orm";
 import z from "zod";
 
+import { isValidNativeLang } from "../lib/native-lang";
 import { adminProcedure, protectedProcedure } from "../index";
 
 export const rebuildRouter = {
@@ -36,7 +37,9 @@ export const rebuildRouter = {
         genderPreference: z
           .enum(["male", "female", "nonbinary", "undisclosed"])
           .optional(),
-        nativeLanguage: z.string().max(30).optional(),
+        nativeLanguage: z.string().refine((v) => isValidNativeLang(v), {
+          message: "Invalid native language",
+        }).optional(),
         tier: z.enum(["free", "premium", "premium_plus"]).optional(),
         phoneNumber: z.string().max(20).optional(),
       })
