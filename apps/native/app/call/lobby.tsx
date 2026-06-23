@@ -86,6 +86,18 @@ export default function LobbyScreen() {
 
       {session?.user ? (
         <>
+          {/* Find a Match via quick matching */}
+          <Link asChild href="/call/matching">
+            <TouchableOpacity
+              style={[
+                styles.matchButton,
+                { backgroundColor: theme.colors.primary },
+              ]}
+            >
+              <Text style={styles.matchButtonText}>Find a Match</Text>
+            </TouchableOpacity>
+          </Link>
+
           {/* Create Room */}
           <View
             style={[styles.createSection, { borderColor: theme.colors.border }]}
@@ -190,6 +202,18 @@ const styles = StyleSheet.create((theme) => ({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  matchButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  matchButtonText: {
+    color: "#fff",
+    fontSize: theme.fontSize.lg,
+    fontWeight: "700",
   },
   createSection: {
     borderWidth: 1,
