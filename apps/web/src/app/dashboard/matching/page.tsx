@@ -72,7 +72,7 @@ export default function MatchingPage() {
   elapsedRef.current = elapsed;
 
   const matchQuery = useQuery({
-    ...orpc.models.matchPartners.queryOptions({ limit: 1 }),
+    ...orpc.models.matchPartners.queryOptions({ input: { limit: 1 } }),
     refetchInterval: 5000,
   });
 

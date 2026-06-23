@@ -2,10 +2,11 @@ import { db } from "@community/db";
 import { callRecord } from "@community/db/schema/call";
 import {
   callRoom,
+  partnerReport,
   strikeEvent,
   userProfile,
 } from "@community/db/schema/rebuild";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { protectedProcedure } from "../index";
@@ -96,6 +97,7 @@ export const moderationRouter = {
           moderationState: userProfile.moderationState,
           cooldownUntil: userProfile.cooldownUntil,
           strikeCount: userProfile.strikeCount,
+          flaggedForReview: userProfile.flaggedForReview,
         })
         .from(userProfile)
         .where(eq(userProfile.userId, userId))
@@ -114,7 +116,8 @@ export const moderationRouter = {
           ? profile.cooldownUntil.toISOString()
           : null;
 
-      const flaggedForReview = active24h >= 10;
+      // Read flaggedForReview from persisted DB profile (set when a partner reports this user)
+      const flaggedForReview = profile?.flaggedForReview === 1;
 
       return {
         strikeCount: nonVoidedStrikes.length,
@@ -229,5 +232,119 @@ export const moderationRouter = {
         showNudge: skipResult.showNudge,
         count: skipResult.count,
       };
+    }),
+
+  /**
+   * Report a partner after a call ends.
+   *
+   * Sets the flaggedForReview flag on the partner's profile so that moderators
+   * can review the call. Also records a strike if the reason indicates abuse
+   * (manual strike not auto-decayed; tied to the report).
+   */
+  reportPartner: protectedProcedure
+    .input(
+      z.object({
+        roomName: z.string().min(1).max(100),
+        reason: z.enum([
+          "non_participation",
+          "abuse",
+          "technical_failure",
+          "other",
+        ]),
+        details: z.string().max(500).optional(),
+      })
+    )
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+
+      // ── Find the room ──────────────────────────────────────────
+      const rooms = await db
+        .select()
+        .from(callRoom)
+        .where(
+          and(
+            eq(callRoom.roomName, input.roomName),
+            eq(callRoom.status, "ended")
+          )
+        )
+        .limit(1);
+
+      const room = rooms[0];
+      if (!room) {
+        throw new Error("NOT_FOUND: No ended room found with that name");
+      }
+
+      // ── Verify participant ────────────────────────────────────
+      const partnerId =
+        room.participantA === userId ? room.participantB : room.participantA;
+
+      if (!partnerId) {
+        throw new Error("BAD_STATE: No partner in this room");
+      }
+
+      // ── Check for existing report (one report per room per user) ──
+      const existing = await db
+        .select({ id: partnerReport.id })
+        .from(partnerReport)
+        .where(
+          and(
+            eq(partnerReport.reporterId, userId),
+            eq(partnerReport.callRoomId, room.id)
+          )
+        )
+        .limit(1)
+        .then((r) => r[0] ?? null);
+
+      if (existing) {
+        return { success: false, alreadyReported: true };
+      }
+
+      // ── Insert the report ─────────────────────────────────────
+      const reportId = crypto.randomUUID();
+      await db.insert(partnerReport).values({
+        id: reportId,
+        reporterId: userId,
+        partnerId,
+        callRoomId: room.id,
+        reason: input.reason,
+        details: input.details ?? null,
+      });
+
+      // ── Void the reporter's strike for this call ──────────────
+      // If the reporter had a short-disconnect strike for this room,
+      // void it — the report serves as the appeal.
+      await db
+        .update(strikeEvent)
+        .set({
+          voidedAt: new Date(),
+          voidedReason: "partner_reported",
+          reportId,
+        })
+        .where(
+          and(
+            eq(strikeEvent.userId, userId),
+            eq(strikeEvent.callRoomId, room.id),
+            eq(strikeEvent.triggerType, "short_disconnect"),
+            sql`voided_at IS NULL`
+          )
+        );
+
+      // ── Flag the partner's profile for review ─────────────────
+      await db
+        .update(userProfile)
+        .set({ flaggedForReview: 1, updatedAt: new Date() })
+        .where(eq(userProfile.userId, partnerId));
+
+      // ── If abuse, record a report-linked strike ───────────────
+      if (input.reason === "abuse") {
+        await db.insert(strikeEvent).values({
+          userId: partnerId,
+          triggerType: "reported",
+          callDuration: room.duration ?? 0,
+          callRoomId: room.id,
+        });
+      }
+
+      return { success: true, alreadyReported: false };
     }),
 };

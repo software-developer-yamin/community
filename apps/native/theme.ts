@@ -1,8 +1,10 @@
 const sharedColors = {
   success: "#22C55E",
+  successForeground: "#155724",
   destructive: "#EF4444",
   destructiveForeground: "#FFFFFF",
   warning: "#F59E0B",
+  warningForeground: "#FFFFFF",
   info: "#3B82F6",
 } as const;
 

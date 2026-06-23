@@ -4,7 +4,6 @@ import { Button } from "@community/ui/components/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-
 import { authClient } from "@/lib/auth-client";
 
 export default function GoogleSignIn() {
@@ -22,7 +21,7 @@ export default function GoogleSignIn() {
           router.push("/dashboard");
           toast.success("Signed in with Google");
         },
-        onError: (error) => {
+        onError: (error: { error?: { message?: string } }) => {
           console.error("Google sign-in failed", error);
           setLoading(false);
           toast.error(error.error?.message || "Failed to sign in with Google");

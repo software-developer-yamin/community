@@ -1,5 +1,6 @@
 import { NATIVE_LANG_MAP } from "@community/api/lib/native-lang";
 import { useForm } from "@tanstack/react-form";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -64,6 +65,10 @@ export function SignUp() {
   const [error, setError] = useState<string | null>(null);
   const [nativeLanguage, setNativeLanguage] = useState<string>("");
 
+  const updateProfile = useMutation(
+    orpc.rebuild.updateProfile.mutationOptions()
+  );
+
   const form = useForm({
     defaultValues: {
       name: "",
@@ -91,7 +96,7 @@ export function SignUp() {
             // Save native language if selected — profile is lazily created
             if (nativeLanguage) {
               try {
-                await orpc.rebuild.updateProfile({
+                await updateProfile.mutateAsync({
                   nativeLanguage,
                 });
               } catch {

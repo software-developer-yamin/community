@@ -12,9 +12,19 @@ export interface SessionRefresherOptions {
 /**
  * Minimal session type matching what Better-Auth returns.
  */
-interface SessionResult {
+export interface SessionResult {
   session?: {
     expiresAt?: string | Date;
+    [key: string]: unknown;
+  };
+  user?: {
+    id: string;
+    email: string;
+    emailVerified?: boolean;
+    name?: string | null;
+    image?: string | null;
+    role?: string;
+    [key: string]: unknown;
   };
 }
 
@@ -22,8 +32,15 @@ interface SessionResult {
  * Minimal auth client interface that both native and web clients satisfy.
  */
 export interface AuthClient {
-  getSession(): Promise<{ data: SessionResult | null; error?: unknown }>;
-  refresh(): Promise<{ data: SessionResult | null; error?: unknown }>;
+  $Infer?: {
+    Session: SessionResult;
+  };
+  getSession(options?: {
+    fetchOptions?: Record<string, unknown>;
+  }): Promise<{ data: SessionResult | null; error?: unknown }>;
+  refresh(options?: {
+    fetchOptions?: Record<string, unknown>;
+  }): Promise<{ data: SessionResult | null; error?: unknown }>;
 }
 
 /**

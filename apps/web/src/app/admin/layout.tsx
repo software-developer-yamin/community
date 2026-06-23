@@ -8,7 +8,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await authClient.getSession({
+  const { data: session } = await authClient.getSession({
     fetchOptions: {
       headers: await headers(),
       throw: true,

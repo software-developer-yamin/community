@@ -302,7 +302,7 @@ const styles = StyleSheet.create((theme) => ({
     backgroundColor: theme.colors.success ?? "#d4edda",
   },
   successText: {
-    color: theme.colors.successForeground ?? "#155724",
+    color: theme.colors.successForeground,
     fontSize: 14,
   },
   input: {

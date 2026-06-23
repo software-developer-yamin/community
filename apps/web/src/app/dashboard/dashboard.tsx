@@ -1,5 +1,6 @@
 "use client";
 
+import type { SessionResult } from "@community/auth/session-refresh";
 import { Button } from "@community/ui/components/button";
 import {
   Card,
@@ -13,12 +14,10 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-
-import type { authClient } from "@/lib/auth-client";
 import { orpc, queryClient } from "@/utils/orpc";
 
 interface DashboardProps {
-  session: typeof authClient.$Infer.Session;
+  session: SessionResult;
 }
 
 const NATIVE_LANG_OPTIONS = [
@@ -79,7 +78,7 @@ export default function Dashboard({ session }: DashboardProps) {
       // Trigger embedding recompute when native language changes
       if (field === "nativeLanguage") {
         try {
-          await orpc.models.recomputeEmbedding({});
+          await orpc.models.recomputeEmbedding.call({});
         } catch {
           // Non-critical; old embedding remains until next interaction
         }

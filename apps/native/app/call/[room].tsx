@@ -12,7 +12,12 @@ import {
 } from "@livekit/react-native";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { RoomEvent, Track } from "livekit-client";
+import {
+  type Participant,
+  type RemoteParticipant,
+  RoomEvent,
+  Track,
+} from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -225,6 +230,12 @@ function RoomView({
   const incrementReconnectRef = useRef(incrementReconnectMutation);
   incrementReconnectRef.current = incrementReconnectMutation;
 
+  // End call mutation
+  const endCallMutation = useMutation(orpc.livekit.endCall.mutationOptions());
+  // Stable ref to avoid re-registering effect on mutation object change
+  const endCallMutationRef = useRef(endCallMutation);
+  endCallMutationRef.current = endCallMutation;
+
   // Track partner reconnection status from ParticipantMetadata events
   const [partnerReconnecting, setPartnerReconnecting] = useState(false);
   const [partnerEndedCountdown, setPartnerEndedCountdown] = useState<
@@ -273,10 +284,12 @@ function RoomView({
     };
 
     // Listen for partner's participant metadata changes (reconnect status)
-    // biome-ignore lint/suspicious/noExplicitAny: LiveKit event callback signature
-    const onParticipantMetadata = (_participant: any, metadata: string) => {
+    const onParticipantMetadata = (
+      _prevMetadata: string | undefined,
+      participant: Participant
+    ) => {
       try {
-        const parsed = JSON.parse(metadata) as {
+        const parsed = JSON.parse(participant.metadata ?? "{}") as {
           reconnectStatus?: string;
           callEndReason?: string;
         };
@@ -290,8 +303,7 @@ function RoomView({
       }
     };
 
-    // biome-ignore lint/suspicious/noExplicitAny: LiveKit event callback signature
-    const onParticipantDisconnected = (participant: any) => {
+    const onParticipantDisconnected = (participant: RemoteParticipant) => {
       if (participant.identity === room.localParticipant.identity) {
         return;
       }
@@ -317,7 +329,7 @@ function RoomView({
         intentionalDisconnectRef.current = true;
         room.disconnect();
         router.replace(
-          `call/ended?reason=connection_lost&roomName=${encodeURIComponent(roomName)}`
+          `/call/ended?reason=connection_lost&roomName=${encodeURIComponent(roomName)}`
         );
       }
     };
@@ -325,14 +337,14 @@ function RoomView({
     room.on(RoomEvent.Reconnecting, onReconnecting);
     room.on(RoomEvent.Reconnected, onReconnected);
     room.on(RoomEvent.Disconnected, onDisconnected);
-    room.on(RoomEvent.ParticipantMetadata, onParticipantMetadata);
+    room.on(RoomEvent.ParticipantMetadataChanged, onParticipantMetadata);
     room.on(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
 
     return () => {
       room.off(RoomEvent.Reconnecting, onReconnecting);
       room.off(RoomEvent.Reconnected, onReconnected);
       room.off(RoomEvent.Disconnected, onDisconnected);
-      room.off(RoomEvent.ParticipantMetadata, onParticipantMetadata);
+      room.off(RoomEvent.ParticipantMetadataChanged, onParticipantMetadata);
       room.off(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -348,7 +360,7 @@ function RoomView({
       intentionalDisconnectRef.current = true;
       room.disconnect();
       router.replace(
-        `call/ended?reason=partner_ended&roomName=${encodeURIComponent(roomName)}`
+        `/call/ended?reason=partner_ended&roomName=${encodeURIComponent(roomName)}`
       );
       return;
     }
@@ -485,15 +497,14 @@ function RoomView({
     intentionalDisconnectRef.current = true;
     room.disconnect();
 
-    // Call endCall with connection_lost reason
-    orpc.livekit.endCall
-      .mutate({ roomName, endReason: "connection_lost" })
-      .catch(() => {
-        // Fire-and-forget: room cleanup best-effort
-      });
+    // Call endCall with connection_lost reason (fire-and-forget)
+    endCallMutationRef.current.mutate({
+      roomName,
+      endReason: "connection_lost",
+    });
 
     router.replace(
-      `call/ended?reason=connection_lost&roomName=${encodeURIComponent(roomName)}`
+      `/call/ended?reason=connection_lost&roomName=${encodeURIComponent(roomName)}`
     );
   }, [roomName, room, router, intentionalDisconnectRef]);
 
@@ -631,6 +642,7 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
 
   const skipMutation = useMutation(orpc.moderation.skipCall.mutationOptions());
+  const endCallMutation = useMutation(orpc.livekit.endCall.mutationOptions());
 
   useEffect(() => {
     setMicEnabled(isMicrophoneEnabled);
@@ -662,13 +674,9 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
     onLeave?.();
     const roomName = room.name;
     room.disconnect();
-    orpc.livekit.endCall
-      .mutate({ roomName, endReason: "explicit" })
-      .catch(() => {
-        // Fire-and-forget: room cleanup best-effort
-      });
+    endCallMutation.mutate({ roomName, endReason: "explicit" });
     router.replace(
-      `call/ended?reason=explicit&roomName=${encodeURIComponent(roomName)}`
+      `/call/ended?reason=explicit&roomName=${encodeURIComponent(roomName)}`
     );
   };
 
@@ -678,11 +686,11 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
     skipMutation
       .mutateAsync({ roomName })
       .then(() => {
-        router.replace("call/matching");
+        router.replace("/call/matching");
       })
       .catch(() => {
         router.replace(
-          `call/ended?reason=explicit&roomName=${encodeURIComponent(roomName)}`
+          `/call/ended?reason=explicit&roomName=${encodeURIComponent(roomName)}`
         );
       });
   };

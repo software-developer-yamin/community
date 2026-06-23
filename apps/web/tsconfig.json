@@ -21,6 +21,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
+      "@community/auth/*": ["../../packages/auth/src/*"],
       "@community/ui/*": ["../../packages/ui/src/*"]
     }
   },
