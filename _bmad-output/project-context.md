@@ -2,7 +2,7 @@
 project_name: 'community'
 user_name: 'Yamin'
 date: '2026-06-14'
-sections_completed: ['technology_stack', 'language_specific', 'framework_specific', 'testing', 'code_quality', 'workflow', 'critical_dont_miss']
+sections_completed: ['technology_stack', 'language_specific', 'framework_specific', 'testing', 'code_quality', 'workflow', 'critical_dont_miss', 'architecture_native_client']
 ---
 
 # Project Context for AI Agents
