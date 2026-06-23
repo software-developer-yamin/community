@@ -1,13 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Stack, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Animated,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { Animated, Pressable, Text, View } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 
 import { orpc } from "@/utils/orpc";
@@ -20,10 +14,10 @@ type MatchStatus =
   | "no_embedding";
 
 interface Partner {
-  id: string;
-  name: string;
-  image: string | null;
   cefr: string | null;
+  id: string;
+  image: string | null;
+  name: string;
   sim: number;
 }
 
@@ -46,7 +40,11 @@ export default function MatchingScreen() {
 
   // Animated dots loop
   useEffect(() => {
-    if (status !== "searching" && status !== "stale" && status !== "long_wait") {
+    if (
+      status !== "searching" &&
+      status !== "stale" &&
+      status !== "long_wait"
+    ) {
       return;
     }
 
@@ -165,111 +163,132 @@ export default function MatchingScreen() {
       outputRange: [0.3, 1],
     });
 
+  const renderStatusContent = () => {
+    if (status === "found" && foundPartner) {
+      return (
+        <View style={styles.foundContainer}>
+          <View
+            style={[
+              styles.avatarCircle,
+              { backgroundColor: `${theme.colors.primary}20` },
+            ]}
+          >
+            <Text style={[styles.avatarText, { color: theme.colors.primary }]}>
+              {foundPartner.name.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <Text
+            style={[styles.partnerName, { color: theme.colors.typography }]}
+          >
+            {foundPartner.name}
+          </Text>
+          {foundPartner.cefr && (
+            <Text
+              style={[
+                styles.cefrBadge,
+                { color: theme.colors.mutedForeground },
+              ]}
+            >
+              {foundPartner.cefr}
+            </Text>
+          )}
+          <Text
+            style={[
+              styles.connectingText,
+              { color: theme.colors.mutedForeground },
+            ]}
+          >
+            Connecting you to the call room...
+          </Text>
+        </View>
+      );
+    }
+
+    if (status === "no_embedding") {
+      return (
+        <View style={styles.centerContent}>
+          <Text
+            style={[
+              styles.noEmbedText,
+              { color: theme.colors.mutedForeground },
+            ]}
+          >
+            Set up your profile first to find practice partners.
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.centerContent}>
+        {/* Animated dots indicator */}
+        <View style={styles.dotsRow}>
+          <Animated.View
+            style={[
+              styles.dot,
+              {
+                backgroundColor: theme.colors.primary,
+                opacity: dotOpacity(dot1Anim),
+              },
+            ]}
+          />
+          <Animated.View
+            style={[
+              styles.dot,
+              {
+                backgroundColor: theme.colors.primary,
+                opacity: dotOpacity(dot2Anim),
+              },
+            ]}
+          />
+          <Animated.View
+            style={[
+              styles.dot,
+              {
+                backgroundColor: theme.colors.primary,
+                opacity: dotOpacity(dot3Anim),
+              },
+            ]}
+          />
+        </View>
+
+        <Text style={[styles.statusText, { color: theme.colors.typography }]}>
+          {statusMessage}
+        </Text>
+
+        {/* Filter hint */}
+        {filterHint && (
+          <View
+            style={[styles.filterHintBox, { borderColor: theme.colors.border }]}
+          >
+            <Text
+              style={[
+                styles.filterHintText,
+                { color: theme.colors.mutedForeground },
+              ]}
+            >
+              Your gender preference is filtering some potential matches. You
+              may find more partners with broader filters.
+            </Text>
+          </View>
+        )}
+
+        {/* Timer */}
+        <Text
+          style={[styles.timerText, { color: theme.colors.mutedForeground }]}
+        >
+          {formatTime(elapsed)}
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.background }]}>
       <Stack.Screen options={{ title: "Finding Your Partner" }} />
 
       <View style={styles.content}>
-        {status === "found" && foundPartner ? (
-          <View style={styles.foundContainer}>
-            <View
-              style={[
-                styles.avatarCircle,
-                { backgroundColor: theme.colors.primary + "20" },
-              ]}
-            >
-              <Text style={[styles.avatarText, { color: theme.colors.primary }]}>
-                {foundPartner.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <Text style={[styles.partnerName, { color: theme.colors.typography }]}>
-              {foundPartner.name}
-            </Text>
-            {foundPartner.cefr && (
-              <Text style={[styles.cefrBadge, { color: theme.colors.mutedForeground }]}>
-                {foundPartner.cefr}
-              </Text>
-            )}
-            <Text style={[styles.connectingText, { color: theme.colors.mutedForeground }]}>
-              Connecting you to the call room...
-            </Text>
-          </View>
-        ) : status === "no_embedding" ? (
-          <View style={styles.centerContent}>
-            <Text style={[styles.noEmbedText, { color: theme.colors.mutedForeground }]}>
-              Set up your profile first to find practice partners.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.centerContent}>
-            {/* Animated dots indicator */}
-            <View style={styles.dotsRow}>
-              <Animated.View
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: theme.colors.primary,
-                    opacity: dotOpacity(dot1Anim),
-                  },
-                ]}
-              />
-              <Animated.View
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: theme.colors.primary,
-                    opacity: dotOpacity(dot2Anim),
-                  },
-                ]}
-              />
-              <Animated.View
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: theme.colors.primary,
-                    opacity: dotOpacity(dot3Anim),
-                  },
-                ]}
-              />
-            </View>
-
-            <Text
-              style={[styles.statusText, { color: theme.colors.typography }]}
-            >
-              {statusMessage}
-            </Text>
-
-            {/* Filter hint */}
-            {filterHint && (
-              <View
-                style={[
-                  styles.filterHintBox,
-                  { borderColor: theme.colors.border },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.filterHintText,
-                    { color: theme.colors.mutedForeground },
-                  ]}
-                >
-                  Your gender preference is filtering some potential matches.
-                  You may find more partners with broader filters.
-                </Text>
-              </View>
-            )}
-
-            {/* Timer */}
-            <Text
-              style={[
-                styles.timerText,
-                { color: theme.colors.mutedForeground },
-              ]}
-            >
-              {formatTime(elapsed)}
-            </Text>
-          </View>
-        )}
+        {renderStatusContent()}
 
         {/* Action buttons */}
         <View style={styles.actions}>
