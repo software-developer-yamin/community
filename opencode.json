@@ -40,6 +40,10 @@
       "type": "remote",
       "url": "https://docs.livekit.io/mcp",
       "enabled": true
+    },
+    "ui-ux-pro": {
+      "type": "local",
+      "command": ["npx", "-y", "ui-ux-pro-mcp", "--stdio"]
     }
   }
 }

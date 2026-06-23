@@ -2,7 +2,12 @@ import { env } from "@community/env/server";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { account, session, user, verification } from "./schema/auth";
 import { callRecord } from "./schema/call";
-import { callRoom } from "./schema/rebuild";
+import {
+  callRoom,
+  partnerReport,
+  strikeEvent,
+  userProfile,
+} from "./schema/rebuild";
 import {
   contentEmbedding,
   contentItem,
@@ -27,6 +32,9 @@ export function createDb() {
       userInteraction,
       recommendationScore,
       userPreference,
+      strikeEvent,
+      userProfile,
+      partnerReport,
     },
   });
 }

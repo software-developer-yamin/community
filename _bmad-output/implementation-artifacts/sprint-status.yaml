@@ -20,10 +20,10 @@ development_status:
   2-4-explicit-call-end: done
   epic-2-retrospective: optional
 
-  epic-3: in-progress
+  epic-3: done
    3-1-gender-filter-enforcement: done
    3-2-native-language-field: done
-   3-3-match-timeout-with-honest-state: backlog
+   3-3-match-timeout-with-honest-state: done
   epic-3-retrospective: optional
 
   epic-4: backlog

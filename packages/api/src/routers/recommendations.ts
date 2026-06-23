@@ -5,6 +5,7 @@ import {
   cefrPlacement,
   userProfileEmbedding,
 } from "@community/db/schema/models";
+import { userProfile } from "@community/db/schema/rebuild";
 import {
   contentEmbedding,
   contentItem,
@@ -12,9 +13,9 @@ import {
   userInteraction,
   userPreference,
 } from "@community/db/schema/recommendations";
+import { ORPCError } from "@orpc/server";
 import { and, desc, eq, gt, inArray, ne, sql } from "drizzle-orm";
 import z from "zod";
-
 import { adminProcedure, protectedProcedure, publicProcedure } from "../index";
 
 // ───────────────────────────────────────────────────────────────
@@ -416,6 +417,33 @@ export const recommendationsRouter = {
         .where(and(...conditions))
         .orderBy(desc(userInteraction.createdAt))
         .limit(input.limit);
+    }),
+
+  // ── Match Partners ─────────────────────────────────────────────
+  matchPartners: protectedProcedure
+    .input(z.void())
+    .handler(async ({ context }) => {
+      const userId = context.session.user.id;
+
+      // Check cooldown guard
+      const profile = await db
+        .select({ cooldownUntil: userProfile.cooldownUntil })
+        .from(userProfile)
+        .where(eq(userProfile.userId, userId))
+        .limit(1)
+        .then((r) => r[0] ?? null);
+
+      if (profile?.cooldownUntil && profile.cooldownUntil > new Date()) {
+        const remainingMs = profile.cooldownUntil.getTime() - Date.now();
+        throw new ORPCError("COOLDOWN", {
+          status: 403,
+          message: `Cooldown active for ${Math.ceil(remainingMs / 1000 / 60)} more minutes`,
+          data: { remainingMs },
+        });
+      }
+
+      // Stub: return empty list until partner matching logic is implemented
+      return [];
     }),
 
   // ── User Preferences ──────────────────────────────────────────

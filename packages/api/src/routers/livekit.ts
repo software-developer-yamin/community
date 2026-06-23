@@ -1,12 +1,17 @@
 import { db } from "@community/db";
 import { callRecord } from "@community/db/schema/call";
-import { callRoom } from "@community/db/schema/rebuild";
+import {
+  callRoom,
+  strikeEvent,
+  userProfile,
+} from "@community/db/schema/rebuild";
 import { env } from "@community/env/server";
 import { and, eq, sql } from "drizzle-orm";
 import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
 import z from "zod";
 
 import { adminProcedure, protectedProcedure } from "../index";
+import { computeDecayedState, shouldCountAsStrike } from "../lib/strike-logic";
 import {
   IncrementReconnectionCountInput,
   RefreshTokenInput,
@@ -270,6 +275,72 @@ export const livekitRouter = {
         participantCount: 2,
         durationSec,
       });
+
+      // ── Strike recording ────────────────────────────────────
+      if (
+        durationSec !== undefined &&
+        shouldCountAsStrike(input.endReason, durationSec)
+      ) {
+        const now = new Date();
+
+        await db.insert(strikeEvent).values({
+          userId,
+          callRoomId: room.id,
+          triggerType: "short_disconnect",
+          callDuration: durationSec,
+          createdAt: now,
+        });
+
+        // Compute new strike count and state
+        const existingProfile = await db
+          .select({ strikeCount: userProfile.strikeCount })
+          .from(userProfile)
+          .where(eq(userProfile.userId, userId))
+          .limit(1)
+          .then((r) => r[0] ?? null);
+
+        const newStrikeCount = (existingProfile?.strikeCount ?? 0) + 1;
+        const { result } = computeDecayedState(
+          [{ createdAt: now, durationSec, voidedAt: null }],
+          now
+        );
+
+        const dbState =
+          result.state === "cooldown_1h" || result.state === "cooldown_24h"
+            ? "cooldown"
+            : result.state;
+
+        await db
+          .insert(userProfile)
+          .values({
+            userId,
+            strikeCount: newStrikeCount,
+            lastStrikeAt: now,
+            moderationState: dbState as
+              | "clean"
+              | "warned"
+              | "cooldown"
+              | "suspended"
+              | "banned",
+            cooldownUntil: result.cooldownUntil,
+            updatedAt: now,
+          })
+          .onConflictDoUpdate({
+            target: userProfile.userId,
+            set: {
+              strikeCount: newStrikeCount,
+              lastStrikeAt: now,
+              moderationState: dbState as
+                | "clean"
+                | "warned"
+                | "cooldown"
+                | "suspended"
+                | "banned",
+              cooldownUntil: result.cooldownUntil,
+              updatedAt: now,
+            },
+          });
+      }
 
       return { success: true };
     }),

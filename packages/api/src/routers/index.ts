@@ -3,6 +3,7 @@ import type { RouterClient } from "@orpc/server";
 import { protectedProcedure, publicProcedure } from "../index";
 import { livekitRouter } from "./livekit";
 import { modelsRouter } from "./models";
+import { moderationRouter } from "./moderation";
 import { rebuildRouter } from "./rebuild";
 import { recommendationsRouter } from "./recommendations";
 import { todoRouter } from "./todo";
@@ -15,6 +16,7 @@ export const appRouter = {
   })),
   todo: todoRouter,
   livekit: livekitRouter,
+  moderation: moderationRouter,
   models: modelsRouter,
   recommendations: recommendationsRouter,
   rebuild: rebuildRouter,
