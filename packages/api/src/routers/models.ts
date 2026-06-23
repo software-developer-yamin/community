@@ -397,11 +397,14 @@ export const modelsRouter = {
           sim: p.sim,
         }));
 
-      console.log(
-        `[matchPartners] user=${context.session.user.id} cefrCandidates=${cefrFiltered.length} genderFiltered=${genderFilteredCount} returned=${partners.length} totalNearby=${nearby.length}`
-      );
-
-      return { partners, reason: "ok" as const };
+      return {
+        partners,
+        reason: "ok" as const,
+        queueStats: {
+          totalCandidates: cefrFiltered.length,
+          genderFiltered: genderFilteredCount,
+        },
+      };
     }),
 
   listPlacements: protectedProcedure.handler(async ({ context }) =>

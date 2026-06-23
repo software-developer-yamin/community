@@ -10,6 +10,7 @@ import {
 } from "@community/ui/components/card";
 import { Label } from "@community/ui/components/label";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -90,11 +91,16 @@ export default function Dashboard({ session }: DashboardProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="font-bold text-2xl">Profile Settings</h2>
-        <p className="text-muted-foreground">
-          Manage your profile information and preferences.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-bold text-2xl">Profile Settings</h2>
+          <p className="text-muted-foreground">
+            Manage your profile information and preferences.
+          </p>
+        </div>
+        <Link href="/dashboard/matching">
+          <Button size="lg">Find a Partner</Button>
+        </Link>
       </div>
 
       <Card>
