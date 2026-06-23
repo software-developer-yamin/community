@@ -5,6 +5,7 @@ license: MIT
 metadata:
   author: HugoRCD
   version: "0.5"
+block_background_tasks: true
 ---
 
 # Review logging patterns

@@ -316,7 +316,9 @@ function RoomView({
       } else {
         intentionalDisconnectRef.current = true;
         room.disconnect();
-        router.replace("call/ended?reason=connection_lost");
+        router.replace(
+          `call/ended?reason=connection_lost&roomName=${encodeURIComponent(roomName)}`
+        );
       }
     };
 
@@ -345,14 +347,16 @@ function RoomView({
     if (partnerEndedCountdown <= 0) {
       intentionalDisconnectRef.current = true;
       room.disconnect();
-      router.replace("call/ended?reason=partner_ended");
+      router.replace(
+        `call/ended?reason=partner_ended&roomName=${encodeURIComponent(roomName)}`
+      );
       return;
     }
     const timer = setTimeout(() => {
       setPartnerEndedCountdown((prev) => (prev === null ? null : prev - 1));
     }, 1000);
     return () => clearTimeout(timer);
-  }, [partnerEndedCountdown, room, router, intentionalDisconnectRef]);
+  }, [partnerEndedCountdown, room, router, intentionalDisconnectRef, roomName]);
 
   // Start/stop elapsed timer based on reconnection phase
   useEffect(() => {
@@ -488,7 +492,9 @@ function RoomView({
         // Fire-and-forget: room cleanup best-effort
       });
 
-    router.replace("call/ended?reason=connection_lost");
+    router.replace(
+      `call/ended?reason=connection_lost&roomName=${encodeURIComponent(roomName)}`
+    );
   }, [roomName, room, router, intentionalDisconnectRef]);
 
   // Animated pulse for reconnecting banner
@@ -661,7 +667,9 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
       .catch(() => {
         // Fire-and-forget: room cleanup best-effort
       });
-    router.replace("call/ended?reason=explicit");
+    router.replace(
+      `call/ended?reason=explicit&roomName=${encodeURIComponent(roomName)}`
+    );
   };
 
   const handleSkip = () => {
@@ -673,7 +681,9 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
         router.replace("call/matching");
       })
       .catch(() => {
-        router.replace("call/ended?reason=explicit");
+        router.replace(
+          `call/ended?reason=explicit&roomName=${encodeURIComponent(roomName)}`
+        );
       });
   };
 

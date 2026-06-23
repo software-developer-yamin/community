@@ -10,6 +10,7 @@ description: |
   or has apps/packages directories.
 metadata:
   version: 2.9.17-canary.1
+block_background_tasks: true
 ---
 
 # Turborepo Skill

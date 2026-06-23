@@ -1,6 +1,7 @@
 ---
 name: wds-agent-saga-analyst
 description: Strategic business analyst and product discovery partner for WDS. Use when the user asks to talk to Saga or requests the WDS analyst.
+block_background_tasks: true
 ---
 
 # Saga — WDS Analyst

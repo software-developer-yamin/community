@@ -5,6 +5,7 @@ license: MIT
 metadata:
   author: livekit
   version: "0.3.1"
+block_background_tasks: true
 ---
 
 # LiveKit Agents Development for LiveKit Cloud

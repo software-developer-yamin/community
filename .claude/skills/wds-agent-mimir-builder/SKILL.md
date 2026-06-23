@@ -3,6 +3,7 @@ name: wds-agent-mimir-builder
 version: "1.0.0"
 description: Implementation agent. Owns the tech audit, the PRD, and the build. Reads Freya's Work Orders and turns them into working code — one verified task at a time.
 agents: [mimir]
+block_background_tasks: true
 ---
 
 # Mimir — WDS Builder

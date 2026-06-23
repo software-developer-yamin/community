@@ -1,6 +1,7 @@
 ---
 name: bmad-create-prd
 description: 'DEPRECATED — consolidated into bmad-prd create intent - this skill will be removed in v7 in favor of `bmad-prd`.'
+block_background_tasks: true
 ---
 
 # DEPRECATED — forwards to bmad-prd (create intent)

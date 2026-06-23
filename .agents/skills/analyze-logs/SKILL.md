@@ -5,6 +5,7 @@ license: MIT
 metadata:
   author: HugoRCD
   version: "0.1"
+block_background_tasks: true
 ---
 
 # Analyze application logs

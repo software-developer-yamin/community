@@ -1,6 +1,7 @@
 ---
 name: bmad-testarch-nfr
 description: 'Audit NFR evidence for performance, security, reliability, and scalability. Use when implementation evidence exists and the user says "audit NFR evidence", "audit NFRs", or "evaluate non-functional requirements"'
+block_background_tasks: true
 ---
 
 # NFR Evidence Audit

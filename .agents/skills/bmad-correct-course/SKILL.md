@@ -1,6 +1,7 @@
 ---
 name: bmad-correct-course
 description: 'Manage significant changes during sprint execution. Use when the user says "correct course" or "propose sprint change"'
+block_background_tasks: true
 ---
 
 # Correct Course - Sprint Change Management Workflow
