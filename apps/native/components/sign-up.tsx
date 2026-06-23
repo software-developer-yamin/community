@@ -10,8 +10,10 @@ import {
 import { StyleSheet } from "react-native-unistyles";
 import z from "zod";
 
+import { NATIVE_LANG_MAP } from "@community/api/lib/native-lang";
+
 import { authClient } from "@/lib/auth-client";
-import { queryClient } from "@/utils/orpc";
+import { orpc, queryClient } from "@/utils/orpc";
 
 const signUpSchema = z.object({
   name: z
@@ -61,6 +63,7 @@ function getErrorMessage(error: unknown): string | null {
 
 export function SignUp() {
   const [error, setError] = useState<string | null>(null);
+  const [nativeLanguage, setNativeLanguage] = useState<string>("");
 
   const form = useForm({
     defaultValues: {
@@ -82,9 +85,21 @@ export function SignUp() {
           onError(error) {
             setError(error.error?.message || "Failed to sign up");
           },
-          onSuccess() {
+          async onSuccess() {
             setError(null);
             formApi.reset();
+
+            // Save native language if selected — profile is lazily created
+            if (nativeLanguage) {
+              try {
+                await orpc.rebuild.updateProfile({
+                  nativeLanguage,
+                });
+              } catch {
+                // Profile may not exist yet; created on first save
+              }
+            }
+
             queryClient.refetchQueries();
           },
         }
@@ -168,6 +183,34 @@ export function SignUp() {
                 )}
               </form.Field>
 
+              <View style={styles.nativeLangSection}>
+                <Text style={styles.nativeLangLabel}>Native Language</Text>
+                <View style={styles.langRow}>
+                  {NATIVE_LANG_MAP.map((lang) => {
+                    const selected = nativeLanguage === lang.value;
+                    return (
+                      <TouchableOpacity
+                        key={lang.key}
+                        onPress={() => setNativeLanguage(selected ? "" : lang.value)}
+                        style={[
+                          styles.langChip,
+                          selected && styles.langChipSelected,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.langChipText,
+                            selected && styles.langChipTextSelected,
+                          ]}
+                        >
+                          {lang.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
               <TouchableOpacity
                 disabled={isSubmitting}
                 onPress={form.handleSubmit}
@@ -236,5 +279,40 @@ const styles = StyleSheet.create((theme) => ({
   },
   buttonText: {
     fontWeight: "500",
+  },
+  nativeLangSection: {
+    marginBottom: 16,
+  },
+  nativeLangLabel: {
+    color: theme.colors.mutedForeground,
+    fontSize: 13,
+    fontWeight: "500",
+    marginBottom: 8,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  langRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  langChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  langChipSelected: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  langChipText: {
+    fontSize: 14,
+    color: theme.colors.typography,
+  },
+  langChipTextSelected: {
+    color: theme.colors.primaryForeground,
+    fontWeight: "600",
   },
 }));

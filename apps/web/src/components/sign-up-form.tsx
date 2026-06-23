@@ -2,14 +2,26 @@ import { Button } from "@community/ui/components/button";
 import { Input } from "@community/ui/components/input";
 import { Label } from "@community/ui/components/label";
 import { useForm } from "@tanstack/react-form";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import z from "zod";
 
 import { authClient } from "@/lib/auth-client";
+import { orpc } from "@/utils/orpc";
 
 import GoogleSignIn from "./google-sign-in";
 import Loader from "./loader";
+
+const NATIVE_LANG_OPTIONS = [
+  { value: "bangla", label: "বাংলা (Bangla)" },
+  { value: "english", label: "English" },
+  { value: "hindi", label: "हिन्दी (Hindi)" },
+  { value: "arabic", label: "العربية (Arabic)" },
+  { value: "spanish", label: "Español (Spanish)" },
+  { value: "french", label: "Français (French)" },
+] as const;
 
 export default function SignUpForm({
   onSwitchToSignIn,
@@ -20,6 +32,11 @@ export default function SignUpForm({
 }) {
   const router = useRouter();
   const { isPending } = authClient.useSession();
+  const [nativeLanguage, setNativeLanguage] = useState("bangla");
+
+  const { mutateAsync: saveProfile } = useMutation(
+    orpc.rebuild.updateProfile.mutationOptions()
+  );
 
   const form = useForm({
     defaultValues: {
@@ -35,7 +52,10 @@ export default function SignUpForm({
           name: value.name,
         },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
+            await saveProfile({ nativeLanguage }).catch(() => {
+              // non-critical — profile created lazily on first dashboard save
+            });
             router.push("/dashboard");
             toast.success("Sign up successful");
           },
@@ -136,6 +156,22 @@ export default function SignUpForm({
               </div>
             )}
           </form.Field>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="native-language">Native Language</Label>
+          <select
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            id="native-language"
+            value={nativeLanguage}
+            onChange={(e) => setNativeLanguage(e.target.value)}
+          >
+            {NATIVE_LANG_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <form.Subscribe

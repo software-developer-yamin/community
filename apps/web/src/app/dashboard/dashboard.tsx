@@ -20,6 +20,15 @@ interface DashboardProps {
   session: typeof authClient.$Infer.Session;
 }
 
+const NATIVE_LANG_OPTIONS = [
+  { value: "bangla", label: "বাংলা (Bangla)" },
+  { value: "english", label: "English" },
+  { value: "hindi", label: "हिन्दी (Hindi)" },
+  { value: "arabic", label: "العربية (Arabic)" },
+  { value: "spanish", label: "Español (Spanish)" },
+  { value: "french", label: "Français (French)" },
+] as const;
+
 const GENDER_OPTIONS = [
   { value: "male", label: "Male" },
   { value: "female", label: "Female" },
@@ -37,11 +46,13 @@ export default function Dashboard({ session }: DashboardProps) {
   const [genderPreference, setGenderPreference] = useState<string | undefined>(
     undefined
   );
+  const [nativeLanguage, setNativeLanguage] = useState<string>("bangla");
   const [loaded, setLoaded] = useState(false);
 
   if (profile && !loaded) {
     setGender(profile.gender ?? undefined);
     setGenderPreference(profile.genderPreference ?? undefined);
+    setNativeLanguage(profile.nativeLanguage ?? "bangla");
     setLoaded(true);
   }
 
@@ -49,7 +60,7 @@ export default function Dashboard({ session }: DashboardProps) {
     session.user?.role === "premium_plus" || session.user?.role === "admin";
 
   const handleSave = async (
-    field: "gender" | "genderPreference",
+    field: "gender" | "genderPreference" | "nativeLanguage",
     value: string | undefined
   ) => {
     try {
@@ -57,11 +68,22 @@ export default function Dashboard({ session }: DashboardProps) {
       toast.success(
         field === "gender"
           ? "Gender identity updated"
-          : "Gender preference updated"
+          : field === "nativeLanguage"
+            ? "Native language updated"
+            : "Gender preference updated"
       );
       queryClient.invalidateQueries({
         queryKey: orpc.rebuild.getProfile.key(),
       });
+
+      // Trigger embedding recompute when native language changes
+      if (field === "nativeLanguage") {
+        try {
+          await orpc.models.recomputeEmbedding({});
+        } catch {
+          // Non-critical; old embedding remains until next interaction
+        }
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save");
     }
@@ -101,6 +123,36 @@ export default function Dashboard({ session }: DashboardProps) {
               {session.user?.role}
             </span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Native Language</CardTitle>
+          <CardDescription>
+            Your primary language. This helps us match you with compatible
+            partners based on language preferences.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <select
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            value={nativeLanguage}
+            onChange={(e) => {
+              const value = e.target.value;
+              setNativeLanguage(value);
+              handleSave("nativeLanguage", value);
+            }}
+          >
+            {NATIVE_LANG_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {isPending && (
+            <p className="mt-2 text-muted-foreground text-sm">Saving...</p>
+          )}
         </CardContent>
       </Card>
 
