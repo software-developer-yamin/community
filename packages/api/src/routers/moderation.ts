@@ -6,7 +6,7 @@ import {
   strikeEvent,
   userProfile,
 } from "@community/db/schema/rebuild";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNotNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { protectedProcedure } from "../index";
@@ -282,6 +282,10 @@ export const moderationRouter = {
       }
 
       // ── Verify participant ────────────────────────────────────
+      if (room.participantA !== userId && room.participantB !== userId) {
+        throw new Error("FORBIDDEN: You are not a participant of this room");
+      }
+
       const partnerId =
         room.participantA === userId ? room.participantB : room.participantA;
 
@@ -391,8 +395,11 @@ export const moderationRouter = {
         .where(
           and(
             eq(callRoom.status, "ended"),
-            sql`(${callRoom.participantA} = ${userId} OR ${callRoom.participantB} = ${userId})`,
-            sql`ended_at IS NOT NULL`,
+            or(
+              eq(callRoom.participantA, userId),
+              eq(callRoom.participantB, userId)
+            ),
+            isNotNull(callRoom.endedAt),
             sql`ended_at > NOW() - INTERVAL '65 seconds'`
           )
         )
