@@ -149,6 +149,12 @@ export const partnerReport = pgTable("partner_report", {
 - Related: Story 4.4 (Visible Moderation State) — downstream consumer of `flaggedForReview` and moderation state
 - Related: Story 4.2 (Skip Button) — provides `skipCall` endpoint (has `console.warn` to clean up)
 
+### ATDD Artifacts
+
+- Checklist: `_bmad-output/test-artifacts/atdd-checklist-4-3-distinguish-victim-from-aggressor.md`
+- API tests: `tests/api/moderation-report.spec.ts` (12 red-phase scaffolds)
+- E2E tests: `tests/e2e/report-partner.spec.ts` (6 red-phase scaffolds)
+
 ### What Must Be Preserved
 
 - Existing `getStrikes` endpoint must continue returning accurate strike counts (voided strikes excluded)
