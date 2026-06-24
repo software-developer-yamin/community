@@ -51,5 +51,16 @@ export const CALL_END_REASONS = [
 /** Strike reason values */
 export const STRIKE_REASONS = ["short_disconnect"] as const;
 
+/** Report reason values */
+export const REPORT_REASONS = [
+  "non_participation",
+  "abuse",
+  "technical_failure",
+  "other",
+] as const;
+
+/** 60-second report window */
+export const REPORT_WINDOW_MS = 60_000;
+
 /** Default timeout for moderation API assertions (ms) */
 export const MOD_API_TIMEOUT = 10_000;

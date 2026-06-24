@@ -6,7 +6,7 @@ import {
   strikeEvent,
   userProfile,
 } from "@community/db/schema/rebuild";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNotNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { protectedProcedure } from "../index";
@@ -191,8 +191,8 @@ export const moderationRouter = {
           );
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
-      } catch (err) {
-        console.warn("Failed to notify partner of skip:", err);
+      } catch {
+        // Non-critical: partner notification is best-effort
       }
 
       // ── Delete the LiveKit room ──────────────────────────────
@@ -274,7 +274,18 @@ export const moderationRouter = {
         throw new Error("NOT_FOUND: No ended room found with that name");
       }
 
+      // ── 60-second report window ─────────────────────────────
+      if (room.endedAt && Date.now() - room.endedAt.getTime() > 60_000) {
+        throw new Error(
+          "REPORT_WINDOW_CLOSED: The 60-second report window has passed"
+        );
+      }
+
       // ── Verify participant ────────────────────────────────────
+      if (room.participantA !== userId && room.participantB !== userId) {
+        throw new Error("FORBIDDEN: You are not a participant of this room");
+      }
+
       const partnerId =
         room.participantA === userId ? room.participantB : room.participantA;
 
@@ -313,13 +324,9 @@ export const moderationRouter = {
       // ── Void the reporter's strike for this call ──────────────
       // If the reporter had a short-disconnect strike for this room,
       // void it — the report serves as the appeal.
-      await db
-        .update(strikeEvent)
-        .set({
-          voidedAt: new Date(),
-          voidedReason: "partner_reported",
-          reportId,
-        })
+      const pendingStrike = await db
+        .select({ id: strikeEvent.id })
+        .from(strikeEvent)
         .where(
           and(
             eq(strikeEvent.userId, userId),
@@ -327,7 +334,20 @@ export const moderationRouter = {
             eq(strikeEvent.triggerType, "short_disconnect"),
             sql`voided_at IS NULL`
           )
-        );
+        )
+        .limit(1)
+        .then((r) => r[0] ?? null);
+
+      if (pendingStrike) {
+        await db
+          .update(strikeEvent)
+          .set({
+            voidedAt: new Date(),
+            voidedReason: "partner_reported",
+            reportId,
+          })
+          .where(eq(strikeEvent.id, pendingStrike.id));
+      }
 
       // ── Flag the partner's profile for review ─────────────────
       await db
@@ -345,6 +365,47 @@ export const moderationRouter = {
         });
       }
 
-      return { success: true, alreadyReported: false };
+      return {
+        success: true,
+        alreadyReported: false,
+        strikeVoided: pendingStrike !== null,
+      };
+    }),
+
+  /**
+   * Get the current user's recent ended rooms for reporting.
+   *
+   * Returns rooms that ended within the last 60 seconds so the user can
+   * submit a report. Used by web clients that don't have the room name
+   * available through navigation state.
+   */
+  getUserEndedRooms: protectedProcedure
+    .input(z.void())
+    .handler(async ({ context }) => {
+      const userId = context.session.user.id;
+
+      const rooms = await db
+        .select({
+          id: callRoom.id,
+          roomName: callRoom.roomName,
+          matchId: callRoom.matchId,
+          endedAt: callRoom.endedAt,
+        })
+        .from(callRoom)
+        .where(
+          and(
+            eq(callRoom.status, "ended"),
+            or(
+              eq(callRoom.participantA, userId),
+              eq(callRoom.participantB, userId)
+            ),
+            isNotNull(callRoom.endedAt),
+            sql`ended_at > NOW() - INTERVAL '65 seconds'`
+          )
+        )
+        .orderBy(sql`ended_at DESC`)
+        .limit(5);
+
+      return { rooms };
     }),
 };
