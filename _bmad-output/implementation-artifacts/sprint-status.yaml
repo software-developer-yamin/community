@@ -1,5 +1,5 @@
 generated: 2026-06-14T00:00:00+06:00
-last_updated: 2026-06-23T21:35:00+06:00
+last_updated: 2026-06-25T19:00:00+06:00
 project: community
 project_key: NOKEY
 tracking_system: file-system
@@ -26,15 +26,15 @@ development_status:
   3-3-match-timeout-with-honest-state: done
   epic-3-retrospective: optional
 
-  epic-4: in-progress
+  epic-4: done
   4-1-graduated-strike-system: done
   4-2-skip-button-in-call-action: done
   4-3-distinguish-victim-from-aggressor: done
-  4-4-visible-moderation-state: backlog
+  4-4-visible-moderation-state: done
   epic-4-retrospective: optional
 
-  epic-5: backlog
-  5-1-visible-subscription-state: backlog
+  epic-5: in-progress
+  5-1-visible-subscription-state: in-progress
   5-2-in-app-support-ticket: backlog
   5-3-refund-mechanism: backlog
   epic-5-retrospective: optional

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 import AccountStanding from "./account-standing";
+import SubscriptionCard from "./subscription-card";
 
 export default async function SettingsPage() {
   const { data: session } = await authClient.getSession({
@@ -19,7 +20,8 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 p-6">
-      <h1 className="text-3xl font-bold">Settings</h1>
+      <h1 className="font-bold text-3xl">Settings</h1>
+      <SubscriptionCard />
       <AccountStanding />
     </div>
   );

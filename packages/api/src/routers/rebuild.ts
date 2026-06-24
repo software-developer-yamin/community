@@ -15,6 +15,128 @@ import { and, desc, eq } from "drizzle-orm";
 import z from "zod";
 import { adminProcedure, protectedProcedure } from "../index";
 import { isValidNativeLang } from "../lib/native-lang";
+import type { SubscriptionDetail } from "../types/subscription";
+
+function formatTierLabel(tier: string): string {
+  if (tier === "premium") {
+    return "Premium";
+  }
+  if (tier === "premium_plus") {
+    return "Premium Plus";
+  }
+  return "Free";
+}
+
+function formatDate(date: Date | null): string | null {
+  if (!date) {
+    return null;
+  }
+  return date.toISOString();
+}
+
+function formatReadableDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function formatSubscriptionDetail(
+  subRow: typeof subscription.$inferSelect | undefined,
+  userTier: string
+): SubscriptionDetail {
+  if (!subRow && userTier === "free") {
+    return {
+      id: "",
+      tier: "free",
+      provider: null,
+      amount: null,
+      currency: null,
+      startedAt: null,
+      endsAt: null,
+      autoRenew: false,
+      autoRenewDisabledAt: null,
+      status: "free",
+      readableLabel: "Free Plan",
+      readableDescription: "You're on the Free plan.",
+      nextBillingDate: null,
+      paymentMethodLastFour: null,
+    };
+  }
+
+  if (!subRow) {
+    return {
+      id: "",
+      tier: userTier as SubscriptionDetail["tier"],
+      provider: null,
+      amount: null,
+      currency: null,
+      startedAt: null,
+      endsAt: null,
+      autoRenew: false,
+      autoRenewDisabledAt: null,
+      status: "active",
+      readableLabel: `${formatTierLabel(userTier)} Plan`,
+      readableDescription: "Your plan is active.",
+      nextBillingDate: null,
+      paymentMethodLastFour: null,
+    };
+  }
+
+  const tierLabel = formatTierLabel(subRow.tier);
+  const metadata = (subRow.metadata ?? {}) as Record<string, unknown>;
+  const paymentMethodLastFour =
+    (metadata.paymentMethodLastFour as string | undefined) ?? null;
+
+  let computedStatus: SubscriptionDetail["status"];
+  let description: string;
+  let nextBillingDate: string | null;
+
+  if (subRow.status === "active" && subRow.autoRenew === 1) {
+    computedStatus = "active";
+    description = `Your plan is active until ${formatReadableDate(subRow.endsAt)}. Auto-renew is on.`;
+    nextBillingDate = formatDate(subRow.endsAt);
+  } else if (subRow.status === "active" && subRow.autoRenew === 0) {
+    computedStatus = "cancelled";
+    description = `Your plan is paid until ${formatReadableDate(subRow.endsAt)}. After that, you'll be downgraded to Free.`;
+    nextBillingDate = formatDate(subRow.endsAt);
+  } else if (subRow.status === "expired") {
+    computedStatus = "expired";
+    description = "Your subscription has ended.";
+    nextBillingDate = null;
+  } else if (subRow.status === "refunded") {
+    computedStatus = "refunded";
+    description = "Your subscription has been refunded.";
+    nextBillingDate = null;
+  } else {
+    computedStatus = subRow.status as SubscriptionDetail["status"];
+    description = `Your subscription is ${subRow.status}.`;
+    nextBillingDate = null;
+  }
+
+  const label =
+    computedStatus === "active"
+      ? `${tierLabel} Plan`
+      : `${tierLabel} Plan (${computedStatus})`;
+
+  return {
+    id: subRow.id,
+    tier: subRow.tier,
+    provider: subRow.provider,
+    amount: subRow.amount,
+    currency: subRow.currency,
+    startedAt: formatDate(subRow.startedAt),
+    endsAt: formatDate(subRow.endsAt),
+    autoRenew: subRow.autoRenew === 1,
+    autoRenewDisabledAt: formatDate(subRow.autoRenewDisabledAt),
+    status: computedStatus,
+    readableLabel: label,
+    readableDescription: description,
+    nextBillingDate,
+    paymentMethodLastFour,
+  };
+}
 
 export const rebuildRouter = {
   getProfile: protectedProcedure.handler(async ({ context }) => {
@@ -255,12 +377,68 @@ export const rebuildRouter = {
   ),
 
   getSubscription: protectedProcedure.handler(async ({ context }) => {
-    const rows = await db
+    const [profile] = await db
+      .select()
+      .from(userProfile)
+      .where(eq(userProfile.userId, context.session.user.id))
+      .limit(1);
+
+    const [subRow] = await db
       .select()
       .from(subscription)
       .where(eq(subscription.userId, context.session.user.id))
       .limit(1);
-    return rows[0] ?? null;
+
+    return formatSubscriptionDetail(
+      subRow ?? undefined,
+      profile?.tier ?? "free"
+    );
+  }),
+
+  toggleAutoRenew: protectedProcedure.handler(async ({ context }) => {
+    const [profile] = await db
+      .select()
+      .from(userProfile)
+      .where(eq(userProfile.userId, context.session.user.id))
+      .limit(1);
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const [subRow] = await db
+      .select()
+      .from(subscription)
+      .where(
+        and(
+          eq(subscription.userId, context.session.user.id),
+          eq(subscription.status, "active")
+        )
+      )
+      .limit(1);
+
+    if (!subRow) {
+      throw new Error("No active subscription found");
+    }
+
+    const now = new Date();
+    const newAutoRenew = subRow.autoRenew === 1 ? 0 : 1;
+
+    const [updated] = await db
+      .update(subscription)
+      .set({
+        autoRenew: newAutoRenew,
+        autoRenewDisabledAt: newAutoRenew === 0 ? now : null,
+        updatedAt: now,
+      })
+      .where(eq(subscription.id, subRow.id))
+      .returning();
+
+    if (!updated) {
+      throw new Error("Failed to update subscription");
+    }
+
+    return formatSubscriptionDetail(updated, profile.tier);
   }),
 
   createSupportTicket: protectedProcedure

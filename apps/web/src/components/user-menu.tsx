@@ -40,8 +40,13 @@ export default function UserMenu() {
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem>
-            <Link href="/settings" className="w-full">
+            <Link className="w-full" href="/settings">
               Settings
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Link className="w-full" href="/settings">
+              Subscription
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem>{session.user.email}</DropdownMenuItem>
