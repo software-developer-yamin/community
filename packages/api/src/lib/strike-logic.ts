@@ -56,6 +56,22 @@ export interface StrikeState {
   strikeCount: number;
 }
 
+/**
+ * Human-readable description of the moderation state.
+ * Returned alongside the machine-readable state so the client can render
+ * the account standing section without duplicating state-to-text logic.
+ */
+export interface ReadableState {
+  /** Short heading, e.g. "Good standing", "Account banned" */
+  label: string;
+  /** Plain-language explanation interpolating strike count / ban reason */
+  description: string;
+  /** Optional call-to-action label when user action is needed */
+  action: string | null;
+  /** Optional CTA link when user action is needed */
+  actionLink: string | null;
+}
+
 // ─── Classification ───────────────────────────────────────────────────────
 
 /**
@@ -95,6 +111,69 @@ export function shouldCountAsStrike(
  * - 5-9 strikes: cooldown_1h (1-hour queue block)
  * - 10+ strikes: cooldown_24h (24-hour queue block + flagged for human review)
  */
+/**
+ * Compute a human-readable description of the moderation state.
+ *
+ * Returns a {@link ReadableState} with a short label, a plain-language
+ * description (interpolating strike count or ban reason when relevant),
+ * and an optional CTA action/link for states that require user action.
+ */
+export function computeReadableState(
+  state: ModerationState,
+  strikeCount: number,
+  banReason?: string | null
+): ReadableState {
+  switch (state) {
+    case "clean":
+      return {
+        label: "Good standing",
+        description: "You're all set! Your account is in good standing.",
+        action: null,
+        actionLink: null,
+      };
+    case "warned":
+      return {
+        label: "Warning — strikes accumulated",
+        description: `You have ${strikeCount} active ${strikeCount === 1 ? "strike" : "strikes"}. Please review the community guidelines to keep future calls positive.`,
+        action: "Learn more",
+        actionLink: "/help/moderation",
+      };
+    case "cooldown_1h":
+      return {
+        label: "Temporary cooldown",
+        description:
+          "Your ability to make calls has been temporarily paused for 1 hour due to multiple recent disconnections.",
+        action: null,
+        actionLink: null,
+      };
+    case "cooldown_24h":
+      return {
+        label: "Extended cooldown",
+        description:
+          "Your account has been flagged for review. Calls are paused for 24 hours while our team reviews your recent activity.",
+        action: null,
+        actionLink: null,
+      };
+    case "suspended":
+      return {
+        label: "Account suspended",
+        description:
+          "Your account is suspended pending review by our team. This usually resolves within 24 hours.",
+        action: "Contact support",
+        actionLink: "/support",
+      };
+    case "banned":
+      return {
+        label: "Account banned",
+        description: banReason
+          ? `Your account has been banned. Reason: ${banReason}`
+          : "Your account has been banned. If you believe this is an error, please contact support.",
+        action: "Contact support",
+        actionLink: "/support",
+      };
+  }
+}
+
 export function determineModerationState(
   activeStrikeCount: number
 ): ModerationResult {

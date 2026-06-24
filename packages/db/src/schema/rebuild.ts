@@ -86,6 +86,7 @@ export const userProfile = pgTable("user_profile", {
   strikeCount: integer("strike_count").default(0).notNull(),
   lastStrikeAt: timestamp("last_strike_at"),
   flaggedForReview: integer("flagged_for_review").default(0).notNull(), // 0 = no, 1 = flagged by partner report
+  banReason: text("ban_reason"), // null unless the user is banned; stores the admin-set reason
   // Onboarding
   onboardingCompleted: integer("onboarding_completed").default(0).notNull(), // 0 = not started, 1 = partial, 2 = complete
   cefrLevel: text("cefr_level"), // A1 | A2 | B1 | B2 | C1 | C2
