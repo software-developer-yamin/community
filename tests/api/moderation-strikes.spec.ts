@@ -248,4 +248,247 @@ test.describe("Moderation: Graduated Strike System — API Contract Tests (ATDD,
     // ACTUAL (red phase): no endpoint exists → fails
     expect(state.strikeCount).toBe(2);
   });
+
+  // =========================================================================
+  // AC7: Report Partner — 60s window, void strike, flag profile
+  // Priority: P0
+  // =========================================================================
+
+  test.skip("[P0] should report a partner within 60s of call ending", async ({
+    request,
+  }) => {
+    // THIS TEST WILL FAIL — auth session + seeded room not set up for tests
+    // Given an ended call room with a known roomName
+    // When the participant reports their partner within 60s
+    // Then the report is recorded and success=true is returned
+    const res = await request.post(`${API_BASE}/moderation/reportPartner`, {
+      data: {
+        roomName: "call-test-room-001",
+        reason: "non_participation",
+        details: "Partner was silent for the entire call",
+      },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.alreadyReported).toBe(false);
+  });
+
+  test.skip("[P0] should reject report after 60s window expires", async ({
+    request,
+  }) => {
+    // THIS TEST WILL FAIL — auth session + timed room not set up
+    // Given an ended call room where endedAt is >60s ago
+    // When the participant tries to report
+    // Then the request fails with REPORT_WINDOW_CLOSED
+    const res = await request.post(`${API_BASE}/moderation/reportPartner`, {
+      data: {
+        roomName: "call-expired-room-002",
+        reason: "abuse",
+      },
+    });
+    // EXPECTED: 400 with error message containing REPORT_WINDOW_CLOSED
+    // ACTUAL (red phase): no auth → 401
+    expect(res.status()).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("REPORT_WINDOW_CLOSED");
+  });
+
+  test.skip("[P0] should reject duplicate report from same user for same room", async ({
+    request,
+  }) => {
+    // THIS TEST WILL FAIL — auth session + seeded data not set up
+    // Given a participant already filed a report for a room
+    // When they try to file another report for the same room
+    // Then the request returns alreadyReported=true
+    const res = await request.post(`${API_BASE}/moderation/reportPartner`, {
+      data: {
+        roomName: "call-already-reported-room-003",
+        reason: "other",
+      },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.alreadyReported).toBe(true);
+  });
+
+  test.skip("[P0] should reject report when room does not exist", async ({
+    request,
+  }) => {
+    // THIS TEST WILL FAIL — auth not set up
+    // Given no room exists with the given roomName
+    // When a user tries to report
+    // Then the request fails with NOT_FOUND
+    const res = await request.post(`${API_BASE}/moderation/reportPartner`, {
+      data: {
+        roomName: "non-existent-room-404",
+        reason: "technical_failure",
+      },
+    });
+    // EXPECTED: 400 with error containing NOT_FOUND
+    // ACTUAL (red phase): no auth → 401
+    expect(res.status()).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("NOT_FOUND");
+  });
+
+  test.skip("[P0] should reject report when room is still active", async ({
+    request,
+  }) => {
+    // THIS TEST WILL FAIL — auth session + active room not set up
+    // Given a call room with status "active"
+    // When a participant tries to report
+    // Then the request fails with NOT_FOUND (only ended rooms can be reported)
+    const res = await request.post(`${API_BASE}/moderation/reportPartner`, {
+      data: {
+        roomName: "call-active-room-005",
+        reason: "non_participation",
+      },
+    });
+    // EXPECTED: 400 with error containing NOT_FOUND
+    // ACTUAL (red phase): no auth → 401
+    expect(res.status()).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("NOT_FOUND");
+  });
+
+  test.skip("[P1] should flag partner profile for review on abuse report", async ({
+    request,
+  }) => {
+    // THIS TEST WILL FAIL — auth session + seeded profiles not set up
+    // Given an ended call room
+    // When the reporter files an abuse report against their partner
+    // Then the partner's flaggedForReview becomes true
+    // And the reporter's own strike for that call is voided
+    const res = await request.post(`${API_BASE}/moderation/reportPartner`, {
+      data: {
+        roomName: "call-abuse-room-006",
+        reason: "abuse",
+        details: "Partner was using inappropriate language",
+      },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body.success).toBe(true);
+
+    // Verify the partner is now flagged
+    const stateRes = await request.get(`${API_BASE}/moderation/strikes`);
+    expect(stateRes.ok()).toBeTruthy();
+    const partnerState = await stateRes.json();
+    expect(partnerState.flaggedForReview).toBe(true);
+  });
+
+  test.skip("[P1] should allow all valid report reasons", async ({
+    request,
+  }) => {
+    // THIS TEST WILL FAIL — auth session + multiple rooms not set up
+    // Given ended call rooms for each report reason
+    // When the participant reports with each valid reason
+    // Then all are accepted
+    const reasons = [
+      "non_participation",
+      "abuse",
+      "technical_failure",
+      "other",
+    ] as const;
+
+    for (const reason of reasons) {
+      const res = await request.post(`${API_BASE}/moderation/reportPartner`, {
+        data: {
+          roomName: `call-valid-reason-${reason}`,
+          reason,
+        },
+      });
+      // EXPECTED: success for all valid reasons
+      // ACTUAL (red phase): no auth → 401 for all
+      expect(res.ok()).toBeTruthy();
+      const body = await res.json();
+      expect(body).toHaveProperty("success");
+    }
+  });
+
+  // =========================================================================
+  // AC8: Skip Call — rate limit, partner notification
+  // Priority: P1
+  // =========================================================================
+
+  test.skip("[P1] should skip an active call", async ({ request }) => {
+    // THIS TEST WILL FAIL — auth session + active room not set up
+    // Given an active call room
+    // When the participant calls skipCall
+    // Then success=true is returned with skip count
+    const res = await request.post(`${API_BASE}/moderation/skipCall`, {
+      data: {
+        roomName: "call-skip-active-room-001",
+      },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body).toHaveProperty("count");
+    expect(typeof body.count).toBe("number");
+    expect(body).toHaveProperty("showNudge");
+    expect(body).toHaveProperty("isRateLimited");
+  });
+
+  test.skip("[P1] should reject skip for non-existent room", async ({
+    request,
+  }) => {
+    // THIS TEST WILL FAIL — auth not set up
+    // Given no active room exists with the given roomName
+    // When skipCall is called
+    // Then the request fails with NOT_FOUND
+    const res = await request.post(`${API_BASE}/moderation/skipCall`, {
+      data: {
+        roomName: "non-existent-room-skip",
+      },
+    });
+    // EXPECTED: 400 with error containing NOT_FOUND
+    // ACTUAL (red phase): no auth → 401
+    expect(res.status()).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("NOT_FOUND");
+  });
+
+  test.skip("[P1] should reject skip from non-participant", async ({
+    request,
+  }) => {
+    // THIS TEST WILL FAIL — auth session not set up as participant
+    // Given an active room where the user is NOT a participant
+    // When skipCall is called
+    // Then the request fails with FORBIDDEN
+    const res = await request.post(`${API_BASE}/moderation/skipCall`, {
+      data: {
+        roomName: "call-not-my-room",
+      },
+    });
+    // EXPECTED: 400 with error containing FORBIDDEN
+    // ACTUAL (red phase): no auth → 401
+    expect(res.status()).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("FORBIDDEN");
+  });
+
+  test.skip("[P1] should enforce skip rate limit (max 1 per 5s)", async ({
+    request,
+  }) => {
+    // THIS TEST WILL FAIL — auth + rapid requests not set up
+    // Given an active call room
+    // When skip is called rapidly twice
+    // Then the second call returns isRateLimited=true
+    await request.post(`${API_BASE}/moderation/skipCall`, {
+      data: { roomName: "call-rate-limit-room" },
+    });
+
+    const res = await request.post(`${API_BASE}/moderation/skipCall`, {
+      data: { roomName: "call-rate-limit-room" },
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    // EXPECTED: isRateLimited === true on rapid second call
+    // ACTUAL (red phase): no auth → 401
+    expect(body.isRateLimited).toBe(true);
+    expect(body.success).toBe(false);
+  });
 });

@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { ReportPartnerDialog } from "@/components/report-partner-dialog";
 import { orpc } from "@/utils/orpc";
 
 type MatchStatus =
@@ -266,6 +267,8 @@ export default function MatchingPage() {
             >
               {status === "found" ? "Go to Call" : "Exit"}
             </Button>
+
+            <ReportPartnerDialog />
           </div>
         </CardContent>
       </Card>

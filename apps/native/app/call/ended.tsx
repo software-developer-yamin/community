@@ -36,6 +36,7 @@ export default function CallEndedScreen() {
     (typeof REPORT_REASONS)[number]["value"] | null
   >(null);
   const [reported, setReported] = useState(false);
+  const [reportStrikeVoided, setReportStrikeVoided] = useState(false);
   const [details, setDetails] = useState("");
 
   const reportMutation = useMutation(
@@ -64,7 +65,8 @@ export default function CallEndedScreen() {
         ...(details.trim() ? { details: details.trim() } : {}),
       },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          setReportStrikeVoided(data.strikeVoided ?? false);
           setReported(true);
           setShowReportForm(false);
         },
@@ -89,7 +91,9 @@ export default function CallEndedScreen() {
         nativeID="report-thanks"
         style={[styles.thanksText, { color: theme.colors.success }]}
       >
-        Thanks for your report — we'll review it.
+        {reportStrikeVoided
+          ? "Report submitted. Your strike has been voided."
+          : "Thanks for your report — we'll review it."}
       </Text>
     );
   } else if (showReportForm) {

@@ -16,6 +16,7 @@
   "dependencies": {
     "@base-ui/react": "^1.0.0",
     "@community/auth": "workspace:*",
+    "@radix-ui/react-dialog": "^1.1.17",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "catalog:",
