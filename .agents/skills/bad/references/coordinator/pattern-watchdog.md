@@ -7,7 +7,7 @@ Use this pattern when `MONITOR_SUPPORT=true` and the activity log hook is instal
 ## How it works
 
 1. **Record the log path** — before spawning a long-running subagent, compute the log directory for that agent.
-2. **Spawn the subagent** with `run_in_background=false`.
+2. **Spawn the subagent** with `run_in_background=true`.
 3. **Start Monitor** — pass a poll script that watches the agent's log file modification time.
 4. **React to events** — on `ALIVE` lines, keep waiting; on `STALE`, notify and ask the user.
 5. **On agent completion** — stop Monitor, proceed normally.
@@ -79,7 +79,7 @@ Before spawning a long-running subagent (Steps 2, 3, 4, 5 are the most likely to
 1. Compute LOG_DIR = ~/.claude/projects/<encoded>/bad-logs/<agent-slug>/
    (e.g. bad-logs/story-4-auth-controller/ for story 4's dev step)
 
-2. Spawn subagent with run_in_background=false
+2. Spawn subagent with run_in_background=true
 
 3. Start Monitor with poll script:
      Monitor(script, args=[LOG_DIR, "story-4 Step 3", STALE_TIMEOUT_MINUTES])
