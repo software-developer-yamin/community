@@ -1,5 +1,5 @@
 # Story Dependency Graph
-_Last updated: 2026-06-23T21:35:00+06:00_
+_Last updated: 2026-06-24T01:45:00+06:00_
 
 ## Stories
 
@@ -17,7 +17,7 @@ _Last updated: 2026-06-23T21:35:00+06:00_
 | 3.2 | 3 | Native Language Field | done | #10 | #57 | merged | Epic 1 | ✅ Yes (done) |
 | 3.3 | 3 | Match Timeout with Honest State | done | #11 | #58 | merged | 3.1, 3.2 | ✅ Yes (done — 3.2 done, 3.1 still pending but story was implemented) |
 | 4.1 | 4 | Graduated Strike System | done | #12 | — | — | Epic 2 | ✅ Yes (done) |
-| 4.2 | 4 | Skip Button (In-Call Action) | done | #13 | — | — | Epic 2 | ✅ Yes (done) |
+| 4.2 | 4 | Skip Button (In-Call Action) | done | #13 | #59 | merged | Epic 2 | ✅ Yes (done) |
 | 4.3 | 4 | Distinguish Victim from Aggressor | backlog | #14 | — | — | 4.1 | ✅ Yes (4.1 done) |
 | 4.4 | 4 | Visible Moderation State | backlog | #15 | — | — | 4.1 | ✅ Yes (4.1 done) |
 | 5.1 | 5 | Visible Subscription State | backlog | #16 | — | — | none | ❌ No (epic ordering) |
