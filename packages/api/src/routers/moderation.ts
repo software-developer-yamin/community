@@ -13,6 +13,7 @@ import { protectedProcedure } from "../index";
 import { recordSkip } from "../lib/skip-tracker";
 import {
   computeActiveStrikes24h,
+  computeReadableState,
   STRIKE_DECAY_DAYS,
 } from "../lib/strike-logic";
 import { roomClient } from "./livekit";
@@ -98,6 +99,7 @@ export const moderationRouter = {
           cooldownUntil: userProfile.cooldownUntil,
           strikeCount: userProfile.strikeCount,
           flaggedForReview: userProfile.flaggedForReview,
+          banReason: userProfile.banReason,
         })
         .from(userProfile)
         .where(eq(userProfile.userId, userId))
@@ -124,6 +126,11 @@ export const moderationRouter = {
         state,
         cooldownUntil,
         flaggedForReview,
+        readableState: computeReadableState(
+          state,
+          nonVoidedStrikes.length,
+          profile?.banReason
+        ),
       };
     }),
 
