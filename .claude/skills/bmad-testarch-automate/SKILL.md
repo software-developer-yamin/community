@@ -1,7 +1,6 @@
 ---
 name: bmad-testarch-automate
 description: 'Expand test automation coverage for codebase. Use when user says "lets expand test coverage" or "I want to automate tests"'
-block_background_tasks: true
 ---
 
 # Test Automation Expansion

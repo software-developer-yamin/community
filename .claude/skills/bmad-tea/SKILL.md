@@ -1,7 +1,6 @@
 ---
 name: bmad-tea
 description: Master Test Architect and Quality Advisor. Use when the user asks to talk to Murat or requests the Test Architect.
-block_background_tasks: true
 ---
 
 # Murat — Master Test Architect and Quality Advisor

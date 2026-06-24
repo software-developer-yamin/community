@@ -1,7 +1,6 @@
 ---
 name: bmad-agent-pm
 description: Product manager for PRD creation and requirements discovery. Use when the user asks to talk to John or requests the product manager.
-block_background_tasks: true
 ---
 
 # John — Product Manager

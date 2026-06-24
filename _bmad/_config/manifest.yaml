@@ -1,26 +1,26 @@
 installation:
-  version: 6.8.0
+  version: 6.9.0
   installDate: 2026-06-06T19:32:32.387Z
-  lastUpdated: 2026-06-06T19:32:32.387Z
+  lastUpdated: 2026-06-24T14:28:51.719Z
 modules:
   - name: core
-    version: 6.8.0
+    version: 6.9.0
     installDate: 2026-06-06T19:32:32.153Z
-    lastUpdated: 2026-06-06T19:32:32.377Z
+    lastUpdated: 2026-06-24T14:28:51.715Z
     source: built-in
     npmPackage: null
     repoUrl: null
   - name: bmm
-    version: 6.8.0
+    version: 6.9.0
     installDate: 2026-06-06T19:32:32.146Z
-    lastUpdated: 2026-06-06T19:32:32.378Z
+    lastUpdated: 2026-06-24T14:28:51.716Z
     source: built-in
     npmPackage: null
     repoUrl: null
   - name: tea
     version: v1.19.0
     installDate: 2026-06-06T19:32:32.222Z
-    lastUpdated: 2026-06-06T19:32:32.381Z
+    lastUpdated: 2026-06-24T14:28:51.717Z
     source: external
     npmPackage: bmad-method-test-architecture-enterprise
     repoUrl: https://github.com/bmad-code-org/bmad-method-test-architecture-enterprise
@@ -29,7 +29,7 @@ modules:
   - name: cis
     version: v0.2.1
     installDate: 2026-06-06T19:32:32.232Z
-    lastUpdated: 2026-06-06T19:32:32.383Z
+    lastUpdated: 2026-06-24T14:28:51.718Z
     source: external
     npmPackage: bmad-creative-intelligence-suite
     repoUrl: https://github.com/bmad-code-org/bmad-module-creative-intelligence-suite
@@ -38,7 +38,7 @@ modules:
   - name: wds
     version: v0.4.3
     installDate: 2026-06-06T19:32:32.295Z
-    lastUpdated: 2026-06-06T19:32:32.387Z
+    lastUpdated: 2026-06-24T14:28:51.719Z
     source: external
     npmPackage: bmad-wds
     repoUrl: https://github.com/bmad-code-org/bmad-method-wds-expansion
@@ -47,3 +47,6 @@ modules:
 ides:
   - claude-code
   - opencode
+  - github-copilot
+  - antigravity
+  - hermes

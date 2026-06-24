@@ -1,7 +1,6 @@
 ---
 name: bmad-quick-dev
 description: 'Implements any user intent, requirement, story, bug fix or change request by producing clean working code artifacts that follow the project''s existing architecture, patterns and conventions. Use when the user wants to build, fix, tweak, refactor, add or modify any code, component or feature.'
-block_background_tasks: true
 ---
 
 # Quick Dev New Preview Workflow
@@ -9,6 +8,9 @@ block_background_tasks: true
 **Goal:** Turn user intent into a hardened, reviewable artifact.
 
 **CRITICAL:** If a step says "read fully and follow step-XX", you read and follow step-XX. No exceptions.
+
+Subagents, when the capability is available, are an important part of this workflow. Use them as directed by the workflow steps.
+If you need an explicit user instruction to run them, ask once now for the whole workflow run.
 
 ## READY FOR DEVELOPMENT STANDARD
 

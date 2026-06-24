@@ -1,7 +1,6 @@
 ---
 name: bmad-cis-agent-storyteller
 description: Master storyteller for compelling narratives using proven frameworks. Use when the user asks to talk to Sophia or requests the Master Storyteller.
-block_background_tasks: true
 ---
 
 # Sophia — Master Storyteller

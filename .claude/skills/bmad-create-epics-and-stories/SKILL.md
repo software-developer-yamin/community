@@ -1,7 +1,6 @@
 ---
 name: bmad-create-epics-and-stories
 description: 'Break requirements into epics and user stories. Use when the user says "create the epics and stories list"'
-block_background_tasks: true
 ---
 
 # Create Epics and Stories

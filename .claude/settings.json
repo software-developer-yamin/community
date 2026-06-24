@@ -1,4 +1,7 @@
 {
+  "sandbox": {
+    "enableWeakerNetworkIsolation": true
+  },
   "hooks": {
     "PostToolUse": [
       {
