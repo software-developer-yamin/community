@@ -64,7 +64,10 @@ test.describe("Story 4.3: Report Partner — Web E2E (ATDD, RED PHASE)", () => {
     await page.goto(`${WEB_BASE}/dashboard/matching`);
     await page.getByRole("button", { name: RE_REPORT_BTN }).click();
 
-    await page.getByLabel(RE_NON_PARTICIPATION_LABEL).check();
+    // Reason selector is a <select> dropdown, not a radio group
+    await page
+      .getByRole("combobox", { name: RE_NON_PARTICIPATION_LABEL })
+      .selectOption("non_participation");
 
     const detailsField = page.getByRole("textbox", { name: RE_DETAILS });
     await expect(detailsField).toBeVisible();
@@ -83,7 +86,8 @@ test.describe("Story 4.3: Report Partner — Web E2E (ATDD, RED PHASE)", () => {
     await page.goto(`${WEB_BASE}/dashboard/matching`);
     await page.getByRole("button", { name: RE_REPORT_BTN }).click();
 
-    await page.getByLabel(RE_NON_PARTICIPATION_LABEL).check();
+    // Reason selector is a <select> dropdown
+    await page.getByRole("combobox").selectOption("non_participation");
     await page.getByRole("button", { name: RE_SUBMIT_BTN }).click();
 
     // EXPECTED: confirmation message mentioning strike voided
@@ -103,7 +107,8 @@ test.describe("Story 4.3: Report Partner — Web E2E (ATDD, RED PHASE)", () => {
     await page.goto(`${WEB_BASE}/dashboard/matching`);
 
     await page.getByRole("button", { name: RE_REPORT_BTN }).click();
-    await page.getByLabel(RE_OTHER).check();
+    // Reason selector is a <select> dropdown
+    await page.getByRole("combobox").selectOption("other");
     await page.getByRole("button", { name: RE_SUBMIT_BTN }).click();
 
     // EXPECTED: report button gone after submit
