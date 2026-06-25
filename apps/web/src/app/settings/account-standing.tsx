@@ -14,7 +14,10 @@ import { orpc } from "@/utils/orpc";
 
 const STATE_COLORS: Record<string, { badge: string; bg: string }> = {
   clean: { badge: "bg-green-500/10 text-green-600", bg: "border-green-200" },
-  warned: { badge: "bg-yellow-500/10 text-yellow-600", bg: "border-yellow-200" },
+  warned: {
+    badge: "bg-yellow-500/10 text-yellow-600",
+    bg: "border-yellow-200",
+  },
   cooldown_1h: { badge: "bg-red-500/10 text-red-600", bg: "border-red-200" },
   cooldown_24h: { badge: "bg-red-500/10 text-red-600", bg: "border-red-200" },
   suspended: { badge: "bg-red-500/10 text-red-600", bg: "border-red-200" },
@@ -99,8 +102,8 @@ export default function AccountStanding() {
 
   return (
     <Card
-      data-testid="account-standing"
       className={`border-l-4 ${colorCfg.bg}`}
+      data-testid="account-standing"
     >
       <CardHeader>
         <CardTitle>Account Standing</CardTitle>
@@ -111,21 +114,21 @@ export default function AccountStanding() {
       <CardContent className="space-y-4">
         <div className="flex items-center gap-3">
           <span
+            className={`inline-block rounded-full px-3 py-1 font-semibold text-xs ${colorCfg.badge}`}
             data-testid="state-badge"
-            className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${colorCfg.badge}`}
           >
             {readableState.label}
           </span>
         </div>
 
-        <p data-testid="state-description" className="text-sm">
+        <p className="text-sm" data-testid="state-description">
           {readableState.description}
         </p>
 
         {countdown !== null && (
           <div
-            data-testid="cooldown-countdown"
             className="rounded bg-muted px-3 py-2 font-mono text-sm"
+            data-testid="cooldown-countdown"
           >
             Time remaining: {countdown}
           </div>
@@ -133,8 +136,8 @@ export default function AccountStanding() {
 
         {flaggedForReview && (
           <div
+            className="rounded border border-orange-200 bg-orange-50 px-3 py-2 text-orange-800 text-sm"
             data-testid="flagged-banner"
-            className="rounded border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-800"
           >
             Flagged for review — our team is reviewing your recent activity.
           </div>
@@ -143,9 +146,9 @@ export default function AccountStanding() {
         {readableState.action && readableState.actionLink && (
           <div className="pt-1">
             <a
-              href={readableState.actionLink}
-              data-testid="state-action"
               className="inline-flex h-7 items-center justify-center gap-1.5 rounded-none border border-border bg-background px-2.5 font-medium text-xs hover:bg-muted hover:text-foreground"
+              data-testid="state-action"
+              href={readableState.actionLink}
             >
               {readableState.action}
             </a>

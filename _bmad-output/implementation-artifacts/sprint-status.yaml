@@ -34,9 +34,9 @@ development_status:
   epic-4-retrospective: optional
 
   epic-5: in-progress
-  5-1-visible-subscription-state: in-progress
-  5-2-in-app-support-ticket: backlog
-  5-3-refund-mechanism: backlog
+  5-1-visible-subscription-state: done
+  5-2-in-app-support-ticket: in-pr
+  5-3-refund-mechanism: blocked
   epic-5-retrospective: optional
 
   epic-6: backlog

@@ -6,6 +6,12 @@
     "ultracite/biome/react"
   ],
   "files": {
-    "includes": ["!_bmad", "!.agents/skills", "!.claude/skills", "!.worktrees"]
+    "includes": [
+      "!_bmad",
+      "!.agent/skills",
+      "!.agents/skills",
+      "!.claude/skills",
+      "!.worktrees"
+    ]
   }
 }

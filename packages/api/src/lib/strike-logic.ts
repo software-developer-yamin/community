@@ -62,14 +62,14 @@ export interface StrikeState {
  * the account standing section without duplicating state-to-text logic.
  */
 export interface ReadableState {
-  /** Short heading, e.g. "Good standing", "Account banned" */
-  label: string;
-  /** Plain-language explanation interpolating strike count / ban reason */
-  description: string;
   /** Optional call-to-action label when user action is needed */
   action: string | null;
   /** Optional CTA link when user action is needed */
   actionLink: string | null;
+  /** Plain-language explanation interpolating strike count / ban reason */
+  description: string;
+  /** Short heading, e.g. "Good standing", "Account banned" */
+  label: string;
 }
 
 // ─── Classification ───────────────────────────────────────────────────────
@@ -168,6 +168,13 @@ export function computeReadableState(
         description: banReason
           ? `Your account has been banned. Reason: ${banReason}`
           : "Your account has been banned. If you believe this is an error, please contact support.",
+        action: "Contact support",
+        actionLink: "/support",
+      };
+    default:
+      return {
+        label: "Unknown",
+        description: "Your account status is unknown. Please contact support.",
         action: "Contact support",
         actionLink: "/support",
       };

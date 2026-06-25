@@ -7,7 +7,7 @@ test.describe("Moderation: Visible Moderation State — E2E Account Standing UI 
   // =========================================================================
 
   test.skip("[P0] settings page shows Account Standing section for clean user", async ({
-    page,
+    page: _page,
   }) => {
     // THIS TEST WILL FAIL — settings page + account standing UI not built
     // Step 1: Login as a user with clean moderation state
@@ -39,7 +39,7 @@ test.describe("Moderation: Visible Moderation State — E2E Account Standing UI 
   // =========================================================================
 
   test.skip("[P0] clean state shows green badge with good standing label", async ({
-    page,
+    page: _page,
   }) => {
     // THIS TEST WILL FAIL — account standing UI not built
     // Given a user in clean moderation state
@@ -62,7 +62,7 @@ test.describe("Moderation: Visible Moderation State — E2E Account Standing UI 
   // =========================================================================
 
   test.skip("[P0] warned state shows yellow badge with strike count in description", async ({
-    page,
+    page: _page,
   }) => {
     // THIS TEST WILL FAIL — no test user with warned state seeded
     // Given a user with 3-4 strikes (warned state)
@@ -86,7 +86,7 @@ test.describe("Moderation: Visible Moderation State — E2E Account Standing UI 
   // =========================================================================
 
   test.skip("[P0] cooldown_1h state shows countdown timer with remaining time", async ({
-    page,
+    page: _page,
   }) => {
     // THIS TEST WILL FAIL — no test user with cooldown state seeded
     // Given a user in cooldown_1h state
@@ -110,7 +110,7 @@ test.describe("Moderation: Visible Moderation State — E2E Account Standing UI 
   // =========================================================================
 
   test.skip("[P0] banned state shows Contact support link with ban reason", async ({
-    page,
+    page: _page,
   }) => {
     // THIS TEST WILL FAIL — no test user with banned state seeded
     // Given a user whose account is banned
@@ -134,7 +134,7 @@ test.describe("Moderation: Visible Moderation State — E2E Account Standing UI 
   // =========================================================================
 
   test.skip("[P1] cooldown countdown updates in real-time", async ({
-    page,
+    page: _page,
   }) => {
     // THIS TEST WILL FAIL — countdown timer interval not implemented
     // Given a user in a cooldown state with a known cooldownUntil
@@ -159,7 +159,7 @@ test.describe("Moderation: Visible Moderation State — E2E Account Standing UI 
   // =========================================================================
 
   test.skip("[P1] page shows updated state when cooldown expires", async ({
-    page,
+    page: _page,
   }) => {
     // THIS TEST WILL FAIL — auto-refetch on cooldown expiry not implemented
     // Given a user in a cooldown state with cooldownUntil ≈ 2s from now
@@ -181,7 +181,7 @@ test.describe("Moderation: Visible Moderation State — E2E Account Standing UI 
   // =========================================================================
 
   test.skip("[P1] flagged_for_review banner is displayed when applicable", async ({
-    page,
+    page: _page,
   }) => {
     // THIS TEST WILL FAIL — flagged_for_review banner not implemented
     // Given a user with flaggedForReview = true
@@ -202,7 +202,7 @@ test.describe("Moderation: Visible Moderation State — E2E Account Standing UI 
   // =========================================================================
 
   test.skip("[P1] suspended state shows pending review message and Contact support", async ({
-    page,
+    page: _page,
   }) => {
     // THIS TEST WILL FAIL — suspended state UI not built
     // Given a user whose account is suspended
