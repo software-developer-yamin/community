@@ -66,6 +66,16 @@ const DrawerLayout = () => {
           ),
         }}
       />
+      <Drawer.Screen
+        name="ticket"
+        options={{
+          headerTitle: "Support Tickets",
+          drawerLabel: "Support",
+          drawerIcon: ({ size, color }) => (
+            <Ionicons color={color} name="help-buoy-outline" size={size} />
+          ),
+        }}
+      />
     </Drawer>
   );
 };
