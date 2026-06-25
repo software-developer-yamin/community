@@ -28,6 +28,20 @@ export const env = createEnv({
     EMBED_URL: z.string().url().optional(),
     PRON_URL: z.string().url().optional(),
     SENTRY_DSN: z.string().url().optional(),
+    // ── Payment providers (@foxses/pay) ───────────────────────────
+    // SSLCommerz (Bangladesh)
+    SSLCOMMERZ_STORE_ID: z.string().optional(),
+    SSLCOMMERZ_STORE_PASS: z.string().optional(),
+    SSLCOMMERZ_SANDBOX: z.coerce.boolean().default(true),
+    // bKash (Bangladesh)
+    BKASH_APP_KEY: z.string().optional(),
+    BKASH_APP_SECRET: z.string().optional(),
+    BKASH_USERNAME: z.string().optional(),
+    BKASH_PASSWORD: z.string().optional(),
+    BKASH_SANDBOX: z.coerce.boolean().default(true),
+    // Stripe (Global)
+    STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),

@@ -14,6 +14,7 @@
     "@community/auth": "workspace:*",
     "@community/db": "workspace:*",
     "@community/env": "workspace:*",
+    "@foxses/pay": "^1.0.5",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",

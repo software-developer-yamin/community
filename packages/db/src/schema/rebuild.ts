@@ -45,7 +45,8 @@ export const callEndReasonEnum = pgEnum("call_end_reason", [
 ]);
 export const paymentProviderEnum = pgEnum("payment_provider", [
   "sslcommerz",
-  "razorpay",
+  "bkash",
+  "stripe",
 ]);
 export const refundStatusEnum = pgEnum("refund_status", [
   "pending",
@@ -315,6 +316,70 @@ export const refundRequest = pgTable(
     index("refund_request_status_idx").on(table.status),
     index("refund_request_sla_idx").on(table.slaDeadline),
   ]
+);
+
+// ─── Payment Transactions ─────────────────────────────────────────────────
+
+export const paymentTransactionStatusEnum = pgEnum(
+  "payment_transaction_status",
+  ["pending", "completed", "failed", "cancelled"]
+);
+
+/**
+ * Individual payment attempts via SSLCommerz (or future providers).
+ * One row per checkout session initiated by the user.
+ */
+export const paymentTransaction = pgTable(
+  "payment_transaction",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    subscriptionId: text("subscription_id").references(() => subscription.id),
+    // SSLCommerz identifiers
+    tranId: text("tran_id").notNull().unique(),
+    valId: text("val_id"),
+    bankTranId: text("bank_tran_id"),
+    sessionKey: text("session_key"),
+    // Payment details
+    tier: tierEnum("tier").notNull(),
+    billingPeriod: text("billing_period").notNull(), // "monthly" | "annual"
+    amount: integer("amount").notNull(), // in poisha (BDT × 100)
+    currency: text("currency").default("BDT").notNull(),
+    // Status
+    status: paymentTransactionStatusEnum("status").default("pending").notNull(),
+    riskLevel: integer("risk_level"),
+    failReason: text("fail_reason"),
+    // Timestamps
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("payment_transaction_user_idx").on(table.userId),
+    index("payment_transaction_tran_id_idx").on(table.tranId),
+    index("payment_transaction_status_idx").on(table.status),
+  ]
+);
+
+export const paymentTransactionRelations = relations(
+  paymentTransaction,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [paymentTransaction.userId],
+      references: [user.id],
+    }),
+    subscription: one(subscription, {
+      fields: [paymentTransaction.subscriptionId],
+      references: [subscription.id],
+    }),
+  })
 );
 
 // ─── Support ──────────────────────────────────────────────────────────────
