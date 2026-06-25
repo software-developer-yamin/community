@@ -35,6 +35,7 @@ import { timeout } from "hono/timeout";
 import { type TimingVariables, timing } from "hono/timing";
 import { rateLimiter } from "hono-rate-limiter";
 import { WebhookReceiver } from "livekit-server-sdk";
+import { handleBillingIpn } from "./routes/billing-ipn";
 
 initLogger({
   env: { service: "community-server" },
@@ -207,6 +208,9 @@ app.post("/livekit/webhook", async (c) => {
 
   return c.json({ received: true });
 });
+
+// ── Billing IPN (public — SSLCommerz posts here after payment) ───
+app.post("/api/billing/ipn", handleBillingIpn);
 
 // ── Auth handler ─────────────────────────────────────────────────
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));

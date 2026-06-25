@@ -1,6 +1,7 @@
 import type { RouterClient } from "@orpc/server";
 
 import { protectedProcedure, publicProcedure } from "../index";
+import { billingRouter } from "./billing";
 import { livekitRouter } from "./livekit";
 import { modelsRouter } from "./models";
 import { moderationRouter } from "./moderation";
@@ -20,6 +21,7 @@ export const appRouter = {
   models: modelsRouter,
   recommendations: recommendationsRouter,
   rebuild: rebuildRouter,
+  billing: billingRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;
