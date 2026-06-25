@@ -8,6 +8,13 @@
       "when": 1782166512698,
       "tag": "0000_sturdy_medusa",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782417291111,
+      "tag": "0001_lovely_pyro",
+      "breakpoints": true
     }
   ]
 }

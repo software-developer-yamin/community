@@ -11,7 +11,7 @@ import {
   supportTicketMessage,
   userProfile,
 } from "@community/db/schema/rebuild";
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import z from "zod";
 import { adminProcedure, protectedProcedure } from "../index";
 import { isValidNativeLang } from "../lib/native-lang";
@@ -521,6 +521,30 @@ export const rebuildRouter = {
       });
 
       return { ok: true };
+    }),
+
+  getTicketMessages: protectedProcedure
+    .input(z.object({ ticketId: z.string().uuid() }))
+    .handler(async ({ input, context }) => {
+      const ticket = await db
+        .select()
+        .from(supportTicket)
+        .where(
+          and(
+            eq(supportTicket.id, input.ticketId),
+            eq(supportTicket.userId, context.session.user.id)
+          )
+        )
+        .limit(1);
+      if (ticket.length === 0) {
+        throw new Error("Ticket not found");
+      }
+
+      return db
+        .select()
+        .from(supportTicketMessage)
+        .where(eq(supportTicketMessage.ticketId, input.ticketId))
+        .orderBy(asc(supportTicketMessage.createdAt));
     }),
 
   listTickets: adminProcedure.handler(async () =>
