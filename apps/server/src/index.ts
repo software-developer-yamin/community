@@ -36,6 +36,7 @@ import { type TimingVariables, timing } from "hono/timing";
 import { rateLimiter } from "hono-rate-limiter";
 import { WebhookReceiver } from "livekit-server-sdk";
 import { handleBillingIpn } from "./routes/billing-ipn";
+import { startTierCleanup } from "./jobs/tier-cleanup";
 
 initLogger({
   env: { service: "community-server" },
@@ -290,5 +291,8 @@ app.post("/ai", async (c) => {
 });
 
 app.get("/", (c) => c.text("OK"));
+
+// ── Background jobs ───────────────────────────────────────────────
+startTierCleanup(); // runs immediately + every 60 min
 
 export default app;
