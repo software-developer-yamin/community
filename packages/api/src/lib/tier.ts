@@ -73,10 +73,11 @@ export async function getEffectiveTier(
   }
 
   if (isExpired) {
+    // tier is already "free" here; surface a consistent free-tier shape
     return {
       effectiveTier: "free",
-      tier: profile.tier as Tier,
-      tierExpiresAt: profile.tierExpiresAt,
+      tier: "free",
+      tierExpiresAt: null,
       isExpired: true,
     };
   }

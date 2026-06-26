@@ -1,6 +1,6 @@
 import { db } from "@community/db";
 import { userProfile } from "@community/db/schema/rebuild";
-import { lt } from "drizzle-orm";
+import { and, lt, ne } from "drizzle-orm";
 import { log } from "evlog";
 
 /**
@@ -15,7 +15,9 @@ export async function cleanupExpiredTiers(): Promise<number> {
   const result = await db
     .update(userProfile)
     .set({ tier: "free", tierExpiresAt: null })
-    .where(lt(userProfile.tierExpiresAt, now))
+    .where(
+      and(lt(userProfile.tierExpiresAt, now), ne(userProfile.tier, "free"))
+    )
     .returning({ id: userProfile.userId });
 
   if (result.length > 0) {
@@ -36,13 +38,21 @@ export async function cleanupExpiredTiers(): Promise<number> {
 export function startTierCleanup(intervalMs = 60 * 60 * 1000): void {
   // Run once immediately on startup
   cleanupExpiredTiers().catch((err) => {
-    log.error({ action: "tier_cleanup", message: "Initial tier cleanup failed", error: String(err) });
+    log.error({
+      action: "tier_cleanup",
+      message: "Initial tier cleanup failed",
+      error: String(err),
+    });
   });
 
   // Then repeat on the interval
   const handle = setInterval(() => {
     cleanupExpiredTiers().catch((err) => {
-      log.error({ action: "tier_cleanup", message: "Tier cleanup failed", error: String(err) });
+      log.error({
+        action: "tier_cleanup",
+        message: "Tier cleanup failed",
+        error: String(err),
+      });
     });
   }, intervalMs);
 
