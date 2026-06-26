@@ -4,52 +4,40 @@ totalSteps: 5
 stepsCompleted: ['step-01-detect-mode', 'step-02-load-context', 'step-03-risk-and-testability', 'step-04-coverage-plan', 'step-05-generate-output']
 lastStep: 'step-05-generate-output'
 nextStep: ''
-lastSaved: '2026-06-20'
-mode: 'epic-level'
-epicNum: 2
-epicTitle: 'Call Reliability & Reconnection'
-inputDocuments:
-  - _bmad-output/planning-artifacts/epics.md
-  - _bmad-output/implementation-artifacts/stories/epic-002-story-021.md
-  - _bmad-output/implementation-artifacts/stories/epic-002-story-022.md
-  - _bmad-output/planning-artifacts/architecture.md
-  - _bmad-output/project-context.md
-  - _bmad/tea/config.yaml
-knowledgeFragments:
-  - risk-governance.md
-  - probability-impact.md
-  - test-levels-framework.md
-  - test-priorities-matrix.md
-  - nfr-criteria.md
+lastSaved: '2026-06-26'
 ---
 
-# Step 5: Generate Output & Validate
+# Test Design Progress — Epic 5
 
-## Completion Report
+## Step 1: Mode Detection
 
-**Mode used**: Sequential (solo — no subagent/agent-team capability detected)
-**Output file**: `_bmad-output/test-artifacts/test-design-epic-2.md`
+- Mode selected: **Epic-Level**
+- Reason: `sprint-status.yaml` exists; user explicitly provided "Epic 5 - Subscription & Payments"
+- Stories loaded: 5.1 (draft), 5.2 (completed), 5.4 (done), 5.5 (pending)
 
-### Key Risks
-- **CRITICAL (score 9)**: R2.3-A (reconnection timeout race), R2.3-B (token expiry during extended reconnection)
-- **HIGH (score 6)**: R2.3-C (state machine consistency), R2.4-A (wrong end reason)
+## Step 2: Context Loaded
 
-### Quality Gate Thresholds
-| Gate | Threshold |
-|------|-----------|
-| P0 pass rate | 100% (CI blocks PR) |
-| P1 pass rate | >= 95% |
-| State machine branch coverage | >= 90% |
-| CRITICAL risk R2.3-A | Grace window confirmed before release |
-| CRITICAL risk R2.3-B | Token refresh procedure verified before release |
+- Project context loaded from `_bmad-output/project-context.md`
+- All 4 Epic 5 story files loaded
+- Stack detected: fullstack (Next.js web + Expo native + Hono server)
+- Config: `tea_use_playwright_utils: true`, `tea_browser_automation: auto`, `tea_execution_mode: auto`
 
-### Open Assumptions
-1. Network disruption tooling (tc/netem) available in CI — if not, fallback to Playwright offline emulation
-2. Token refresh endpoint (Story 2.3 Task 4) implemented before reconnection token tests pass
-3. LiveKit room emptyTimeout=30s from Story 2.1 prevents premature room cleanup
-4. Web call screen may not exist yet — web E2E tests deferred until created
-5. Moderation stub API needed for Story 2.4 strike-exclusion tests
+## Step 3: Risk & Testability Assessment
 
-### Total Coverage
-- **47 test scenarios**: 20 P0, 14 P1, 8 P2, 5 P3
-- **Resources**: ~48-75h QA effort over 2-3 weeks
+- 14 risks identified
+- 6 high-priority (≥6): R-001 (IPN forgery), R-002 (risk_level bypass), R-003 (IPN idempotency), R-004 (tier lazy downgrade), R-005 (auth boundaries), R-006 (client-supplied amount — design invariant)
+- NFR categories in scope: Security, Reliability, Performance (freshness), Maintainability
+
+## Step 4: Coverage Plan
+
+- P0: 22 scenarios (~44–55 hours)
+- P1: 18 scenarios (~18–27 hours)
+- P2: 12 scenarios (~6–12 hours)
+- P3: 5 scenarios (~1–3 hours)
+- Total: 57 scenarios, ~69–97 hours
+
+## Step 5: Output Generated
+
+- Output: `_bmad-output/test-artifacts/test-design/test-design-epic-5.md`
+- Execution mode: sequential (single output artifact)
+- Validated against checklist: all sections populated
