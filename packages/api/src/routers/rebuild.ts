@@ -15,6 +15,7 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import z from "zod";
 import { adminProcedure, protectedProcedure } from "../index";
 import { isValidNativeLang } from "../lib/native-lang";
+import { getEffectiveTier } from "../lib/tier";
 import type { SubscriptionDetail } from "../types/subscription";
 
 function formatTierLabel(tier: string): string {
@@ -62,6 +63,9 @@ function formatSubscriptionDetail(
       readableDescription: "You're on the Free plan.",
       nextBillingDate: null,
       paymentMethodLastFour: null,
+      tierExpiresAt: null,
+      isCancelled: false,
+      willExpireOn: null,
     };
   }
 
@@ -81,6 +85,9 @@ function formatSubscriptionDetail(
       readableDescription: "Your plan is active.",
       nextBillingDate: null,
       paymentMethodLastFour: null,
+      tierExpiresAt: null,
+      isCancelled: false,
+      willExpireOn: null,
     };
   }
 
@@ -135,6 +142,9 @@ function formatSubscriptionDetail(
     readableDescription: description,
     nextBillingDate,
     paymentMethodLastFour,
+    tierExpiresAt: formatDate(subRow.endsAt),
+    isCancelled: subRow.autoRenew === 0,
+    willExpireOn: subRow.autoRenew === 0 ? formatDate(subRow.endsAt) : null,
   };
 }
 
@@ -170,12 +180,10 @@ export const rebuildRouter = {
     )
     .handler(async ({ input, context }) => {
       if (input.genderPreference !== undefined) {
-        const profile = await db
-          .select({ tier: userProfile.tier })
-          .from(userProfile)
-          .where(eq(userProfile.userId, context.session.user.id))
-          .limit(1);
-        if (profile[0]?.tier !== "premium_plus") {
+        const { effectiveTier } = await getEffectiveTier(
+          context.session.user.id
+        );
+        if (effectiveTier !== "premium_plus") {
           throw new Error("Gender preference requires premium_plus tier");
         }
       }
@@ -436,6 +444,13 @@ export const rebuildRouter = {
 
     if (!updated) {
       throw new Error("Failed to update subscription");
+    }
+
+    if (subRow.endsAt) {
+      await db
+        .update(userProfile)
+        .set({ tierExpiresAt: subRow.endsAt })
+        .where(eq(userProfile.userId, context.session.user.id));
     }
 
     return formatSubscriptionDetail(updated, profile.tier);
