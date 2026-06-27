@@ -50,11 +50,11 @@ export async function clearCallState(): Promise<void> {
 
 /**
  * Returns `true` when the persisted state is stale (older than the
- * supplied TTL in ms — default 5 minutes).
+ * supplied TTL in ms — default 30 minutes, matching FR17 backgrounding spec).
  */
 export function isStateStale(
   state: SavedCallState,
-  ttlMs = 5 * 60 * 1000
+  ttlMs = 30 * 60 * 1000
 ): boolean {
   return Date.now() - state.timestamp > ttlMs;
 }
