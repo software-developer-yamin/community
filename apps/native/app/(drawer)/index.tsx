@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 
+import { AccountRecovery } from "@/components/account-recovery";
 import { Container } from "@/components/container";
 import { GoogleSignIn } from "@/components/google-sign-in";
 import { PhoneSignIn } from "@/components/phone-sign-in";
@@ -25,6 +26,7 @@ export default function Home() {
   const { data: session } = authClient.useSession();
   const profile = useQuery(orpc.rebuild.getProfile.queryOptions());
 
+  const [recoveryDismissed, setRecoveryDismissed] = useState(false);
   const [pendingLang, setPendingLang] = useState<string | null>(null);
 
   const updateProfile = useMutation(
@@ -44,6 +46,29 @@ export default function Home() {
   );
 
   const currentLang = profile.data?.nativeLanguage ?? "";
+
+  // After sign-in, if session exists but profile is null, show account recovery prompt
+  if (
+    session?.user &&
+    profile.isSuccess &&
+    profile.data === null &&
+    !recoveryDismissed
+  ) {
+    return (
+      <Container>
+        <ScrollView>
+          <View style={styles.pageContainer}>
+            <AccountRecovery
+              onComplete={() => {
+                setRecoveryDismissed(true);
+                queryClient.invalidateQueries();
+              }}
+            />
+          </View>
+        </ScrollView>
+      </Container>
+    );
+  }
 
   return (
     <Container>
