@@ -1,6 +1,6 @@
 import { deleteItemAsync, getItemAsync, setItemAsync } from "expo-secure-store";
 
-const CALL_STATE_KEY = "acefluency_call_state";
+export const CALL_STATE_KEY = "acefluency_call_state";
 
 export interface SavedCallState {
   roomName: string;

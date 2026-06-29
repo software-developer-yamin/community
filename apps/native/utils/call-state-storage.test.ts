@@ -11,6 +11,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import type { SavedCallState } from "./call-state-storage";
 import {
+  CALL_STATE_KEY,
   clearCallState,
   getCallState,
   isStateStale,
@@ -102,8 +103,9 @@ describe("callStateStorage", () => {
   // 6.1-UNIT-006: corrupt JSON gracefully returns null (no throw)
   // -------------------------------------------------------------------------
   test("6.1-UNIT-006: corrupt JSON returns null without throwing", async () => {
-    // Write non-JSON directly into the in-memory store
-    secureStore.acefluency_call_state = "not-valid-json!!!";
+    // Write non-JSON directly into the in-memory store using the exported key constant
+    // so this test stays correct if CALL_STATE_KEY is ever renamed.
+    secureStore[CALL_STATE_KEY] = "not-valid-json!!!";
     const result = await getCallState();
     expect(result).toBeNull();
   });
@@ -135,10 +137,12 @@ describe("callStateStorage", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Additional: default TTL constant verification (R-007 guard)
-  // isStateStale with default TTL must treat 29-min state as fresh
+  // R-007-GUARD: default TTL constant verification (extra guard beyond spec)
+  // Verifies the *default* parameter of isStateStale — distinct from
+  // 6.1-UNIT-003/004 which pass the TTL explicitly. Fails if the default is
+  // reverted to 5 min (which would return true for a 29-min-old state).
   // -------------------------------------------------------------------------
-  test("default TTL is 30 min: 29-min-old state is not stale (no explicit TTL arg)", () => {
+  test("R-007-GUARD: default TTL is 30 min — 29-min-old state not stale with no explicit TTL arg", () => {
     const twentyNineMinAgo = Date.now() - 29 * 60 * 1000;
     const state = makeState({ timestamp: twentyNineMinAgo });
     // If default TTL were 5 min, this would return true — must be false
