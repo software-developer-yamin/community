@@ -5,6 +5,7 @@ import { StyleSheet } from "react-native-unistyles";
 
 import { Container } from "@/components/container";
 import { authClient } from "@/lib/auth-client";
+import { clearCallState } from "@/utils/call-state-storage";
 import { orpc, queryClient } from "@/utils/orpc";
 
 const GENDER_OPTIONS = ["male", "female", "nonbinary", "undisclosed"] as const;
@@ -164,6 +165,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity
               onPress={() => {
+                clearCallState().catch(() => undefined);
                 authClient.signOut();
                 queryClient.invalidateQueries();
               }}

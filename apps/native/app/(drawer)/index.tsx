@@ -18,6 +18,7 @@ import { PhoneSignIn } from "@/components/phone-sign-in";
 import { SignIn } from "@/components/sign-in";
 import { SignUp } from "@/components/sign-up";
 import { authClient } from "@/lib/auth-client";
+import { clearCallState } from "@/utils/call-state-storage";
 import { orpc, queryClient } from "@/utils/orpc";
 
 export default function Home() {
@@ -87,6 +88,7 @@ export default function Home() {
 
               <TouchableOpacity
                 onPress={() => {
+                  clearCallState().catch(() => undefined);
                   authClient.signOut();
                   queryClient.invalidateQueries();
                 }}

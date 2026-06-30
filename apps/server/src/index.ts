@@ -35,8 +35,8 @@ import { timeout } from "hono/timeout";
 import { type TimingVariables, timing } from "hono/timing";
 import { rateLimiter } from "hono-rate-limiter";
 import { WebhookReceiver } from "livekit-server-sdk";
-import { handleBillingIpn } from "./routes/billing-ipn";
 import { startTierCleanup } from "./jobs/tier-cleanup";
+import { handleBillingIpn } from "./routes/billing-ipn";
 
 initLogger({
   env: { service: "community-server" },
