@@ -22,10 +22,10 @@ import { expect, test } from "@playwright/test";
 const SIGN_IN_BUTTON = /sign in/i;
 const EMAIL_LABEL = /email/i;
 const PASSWORD_LABEL = /password/i;
-const CEFR_LEVEL_REGEX = /B2/;
-const NATIVE_LANGUAGE_REGEX = /Bengali/i;
-const SUBSCRIPTION_TIER_REGEX = /Premium/i;
-const SUBSCRIPTION_STATUS_REGEX = /Active/i;
+const CEFR_B2 = /B2/;
+const BENGALI = /Bengali/i;
+const PREMIUM = /Premium/i;
+const ACTIVE = /Active/i;
 
 test.describe("Reinstall Account Preservation — E2E Tests (ATDD, RED PHASE)", () => {
   // =========================================================================
@@ -46,9 +46,7 @@ test.describe("Reinstall Account Preservation — E2E Tests (ATDD, RED PHASE)", 
 
     // Profile data must be visible immediately after sign-in
     // (All data is server-authoritative — nothing lost on reinstall)
-    await expect(page.getByTestId("user-cefr-level")).toHaveText(
-      CEFR_LEVEL_REGEX
-    );
+    await expect(page.getByTestId("user-cefr-level")).toHaveText(CEFR_B2);
   });
 
   test.skip("[P0][AC-1] profile page shows nativeLanguage and totalCallCount after re-authentication", async ({
@@ -66,9 +64,7 @@ test.describe("Reinstall Account Preservation — E2E Tests (ATDD, RED PHASE)", 
     await page.waitForLoadState("networkidle");
 
     // Profile page must display server-stored data (not device-stored)
-    await expect(page.getByTestId("native-language")).toHaveText(
-      NATIVE_LANGUAGE_REGEX
-    );
+    await expect(page.getByTestId("native-language")).toHaveText(BENGALI);
     await expect(page.getByTestId("total-call-count")).not.toBeEmpty();
   });
 
@@ -92,12 +88,8 @@ test.describe("Reinstall Account Preservation — E2E Tests (ATDD, RED PHASE)", 
     await page.waitForLoadState("networkidle");
 
     // Tier must come from the server on every load — no local storage used
-    await expect(page.getByTestId("subscription-tier")).toHaveText(
-      SUBSCRIPTION_TIER_REGEX
-    );
-    await expect(page.getByTestId("subscription-status")).toHaveText(
-      SUBSCRIPTION_STATUS_REGEX
-    );
+    await expect(page.getByTestId("subscription-tier")).toHaveText(PREMIUM);
+    await expect(page.getByTestId("subscription-status")).toHaveText(ACTIVE);
   });
 
   // =========================================================================
