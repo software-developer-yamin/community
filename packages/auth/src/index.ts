@@ -57,6 +57,12 @@ export function createAuth() {
     emailAndPassword: {
       enabled: true,
     },
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google", "email-password"],
+      },
+    },
     session: {
       expiresIn: 2_592_000, // 30 days (default: 604800 = 7 days)
       updateAge: 86_400, // extend session on use within 1 day of expiry

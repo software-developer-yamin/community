@@ -1,4 +1,5 @@
 import { db } from "@community/db";
+import { account, user } from "@community/db/schema/auth";
 import {
   callRating,
   callRoom,
@@ -11,6 +12,7 @@ import {
   supportTicketMessage,
   userProfile,
 } from "@community/db/schema/rebuild";
+import { ORPCError } from "@orpc/server";
 import { and, asc, desc, eq } from "drizzle-orm";
 import z from "zod";
 import { adminProcedure, protectedProcedure } from "../index";
@@ -656,6 +658,96 @@ export const rebuildRouter = {
         throw new Error("Failed to log crash");
       }
       return { crashId: crash.id };
+    }),
+
+  linkAccount: protectedProcedure
+    .input(z.object({ phoneNumber: z.string().min(10) }))
+    .handler(async ({ input, context }) => {
+      const { phoneNumber: phone } = input;
+      const currentUserId = context.session.user.id;
+
+      // Find the old account by phone number
+      const [oldUser] = await db
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.phoneNumber, phone))
+        .limit(1);
+
+      if (!oldUser) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "No account found for that phone number",
+        });
+      }
+
+      const oldUserId = oldUser.id;
+
+      if (oldUserId === currentUserId) {
+        return { linked: false, reason: "same_account" };
+      }
+
+      // Safety check: old account must have a phone-number provider entry
+      const [oldPhoneAccount] = await db
+        .select({ id: account.id })
+        .from(account)
+        .where(
+          and(
+            eq(account.userId, oldUserId),
+            eq(account.providerId, "phone-number")
+          )
+        )
+        .limit(1);
+
+      if (!oldPhoneAccount) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "No phone account found for that number",
+        });
+      }
+
+      // Guard: if current user already has a phone-number account, reject
+      const [currentPhoneAccount] = await db
+        .select({ id: account.id })
+        .from(account)
+        .where(
+          and(
+            eq(account.userId, currentUserId),
+            eq(account.providerId, "phone-number")
+          )
+        )
+        .limit(1);
+
+      if (currentPhoneAccount) {
+        throw new ORPCError("CONFLICT", {
+          message: "Current account already has a phone sign-in method",
+        });
+      }
+
+      // Re-point the phone-number account row to the current userId
+      await db
+        .update(account)
+        .set({ userId: currentUserId })
+        .where(
+          and(
+            eq(account.userId, oldUserId),
+            eq(account.providerId, "phone-number")
+          )
+        );
+
+      // Migrate userProfile only if current user has no profile yet
+      const [currentProfile] = await db
+        .select({ userId: userProfile.userId })
+        .from(userProfile)
+        .where(eq(userProfile.userId, currentUserId))
+        .limit(1);
+
+      if (!currentProfile) {
+        await db
+          .update(userProfile)
+          .set({ userId: currentUserId })
+          .where(eq(userProfile.userId, oldUserId));
+      }
+      // If current user already has a profile, keep it — new onboarding takes precedence
+
+      return { linked: true };
     }),
 
   reconnectToRoom: protectedProcedure
