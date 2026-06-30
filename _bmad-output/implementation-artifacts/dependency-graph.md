@@ -1,5 +1,5 @@
 # Story Dependency Graph
-_Last updated: 2026-06-25T21:00:00+06:00_
+_Last updated: 2026-06-26T17:40:00+06:00_
 
 ## Stories
 
@@ -15,14 +15,16 @@ _Last updated: 2026-06-25T21:00:00+06:00_
 | 2.4 | 2 | Explicit Call End | done | #8 | #56 | merged | 2.2 | ✅ Yes (done) |
 | 3.1 | 3 | Gender Filter Enforcement | done | #9 | — | — | Epic 1 | ✅ Yes (done) |
 | 3.2 | 3 | Native Language Field | done | #10 | #57 | merged | Epic 1 | ✅ Yes (done) |
-| 3.3 | 3 | Match Timeout with Honest State | done | #11 | #58 | merged | 3.1, 3.2 | ✅ Yes (done — 3.2 done, 3.1 still pending but story was implemented) |
+| 3.3 | 3 | Match Timeout with Honest State | done | #11 | #58 | merged | 3.1, 3.2 | ✅ Yes (done) |
 | 4.1 | 4 | Graduated Strike System | done | #12 | — | — | Epic 2 | ✅ Yes (done) |
 | 4.2 | 4 | Skip Button (In-Call Action) | done | #13 | #59 | merged | Epic 2 | ✅ Yes (done) |
 | 4.3 | 4 | Distinguish Victim from Aggressor | done | #14 | #60 | merged | 4.1 | ✅ Yes (done) |
 | 4.4 | 4 | Visible Moderation State | done | #15 | #61 | merged | 4.1 | ✅ Yes (done) |
-| 5.1 | 5 | Visible Subscription State | in-progress | #16 | — | — | none | ✅ Yes |
-| 5.2 | 5 | In-App Support Ticket | backlog | #17 | — | — | none | ✅ Yes |
-| 5.3 | 5 | Refund Mechanism | backlog | #18 | — | — | 5.1 | ❌ No (5.1 not done) |
+| 5.1 | 5 | Visible Subscription State | done | #16 | — | — | none | ✅ Yes (done) |
+| 5.2 | 5 | In-App Support Ticket | done | #17 | #64 | merged | none | ✅ Yes (done) |
+| 5.3 | 5 | Refund Mechanism | blocked | #18 | — | — | 5.1 | ✅ Yes (5.1 done, blocked externally) |
+| 5.4 | 5 | SSLCommerz Payment Gateway | done | #65 | #63 | merged | none | ✅ Yes (done) |
+| 5.5 | 5 | Cancellation Preserves Access (FR15) | done | #66 | #67 | merged | 5.1, 5.4 | ✅ Yes (done) |
 | 6.1 | 6 | State Preservation Across Backgrounding | backlog | #19 | — | — | Epic 2 | ✅ Yes (Epic 2 done) |
 | 6.2 | 6 | Crash Resilience | backlog | #20 | — | — | 6.1 | ❌ No (6.1 not done) |
 | 6.3 | 6 | Reinstall Account Preservation | backlog | #36 | — | — | Epic 2 | ✅ Yes (Epic 2 done) |
@@ -57,9 +59,11 @@ _Last updated: 2026-06-25T21:00:00+06:00_
 - **4.2** depends on: Epic 2
 - **4.3** depends on: 4.1
 - **4.4** depends on: 4.1
-- **5.1** depends on: none (blocked by epic ordering)
-- **5.2** depends on: none (blocked by epic ordering)
+- **5.1** depends on: none
+- **5.2** depends on: none
 - **5.3** depends on: 5.1
+- **5.4** depends on: none
+- **5.5** depends on: 5.1, 5.4
 - **6.1** depends on: Epic 2
 - **6.2** depends on: 6.1
 - **6.3** depends on: Epic 2
@@ -84,7 +88,9 @@ _Last updated: 2026-06-25T21:00:00+06:00_
 - **Epic 2 fully complete** — 2.1 + 2.2 + 2.3 + 2.4 done. 2.4 (PR #56) merged.
 - **Epic 3 fully complete** — 3.1 + 3.2 + 3.3 done. 3.3 (PR #58) merged.
 - **Epic 4 fully done** — 4.1 + 4.2 + 4.3 (PR #60) + 4.4 (PR #61) all merged to master.
-- **Epics 5-7 backlog** — unblocked. Epic 4 done, Epic 5 is the next lowest incomplete epic.
+- **Epic 5 in-progress** — 5.1 done, 5.2 done (PR #64), 5.3 blocked externally (unblocked dependency-wise), 5.4 done (PR #63, issue #65), 5.5 done (PR #67 merged, issue #66).
+- **Epic 6 backlog** — FR17, FR18, FR19 all unstarted. Epic 2 done, so 6.1 and 6.3 are unblocked.
+- **Epic 7 backlog** — FR23 post-call rating, unstarted. Epic 2 done, so 7.1 is unblocked.
 - **RE-* epics are separate track** — recommendation engine independent of voice calling (Epics 2-7). Only depends on Epic 1 (auth/session, done).
 - **max_parallel_stories=1**
 - Default branch: `master`

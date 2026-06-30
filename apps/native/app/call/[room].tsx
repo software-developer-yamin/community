@@ -31,6 +31,7 @@ import {
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 
 import { authClient } from "@/lib/auth-client";
+import { clearCallState, saveCallState } from "@/utils/call-state-storage";
 import { orpc } from "@/utils/orpc";
 
 const RECONNECTION_TIMEOUT_S = 30;
@@ -88,13 +89,24 @@ export default function CallScreen() {
     };
   }, []);
 
-  // Capture token when it becomes available
+  // Capture token when it becomes available and persist call state immediately.
+  // Saving before any navigation or UI transition satisfies R-001: if the OS
+  // kills the app right after the token is fetched, the state is already in
+  // SecureStore and CallStateRestoreGuard will detect it on next startup.
   useEffect(() => {
-    if (tokenQuery.data?.token) {
-      tokenRef.current = tokenQuery.data.token;
+    const token = tokenQuery.data?.token;
+    const userId = session?.user?.id;
+    if (token && userId && roomName) {
+      tokenRef.current = token;
       connectTimeRef.current = Date.now();
+      saveCallState({
+        roomName,
+        token,
+        userId,
+        timestamp: Date.now(),
+      }).catch(() => undefined); // best-effort; warn already handled inside saveCallState
     }
-  }, [tokenQuery.data?.token]);
+  }, [tokenQuery.data?.token, session?.user?.id, roomName]);
 
   if (!roomName) {
     return (
@@ -359,6 +371,8 @@ function RoomView({
     if (partnerEndedCountdown <= 0) {
       intentionalDisconnectRef.current = true;
       room.disconnect();
+      // Partner ended the call — clear persisted state so startup recovery doesn't trigger
+      clearCallState().catch(() => undefined);
       router.replace(
         `/call/ended?reason=partner_ended&roomName=${encodeURIComponent(roomName)}`
       );
@@ -496,6 +510,8 @@ function RoomView({
   const handleEndCall = useCallback(() => {
     intentionalDisconnectRef.current = true;
     room.disconnect();
+    // Clear persisted state — user is intentionally leaving after connection_lost banner
+    clearCallState().catch(() => undefined);
 
     // Call endCall with connection_lost reason (fire-and-forget)
     endCallMutationRef.current.mutate({
@@ -674,6 +690,8 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
     onLeave?.();
     const roomName = room.name;
     room.disconnect();
+    // Clear persisted state on intentional leave so startup recovery doesn't trigger
+    clearCallState().catch(() => undefined);
     endCallMutation.mutate({ roomName, endReason: "explicit" });
     router.replace(
       `/call/ended?reason=explicit&roomName=${encodeURIComponent(roomName)}`
@@ -683,6 +701,8 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
   const handleSkip = () => {
     const roomName = room.name;
     room.disconnect();
+    // Clear persisted state on skip so startup recovery doesn't trigger
+    clearCallState().catch(() => undefined);
     skipMutation
       .mutateAsync({ roomName })
       .then(() => {
