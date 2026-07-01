@@ -8,6 +8,7 @@ import { orpc } from "@/utils/orpc";
 
 const END_REASON_MESSAGES: Record<string, string> = {
   connection_lost: "Call ended — connection lost",
+  crash: "Call ended — connection lost",
   explicit: "Call ended — you ended the call",
   disconnect: "Call ended — the call was disconnected.",
   timeout: "Call ended — the call timed out.",

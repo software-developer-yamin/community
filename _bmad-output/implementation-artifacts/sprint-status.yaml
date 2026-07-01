@@ -42,8 +42,8 @@ development_status:
   epic-5-retrospective: optional
 
   epic-6: backlog
-  6-1-state-preservation-across-backgrounding: backlog
-  6-2-crash-resilience: backlog
+  6-1-state-preservation-across-backgrounding: done
+  6-2-crash-resilience: ready-for-dev
   6-3-reinstall-account-preservation: review
   epic-6-retrospective: optional
 
