@@ -5,6 +5,7 @@ import { billingRouter } from "./billing";
 import { livekitRouter } from "./livekit";
 import { modelsRouter } from "./models";
 import { moderationRouter } from "./moderation";
+import { ratingRouter } from "./rating";
 import { rebuildRouter } from "./rebuild";
 import { recommendationsRouter } from "./recommendations";
 import { todoRouter } from "./todo";
@@ -22,6 +23,7 @@ export const appRouter = {
   recommendations: recommendationsRouter,
   rebuild: rebuildRouter,
   billing: billingRouter,
+  rating: ratingRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;
