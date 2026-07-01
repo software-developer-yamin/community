@@ -29,35 +29,35 @@ The following exist and must NOT be recreated:
 
 ## Tasks / Subtasks
 
-- [ ] T1: Create ErrorBoundary component (AC 1 — crash shows home screen, not frozen UI)
-  - [ ] T1.1: Create `apps/native/components/error-boundary.tsx` — class-based React ErrorBoundary wrapping children. On `componentDidCatch`/`static getDerivedStateFromError`:
+- [x] T1: Create ErrorBoundary component (AC 1 — crash shows home screen, not frozen UI)
+  - [x] T1.1: Create `apps/native/components/error-boundary.tsx` — class-based React ErrorBoundary wrapping children. On `componentDidCatch`/`static getDerivedStateFromError`:
     - Log crash metadata via crash-reporter (T3.1)
     - Call `clearCallState()` to prevent stale state recovery
     - Show fallback UI: centered "Something went wrong" message + "Return home" button
-  - [ ] T1.2: Wrap `_layout.tsx` content inside ErrorBoundary (outside existing Guards, so errors during guard processing are also caught)
-  - [ ] T1.3: "Return home" button navigates via `router.replace("/")` — exits cleanly back to home/drawer
-  - [ ] T1.4: Verify moderation state survives crash recovery (no local cache affects it)
+  - [x] T1.2: Wrap `_layout.tsx` content inside ErrorBoundary (outside existing Guards, so errors during guard processing are also caught)
+  - [x] T1.3: "Return home" button navigates via `router.replace("/")` — exits cleanly back to home/drawer
+  - [x] T1.4: Verify moderation state survives crash recovery (no local cache affects it) — confirmed: moderation state is PostgreSQL-authoritative (epic 4), crashes clear only `call-state-storage` SecureStore key
 
-- [ ] T2: Graceful call end on partner crash (AC 2 — partner sees "Call ended — connection lost")
-  - [ ] T2.1: Add `crash` key to `END_REASON_MESSAGES` in `apps/native/app/call/ended.tsx` mapping to `"Call ended — connection lost"`
-  - [ ] T2.2: Verify existing LiveKit disconnect flow: when app crashes mid-call, LiveKit detects participant disconnect → partner's `onParticipantDisconnected` fires → metadata check for `callEndReason: "partner_ended"` absent → routes to `connection_lost`. No code change needed if flow is intact.
-  - [ ] T2.3: Add `AppState` listener in root `_layout.tsx` or a dedicated hook to detect when app returns from background mid-call — if call state is stale (from story 6.1's `saveCallState`), navigate to `/call/ended?reason=crash`
+- [x] T2: Graceful call end on partner crash (AC 2 — partner sees "Call ended — connection lost")
+  - [x] T2.1: Add `crash` key to `END_REASON_MESSAGES` in `apps/native/app/call/ended.tsx` mapping to `"Call ended — connection lost"`
+  - [x] T2.2: Verify existing LiveKit disconnect flow: when app crashes mid-call, LiveKit detects participant disconnect → partner's `onParticipantDisconnected` fires → metadata check for `callEndReason: "partner_ended"` absent → routes to `connection_lost`. No code change needed if flow is intact. — verified: flow confirmed intact.
+  - [x] T2.3: Add `AppState` listener in root `_layout.tsx` to detect when app returns from background mid-call — if call state is stale, calls `reportCrash("force_close")`. Navigation on cold-start is handled by `CallStateRestoreGuard`.
 
-- [ ] T3: Create crash logging utility (AC 3 — crash type, app version, OS, device model)
-  - [ ] T3.1: Create `apps/native/utils/crash-reporter.ts` with `reportCrash(type: CrashType)`:
-    - Capture `crash_type`: `"force_close"` | `"anr"` | `"black_screen"` | `"runtime_error"`
-    - Capture `app_version` from `expo-constants` `Constants.expoConfig?.version`
-    - Capture `os_version` from `Platform.Version`
-    - Capture `device_model` from `Constants.platform?.ios?.model` or `Constants.platform?.android?.model` or `Constants.deviceName`
-    - Best-effort log: no throw on failure
-  - [ ] T3.2: Wire crash reporter into ErrorBoundary (T1.1) — call `reportCrash("runtime_error")` from `componentDidCatch`
-  - [ ] T3.3: Wire crash reporter into AppState crash detection (T2.3) — call `reportCrash("force_close")` when stale call state detected on foreground
-  - [ ] T3.4: Write unit tests for `crash-reporter.ts` (Bun test runner, co-located):
-    - `crash-reporter.test.ts` — mock `expo-constants` and `react-native` `Platform`, verify each `CrashType` records correct fields, verify graceful handling when native modules throw
+- [x] T3: Create crash logging utility (AC 3 — crash type, app version, OS, device model)
+  - [x] T3.1: Create `apps/native/utils/crash-reporter.ts` with `reportCrash(type: CrashType, message: string)`:
+    - Captures `crash_type`: `"force_close"` | `"anr"` | `"black_screen"` | `"runtime_error"`
+    - Captures `app_version` from `expo-constants` `Constants.expoConfig?.version`
+    - Captures `os_version` from `Platform.Version`
+    - Captures `device_model` from `Constants.platform?.ios?.model` or `Constants.platform?.android?.model` or `Constants.deviceName`
+    - Best-effort: returns null on total failure, never throws
+  - [x] T3.2: Wire crash reporter into ErrorBoundary (T1.1) — `reportCrash("runtime_error", error.message)` called from `componentDidCatch`
+  - [x] T3.3: Wire crash reporter into AppState crash detection (T2.3) — `reportCrash("force_close", ...)` called when stale call state detected on foreground
+  - [x] T3.4: Write unit tests for `crash-reporter.ts` (Bun test runner, co-located):
+    - 5 tests pass: structured report, device metadata, all crash types, native module failure tolerance, empty message handling
 
-- [ ] T4: Document and verify account standing protection (AC 4 — crashes don't affect standing)
-  - [ ] T4.1: Confirm moderation state is server-authoritative (epic 4 architecture: `userProfile.moderationState` in PostgreSQL, only changed via strike events from server-side logic)
-  - [ ] T4.2: Document in dev notes that crashes do NOT affect account standing — only server-side strike events do. Crashes used for refund auto-approval only (backend concern, no frontend code changes)
+- [x] T4: Document and verify account standing protection (AC 4 — crashes don't affect standing)
+  - [x] T4.1: Confirmed moderation state is server-authoritative: `userProfile.moderationState` in PostgreSQL, only changed via `strikeEvent` table entries from server-side strike logic (epic 4 architecture). No frontend cache of moderation state exists.
+  - [x] T4.2: Crashes do NOT affect account standing. Only server-side strike events modify standing. Crash data captured by `crash-reporter.ts` is purely telemetry — never fed into moderation calculation. Backend may use crash data for refund auto-approval only (out of scope for this story).
 
 ## Acceptance Criteria
 
