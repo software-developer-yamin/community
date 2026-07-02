@@ -1,5 +1,5 @@
 generated: 2026-06-14T00:00:00+06:00
-last_updated: 2026-06-30T02:15:00+06:00
+last_updated: 2026-07-02T18:00:00+06:00
 project: community
 project_key: NOKEY
 tracking_system: file-system
@@ -41,20 +41,20 @@ development_status:
   5-5-cancellation-preserves-access: done
   epic-5-retrospective: optional
 
-  epic-6: backlog
+  epic-6: done
   6-1-state-preservation-across-backgrounding: done
-  6-2-crash-resilience: ready-for-dev
-  6-3-reinstall-account-preservation: review
+  6-2-crash-resilience: done
+  6-3-reinstall-account-preservation: done
   epic-6-retrospective: optional
 
-  epic-7: backlog
-  7-1-post-call-rating-flow: backlog
-  7-2-rating-integration-with-matching: backlog
+  epic-7: done
+  7-1-post-call-rating-flow: done
+  7-2-rating-integration-with-matching: done
   epic-7-retrospective: optional
 
-  epic-re-1: backlog
-  re-1-1-update-content-item: backlog
-  re-1-2-bulk-content-import: backlog
+  epic-re-1: in-progress
+  re-1-1-update-content-item: done
+  re-1-2-bulk-content-import: ready-for-dev
   re-1-3-secure-content-creation: backlog
   epic-re-1-retrospective: optional
 
