@@ -1,5 +1,5 @@
 # Story Dependency Graph
-_Last updated: 2026-07-02T21:48:00+06:00_
+_Last updated: 2026-07-02T22:00:00+06:00_
 
 ## Stories
 
@@ -32,7 +32,7 @@ _Last updated: 2026-07-02T21:48:00+06:00_
 | 7.2 | 7 | Rating Integration with Matching | done | #38 | #72 | merged | 7.1 | ✅ Yes (done) |
 | re-1.1 | RE-1 | Update Content Item | done | #43 | #73 | merged | none | ✅ Yes (done) |
 | re-1.2 | RE-1 | Bulk Content Import | done | #44 | #74 | open | none | ✅ Yes (done) |
-| re-1.3 | RE-1 | Secure Content Creation | backlog | #45 | — | — | none | ✅ Yes |
+| re-1.3 | RE-1 | Secure Content Creation | done | #45 | #75 | open | none | ✅ Yes (done) |
 | re-2.1 | RE-2 | Compute Content Embedding on Creation | backlog | #46 | — | — | none | ✅ Yes |
 | re-2.2 | RE-2 | Recompute Content Embedding on Update | backlog | #47 | — | — | re-1.1, re-2.1 | ❌ No (re-1.1, re-2.1 not done) |
 | re-2.3 | RE-2 | Real Profile Embeddings from User Data | backlog | #48 | — | — | none | ✅ Yes |
@@ -92,6 +92,6 @@ _Last updated: 2026-07-02T21:48:00+06:00_
 - **Epic 6 fully done** — 6.1 (PR #69), 6.2 (PR #70), 6.3 (PR #68) all merged to master.
 - **Epic 7 fully done** — 7.1 (PR #71) merged. 7.2 (PR #72) merged.
 - **RE-* epics are separate track** — recommendation engine independent of voice calling (Epics 2-7). Only depends on Epic 1 (auth/session, done).
-- **RE-1 in-progress** — re-1.1 (PR #73) merged. re-1.2 and re-1.3 ready for dev.
+- **RE-1 in-progress** — re-1.1 (PR #73) merged. re-1.2 (PR #74 open), re-1.3 (PR #75 open).
 - **max_parallel_stories=1**
 - Default branch: `master`
