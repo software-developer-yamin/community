@@ -928,6 +928,75 @@ export const recommendationsRouter = {
       return updated;
     }),
 
+  bulkImportContent: adminProcedure
+    .input(
+      z.object({
+        items: z
+          .array(
+            z.object({
+              title: z.string().min(1).max(200),
+              description: z.string().min(1).max(2000),
+              type: z.enum(["video", "article", "exercise", "dialogue"]),
+              cefrLevel: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]),
+              sourceUrl: z.string().url().optional().nullable(),
+              thumbnailUrl: z.string().url().optional().nullable(),
+              duration: z.number().int().min(1).optional().nullable(),
+              tags: z.array(z.string().min(1).max(50)).max(10).default([]),
+              metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+            })
+          )
+          .max(200),
+      })
+    )
+    .handler(async ({ input }) => {
+      const { items } = input;
+
+      const inputTitles = items.map((i) => i.title);
+      const existingRows = await db
+        .select({ title: contentItem.title })
+        .from(contentItem)
+        .where(inArray(contentItem.title, inputTitles));
+      const existingTitles = new Set(existingRows.map((r) => r.title));
+
+      type ImportError = { index: number; title: string; error: string };
+      const errors: ImportError[] = [];
+      const toInsert: (typeof items)[number][] = [];
+
+      for (let idx = 0; idx < items.length; idx++) {
+        const item = items[idx];
+        if (!item) continue;
+
+        if (existingTitles.has(item.title)) {
+          errors.push({
+            index: idx,
+            title: item.title,
+            error: `Duplicate title: ${item.title}`,
+          });
+          continue;
+        }
+
+        toInsert.push(item);
+      }
+
+      if (toInsert.length > 0) {
+        await db
+          .insert(contentItem)
+          .values(
+            toInsert.map((i) => ({
+              ...i,
+              metadata: i.metadata ?? null,
+            }))
+          )
+          .returning();
+      }
+
+      return {
+        created: toInsert.length,
+        failed: errors.length,
+        errors,
+      };
+    }),
+
   adminDeleteContent: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
     .handler(async ({ input }) => {
