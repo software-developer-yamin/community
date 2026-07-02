@@ -5,7 +5,11 @@ import {
   cefrPlacement,
   userProfileEmbedding,
 } from "@community/db/schema/models";
-import { userProfile } from "@community/db/schema/rebuild";
+import {
+  callRating,
+  callRoom,
+  userProfile,
+} from "@community/db/schema/rebuild";
 import {
   contentEmbedding,
   contentItem,
@@ -14,7 +18,18 @@ import {
   userPreference,
 } from "@community/db/schema/recommendations";
 import { ORPCError } from "@orpc/server";
-import { and, desc, eq, gt, inArray, ne, sql } from "drizzle-orm";
+import {
+  and,
+  avg,
+  count,
+  desc,
+  eq,
+  gt,
+  inArray,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 import z from "zod";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../index";
 
@@ -165,6 +180,62 @@ function cosineSimilarity(a: number[], b: number[]): number {
   }
   const denom = Math.sqrt(aMag) * Math.sqrt(bMag);
   return denom === 0 ? 0 : dot / denom;
+}
+
+// ───────────────────────────────────────────────────────────────
+// Partner Rating Helpers (Story 7.2)
+
+async function runAnonymizationSweep(): Promise<void> {
+  await db
+    .update(callRating)
+    .set({ anonymizedAt: new Date() })
+    .where(
+      and(
+        sql`${callRating.createdAt} < NOW() - INTERVAL '90 days'`,
+        sql`${callRating.anonymizedAt} IS NULL`
+      )
+    );
+}
+// ───────────────────────────────────────────────────────────────
+
+/**
+ * Compute a quality score [0, 1] from a partner's average call rating.
+ *
+ * - null/undefined AVG or 0 ratings → 0.5 (neutral, no penalty for new users)
+ * - avg < 2.5 → score < 0.5 (penalty applied, AC1)
+ * - avg >= 2.5 → proportional positive score up to 1.0
+ * - result clamped [0, 1]
+ */
+export function computePartnerRatingScore(
+  avgRating: number | null | undefined,
+  ratingCount: number
+): number {
+  if (avgRating == null || ratingCount === 0) {
+    return 0.5;
+  }
+
+  if (avgRating < 2.5) {
+    return Math.max(0, (avgRating / 2.5) * 0.4);
+  }
+
+  return Math.min(1, 0.4 + ((avgRating - 2.5) / 2.5) * 0.6);
+}
+
+/**
+ * Blend three signal scores into a single match score.
+ *
+ * Weights: embedding 0.4, cefr 0.3, rating 0.3
+ * Each weight ≤ 0.5 ensures no single metric dominates (AC4).
+ * Result clamped [0, 1].
+ */
+export function computeBlendedScore(scores: {
+  embedding: number;
+  cefr: number;
+  rating: number;
+}): number {
+  const total =
+    scores.embedding * 0.4 + scores.cefr * 0.3 + scores.rating * 0.3;
+  return Math.min(1, Math.max(0, total));
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -420,12 +491,28 @@ export const recommendationsRouter = {
     }),
 
   // ── Match Partners ─────────────────────────────────────────────
+
+  /**
+   * Anonymize call ratings older than 90 days (AC3).
+   * Marks eligible rows with anonymizedAt = now() so individual ratings
+   * are no longer linked to users, while aggregate stars remain valid.
+   */
+  anonymizeOldRatings: protectedProcedure.handler(async () => {
+    await runAnonymizationSweep();
+    return { success: true };
+  }),
+
   matchPartners: protectedProcedure
-    .input(z.void())
-    .handler(async ({ context }) => {
+    .input(
+      z.object({
+        limit: z.number().int().min(1).max(20).default(10),
+      })
+    )
+    .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
 
-      // Check cooldown guard
+      await runAnonymizationSweep();
+
       const profile = await db
         .select({ cooldownUntil: userProfile.cooldownUntil })
         .from(userProfile)
@@ -442,8 +529,158 @@ export const recommendationsRouter = {
         });
       }
 
-      // Stub: return empty list until partner matching logic is implemented
-      return [];
+      const [myEmbedding, myCefr, myProfile] = await Promise.all([
+        getUserEmbedding(userId),
+        getCefrLevel(userId),
+        db
+          .select({
+            nativeLanguage: userProfile.nativeLanguage,
+            genderPreference: userProfile.genderPreference,
+            tier: userProfile.tier,
+          })
+          .from(userProfile)
+          .where(eq(userProfile.userId, userId))
+          .limit(1)
+          .then((r) => r[0] ?? null),
+      ]);
+
+      const myCefrNum = myCefr
+        ? (cefrOrder[myCefr as keyof typeof cefrOrder] ?? 3)
+        : 3;
+
+      const candidateConditions = [
+        ne(userProfile.userId, userId),
+        eq(userProfile.onboardingCompleted, 2),
+        sql`(${userProfile.cooldownUntil} IS NULL OR ${userProfile.cooldownUntil} < NOW())`,
+        ne(userProfile.moderationState, "banned"),
+        ne(userProfile.moderationState, "suspended"),
+      ];
+
+      if (myProfile?.genderPreference) {
+        candidateConditions.push(
+          eq(userProfile.gender, sql`${myProfile.genderPreference}::gender`)
+        );
+      }
+
+      const candidates = await db
+        .select({
+          userId: userProfile.userId,
+          name: user.name,
+          image: user.image,
+          cefrLevel: userProfile.cefrLevel,
+          nativeLanguage: userProfile.nativeLanguage,
+          tier: userProfile.tier,
+          totalCallCount: userProfile.totalCallCount,
+        })
+        .from(userProfile)
+        .innerJoin(user, eq(user.id, userProfile.userId))
+        .where(and(...candidateConditions))
+        .limit(50);
+
+      if (candidates.length === 0) {
+        return [];
+      }
+
+      const recentThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recentRooms = await db
+        .select({
+          participantA: callRoom.participantA,
+          participantB: callRoom.participantB,
+        })
+        .from(callRoom)
+        .where(
+          and(
+            or(
+              eq(callRoom.participantA, userId),
+              eq(callRoom.participantB, userId)
+            ),
+            gt(callRoom.createdAt, recentThreshold)
+          )
+        );
+
+      const excludeIds = new Set<string>();
+      for (const room of recentRooms) {
+        excludeIds.add(
+          room.participantA === userId ? room.participantB : room.participantA
+        );
+      }
+
+      const candidateIds = candidates.map((c) => c.userId);
+      const avgRatings = await db
+        .select({
+          partnerId: callRating.partnerId,
+          avgStars: avg(callRating.stars).mapWith(Number),
+          ratingCount: count(callRating.id),
+        })
+        .from(callRating)
+        .where(inArray(callRating.partnerId, candidateIds))
+        .groupBy(callRating.partnerId);
+
+      const ratingMap = new Map(
+        avgRatings.map((r) => [
+          r.partnerId,
+          { avgStars: r.avgStars, ratingCount: r.ratingCount },
+        ])
+      );
+
+      const candidateEmbeddings = await db
+        .select({
+          userId: userProfileEmbedding.userId,
+          embedding: userProfileEmbedding.embedding,
+        })
+        .from(userProfileEmbedding)
+        .where(inArray(userProfileEmbedding.userId, candidateIds));
+
+      const embeddingMap = new Map(
+        candidateEmbeddings.map((e) => [e.userId, e.embedding])
+      );
+
+      const scored = candidates
+        .filter((c) => !excludeIds.has(c.userId))
+        .map((c) => {
+          const otherEmbedding = embeddingMap.get(c.userId);
+          let embeddingScore = 0;
+          if (myEmbedding && otherEmbedding) {
+            embeddingScore = cosineSimilarity(myEmbedding, otherEmbedding);
+          }
+
+          const otherCefrNum = c.cefrLevel
+            ? (cefrOrder[c.cefrLevel as keyof typeof cefrOrder] ?? 3)
+            : 3;
+          const cefrDiff = Math.abs(otherCefrNum - myCefrNum);
+          const cefrScore = 1 - cefrDiff / 5;
+
+          const ratingData = ratingMap.get(c.userId);
+          const ratingScore = computePartnerRatingScore(
+            ratingData?.avgStars ?? null,
+            ratingData?.ratingCount ?? 0
+          );
+
+          const blended = computeBlendedScore({
+            embedding: embeddingScore,
+            cefr: cefrScore,
+            rating: ratingScore,
+          });
+
+          return {
+            userId: c.userId,
+            name: c.name,
+            image: c.image,
+            cefrLevel: c.cefrLevel,
+            nativeLanguage: c.nativeLanguage,
+            tier: c.tier,
+            totalCallCount: c.totalCallCount,
+            score: blended,
+            scoreBreakdown: {
+              embedding: embeddingScore,
+              cefr: cefrScore,
+              rating: ratingScore,
+            },
+          };
+        });
+
+      scored.sort((a, b) => b.score - a.score);
+      return scored.slice(0, input.limit);
     }),
 
   // ── User Preferences ──────────────────────────────────────────
@@ -636,6 +873,59 @@ export const recommendationsRouter = {
         cefr: cefrMap.get(u.id) ?? null,
         preferences: prefMap.get(u.id) ?? null,
       }));
+    }),
+
+  updateContent: adminProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        title: z.string().min(1).max(200).optional(),
+        description: z.string().min(1).max(2000).optional(),
+        type: z.enum(["video", "article", "exercise", "dialogue"]).optional(),
+        cefrLevel: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]).optional(),
+        sourceUrl: z.string().url().optional().nullable(),
+        thumbnailUrl: z.string().url().optional().nullable(),
+        duration: z.number().int().min(1).optional().nullable(),
+        tags: z.array(z.string().min(1).max(50)).max(10).optional(),
+        metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+      })
+    )
+    .handler(async ({ input }) => {
+      const { id, ...patch } = input;
+
+      const existing = await db
+        .select({ id: contentItem.id })
+        .from(contentItem)
+        .where(eq(contentItem.id, id))
+        .limit(1);
+
+      if (existing.length === 0) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "Content item not found",
+        });
+      }
+
+      const rows = await db
+        .update(contentItem)
+        .set(patch)
+        .where(eq(contentItem.id, id))
+        .returning();
+
+      if (patch.title !== undefined || patch.description !== undefined) {
+        await db
+          .update(contentEmbedding)
+          .set({ modelVersion: "pending" })
+          .where(eq(contentEmbedding.contentId, id));
+      }
+
+      const updated = rows[0];
+      if (!updated) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "Content item not found after update",
+        });
+      }
+
+      return updated;
     }),
 
   adminDeleteContent: adminProcedure

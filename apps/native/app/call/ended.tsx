@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { type UseMutationResult, useMutation } from "@tanstack/react-query";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
@@ -8,6 +8,7 @@ import { orpc } from "@/utils/orpc";
 
 const END_REASON_MESSAGES: Record<string, string> = {
   connection_lost: "Call ended — connection lost",
+  crash: "Call ended — connection lost",
   explicit: "Call ended — you ended the call",
   disconnect: "Call ended — the call was disconnected.",
   timeout: "Call ended — the call timed out.",
@@ -24,41 +25,245 @@ const REPORT_REASONS = [
   { value: "other" as const, label: "Other" },
 ];
 
-export default function CallEndedScreen() {
-  const router = useRouter();
+// ── Sub-components ──────────────────────────────────────────────────────
+
+interface RatingFormProps {
+  mutation: UseMutationResult<
+    { success: boolean; alreadyRated: boolean },
+    Error,
+    {
+      roomName: string;
+      stars: number;
+      helpedPractice: boolean;
+      comment?: string;
+    },
+    unknown
+  >;
+  onDismissed: () => void;
+  onSubmitted: () => void;
+  roomName: string;
+}
+
+function RatingForm({
+  roomName,
+  mutation,
+  onSubmitted,
+  onDismissed,
+}: RatingFormProps) {
   const { theme } = useUnistyles();
-  const { reason, roomName } = useLocalSearchParams<{
-    reason?: string;
-    roomName?: string;
-  }>();
-  const [showReportForm, setShowReportForm] = useState(false);
+  const [stars, setStars] = useState(0);
+  const [comment, setComment] = useState("");
+  const [helped, setHelped] = useState<boolean | null>(null);
+
+  const handleSubmit = () => {
+    if (!(stars > 0)) {
+      return;
+    }
+    mutation.mutate(
+      {
+        roomName,
+        stars,
+        helpedPractice: helped ?? false,
+        ...(comment.trim() ? { comment: comment.trim() } : {}),
+      },
+      { onSuccess: onSubmitted }
+    );
+  };
+
+  return (
+    <View
+      nativeID="rating-form"
+      style={[styles.ratingForm, { borderColor: theme.colors.border }]}
+    >
+      <Text
+        style={[styles.ratingFormTitle, { color: theme.colors.typography }]}
+      >
+        Rate your partner
+      </Text>
+
+      <View style={styles.starsRow}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Pressable
+            key={star}
+            nativeID={`star-${star}`}
+            onPress={() => setStars(star)}
+            style={styles.starPressable}
+          >
+            <Text
+              style={[
+                styles.star,
+                {
+                  color:
+                    star <= stars ? theme.colors.warning : theme.colors.muted,
+                },
+              ]}
+            >
+              ★
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Text
+        style={[styles.ratingQuestion, { color: theme.colors.mutedForeground }]}
+      >
+        Did this partner help you practice?
+      </Text>
+      <View style={styles.helpedRow}>
+        <Pressable
+          nativeID="helped-yes"
+          onPress={() => setHelped(true)}
+          style={[
+            styles.helpedOption,
+            {
+              backgroundColor:
+                helped === true ? theme.colors.primary : theme.colors.muted,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.helpedText,
+              {
+                color:
+                  helped === true
+                    ? theme.colors.primaryForeground
+                    : theme.colors.typography,
+              },
+            ]}
+          >
+            Yes
+          </Text>
+        </Pressable>
+        <Pressable
+          nativeID="helped-no"
+          onPress={() => setHelped(false)}
+          style={[
+            styles.helpedOption,
+            {
+              backgroundColor:
+                helped === false ? theme.colors.primary : theme.colors.muted,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.helpedText,
+              {
+                color:
+                  helped === false
+                    ? theme.colors.primaryForeground
+                    : theme.colors.typography,
+              },
+            ]}
+          >
+            No
+          </Text>
+        </Pressable>
+      </View>
+
+      <TextInput
+        multiline
+        nativeID="rating-comment-input"
+        numberOfLines={3}
+        onChangeText={setComment}
+        placeholder="Optional comment..."
+        placeholderTextColor={theme.colors.mutedForeground}
+        style={[
+          styles.detailsInput,
+          {
+            color: theme.colors.typography,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.muted,
+          },
+        ]}
+        value={comment}
+      />
+
+      <View style={styles.ratingActions}>
+        <Pressable
+          nativeID="dismiss-rating-button"
+          onPress={onDismissed}
+          style={[
+            styles.ratingActionBtn,
+            { backgroundColor: theme.colors.muted },
+          ]}
+        >
+          <Text
+            style={[
+              styles.ratingActionText,
+              { color: theme.colors.mutedForeground },
+            ]}
+          >
+            Skip
+          </Text>
+        </Pressable>
+        <Pressable
+          disabled={!stars || mutation.isPending}
+          nativeID="submit-rating-button"
+          onPress={handleSubmit}
+          style={[
+            styles.ratingActionBtn,
+            {
+              backgroundColor: stars
+                ? theme.colors.primary
+                : theme.colors.muted,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.ratingActionText,
+              {
+                color: stars
+                  ? theme.colors.primaryForeground
+                  : theme.colors.mutedForeground,
+              },
+            ]}
+          >
+            {mutation.isPending ? "Sending..." : "Submit rating"}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+interface ReportFormProps {
+  mutation: UseMutationResult<
+    { success: boolean; alreadyReported: boolean; strikeVoided?: boolean },
+    Error,
+    {
+      roomName: string;
+      reason: (typeof REPORT_REASONS)[number]["value"];
+      details?: string;
+    },
+    unknown
+  >;
+  onCancelled: () => void;
+  onSubmitted: (strikeVoided: boolean) => void;
+  roomName: string;
+}
+
+function ReportForm({
+  roomName,
+  mutation,
+  onSubmitted,
+  onCancelled,
+}: ReportFormProps) {
+  const { theme } = useUnistyles();
   const [selectedReason, setSelectedReason] = useState<
     (typeof REPORT_REASONS)[number]["value"] | null
   >(null);
-  const [reported, setReported] = useState(false);
-  const [reportStrikeVoided, setReportStrikeVoided] = useState(false);
   const [details, setDetails] = useState("");
 
-  const reportMutation = useMutation(
-    orpc.moderation.reportPartner.mutationOptions()
-  );
-
-  const subtitle =
-    (reason && END_REASON_MESSAGES[reason]) ?? "The call has ended.";
-
-  const handleBackToLobby = () => {
-    router.replace("/call/lobby");
-  };
-
-  const handleReportIssue = () => {
-    setShowReportForm(true);
-  };
-
-  const handleSubmitReport = () => {
+  const handleSubmit = () => {
     if (!(selectedReason && roomName)) {
       return;
     }
-    reportMutation.mutate(
+    mutation.mutate(
       {
         roomName,
         reason: selectedReason,
@@ -66,24 +271,181 @@ export default function CallEndedScreen() {
       },
       {
         onSuccess: (data) => {
-          setReportStrikeVoided(data.strikeVoided ?? false);
-          setReported(true);
-          setShowReportForm(false);
+          onSubmitted(data.strikeVoided ?? false);
         },
       }
     );
   };
 
-  const handleReturnHome = () => {
-    router.replace("/");
-  };
+  return (
+    <View
+      nativeID="report-form"
+      style={[styles.reportForm, { borderColor: theme.colors.border }]}
+    >
+      <Text
+        style={[styles.reportFormTitle, { color: theme.colors.typography }]}
+      >
+        What went wrong?
+      </Text>
 
-  const handleCancelReport = () => {
-    setShowReportForm(false);
-    setSelectedReason(null);
-    setDetails("");
-  };
+      {REPORT_REASONS.map((r) => (
+        <Pressable
+          key={r.value}
+          nativeID={`report-reason-${r.value}`}
+          onPress={() => setSelectedReason(r.value)}
+          style={[
+            styles.reasonOption,
+            {
+              backgroundColor:
+                selectedReason === r.value
+                  ? theme.colors.primary
+                  : theme.colors.muted,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.reasonText,
+              {
+                color:
+                  selectedReason === r.value
+                    ? theme.colors.primaryForeground
+                    : theme.colors.typography,
+              },
+            ]}
+          >
+            {r.label}
+          </Text>
+        </Pressable>
+      ))}
 
+      <TextInput
+        multiline
+        nativeID="report-details-input"
+        numberOfLines={3}
+        onChangeText={setDetails}
+        placeholder="Optional details..."
+        placeholderTextColor={theme.colors.mutedForeground}
+        style={[
+          styles.detailsInput,
+          {
+            color: theme.colors.typography,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.muted,
+          },
+        ]}
+        value={details}
+      />
+
+      <View style={styles.reportActions}>
+        <Pressable
+          nativeID="cancel-report-button"
+          onPress={onCancelled}
+          style={[
+            styles.reportActionBtn,
+            { backgroundColor: theme.colors.muted },
+          ]}
+        >
+          <Text
+            style={[
+              styles.reportActionText,
+              { color: theme.colors.mutedForeground },
+            ]}
+          >
+            Cancel
+          </Text>
+        </Pressable>
+        <Pressable
+          disabled={!selectedReason || mutation.isPending}
+          nativeID="submit-report-button"
+          onPress={handleSubmit}
+          style={[
+            styles.reportActionBtn,
+            {
+              backgroundColor: selectedReason
+                ? theme.colors.destructive
+                : theme.colors.muted,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.reportActionText,
+              {
+                color: selectedReason
+                  ? theme.colors.destructiveForeground
+                  : theme.colors.mutedForeground,
+              },
+            ]}
+          >
+            {mutation.isPending ? "Sending..." : "Submit report"}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// ── Main screen ─────────────────────────────────────────────────────────
+
+export default function CallEndedScreen() {
+  const router = useRouter();
+  const { theme } = useUnistyles();
+  const { reason, roomName } = useLocalSearchParams<{
+    reason?: string;
+    roomName?: string;
+  }>();
+
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [reported, setReported] = useState(false);
+  const [reportStrikeVoided, setReportStrikeVoided] = useState(false);
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [ratingDismissed, setRatingDismissed] = useState(false);
+
+  const reportMutation = useMutation(
+    orpc.moderation.reportPartner.mutationOptions()
+  );
+  const ratingMutation = useMutation(orpc.rating.ratePartner.mutationOptions());
+
+  const subtitle =
+    (reason && END_REASON_MESSAGES[reason]) ?? "The call has ended.";
+
+  const handleBackToLobby = () => router.replace("/call/lobby");
+  const handleReturnHome = () => router.replace("/");
+
+  // ── Rating section ────────────────────────────────────────────────────
+  let ratingSection: React.ReactNode;
+  if (ratingSubmitted) {
+    ratingSection = (
+      <Text
+        nativeID="rating-thanks"
+        style={[styles.thanksText, { color: theme.colors.success }]}
+      >
+        Thanks for rating your partner!
+      </Text>
+    );
+  } else if (ratingDismissed) {
+    ratingSection = (
+      <Text
+        nativeID="rating-dismissed"
+        style={[styles.thanksText, { color: theme.colors.mutedForeground }]}
+      >
+        You can rate your partner later from your call history.
+      </Text>
+    );
+  } else if (roomName) {
+    ratingSection = (
+      <RatingForm
+        mutation={ratingMutation}
+        onDismissed={() => setRatingDismissed(true)}
+        onSubmitted={() => setRatingSubmitted(true)}
+        roomName={roomName}
+      />
+    );
+  }
+
+  // ── Report section ────────────────────────────────────────────────────
   let reportSection: React.ReactNode;
   if (reported) {
     reportSection = (
@@ -96,121 +458,26 @@ export default function CallEndedScreen() {
           : "Thanks for your report — we'll review it."}
       </Text>
     );
-  } else if (showReportForm) {
+  } else if (showReportForm && roomName) {
     reportSection = (
-      <View
-        nativeID="report-form"
-        style={[styles.reportForm, { borderColor: theme.colors.border }]}
-      >
-        <Text
-          style={[styles.reportFormTitle, { color: theme.colors.typography }]}
-        >
-          What went wrong?
-        </Text>
-
-        {REPORT_REASONS.map((r) => (
-          <Pressable
-            key={r.value}
-            nativeID={`report-reason-${r.value}`}
-            onPress={() => setSelectedReason(r.value)}
-            style={[
-              styles.reasonOption,
-              {
-                backgroundColor:
-                  selectedReason === r.value
-                    ? theme.colors.primary
-                    : theme.colors.muted,
-                borderColor: theme.colors.border,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.reasonText,
-                {
-                  color:
-                    selectedReason === r.value
-                      ? theme.colors.primaryForeground
-                      : theme.colors.typography,
-                },
-              ]}
-            >
-              {r.label}
-            </Text>
-          </Pressable>
-        ))}
-
-        <TextInput
-          multiline
-          nativeID="report-details-input"
-          numberOfLines={3}
-          onChangeText={setDetails}
-          placeholder="Optional details..."
-          placeholderTextColor={theme.colors.mutedForeground}
-          style={[
-            styles.detailsInput,
-            {
-              color: theme.colors.typography,
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.muted,
-            },
-          ]}
-          value={details}
-        />
-
-        <View style={styles.reportActions}>
-          <Pressable
-            nativeID="cancel-report-button"
-            onPress={handleCancelReport}
-            style={[
-              styles.reportActionBtn,
-              { backgroundColor: theme.colors.muted },
-            ]}
-          >
-            <Text
-              style={[
-                styles.reportActionText,
-                { color: theme.colors.mutedForeground },
-              ]}
-            >
-              Cancel
-            </Text>
-          </Pressable>
-
-          <Pressable
-            disabled={!selectedReason || reportMutation.isPending}
-            nativeID="submit-report-button"
-            onPress={handleSubmitReport}
-            style={[
-              styles.reportActionBtn,
-              {
-                backgroundColor: selectedReason
-                  ? theme.colors.destructive
-                  : theme.colors.muted,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.reportActionText,
-                {
-                  color: selectedReason
-                    ? theme.colors.destructiveForeground
-                    : theme.colors.mutedForeground,
-                },
-              ]}
-            >
-              {reportMutation.isPending ? "Sending..." : "Submit report"}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+      <ReportForm
+        mutation={reportMutation}
+        onCancelled={() => {
+          setShowReportForm(false);
+        }}
+        onSubmitted={(strikeVoided) => {
+          setReportStrikeVoided(strikeVoided);
+          setReported(true);
+          setShowReportForm(false);
+        }}
+        roomName={roomName}
+      />
     );
   } else {
     reportSection = (
       <Pressable
         nativeID="report-issue-button"
-        onPress={handleReportIssue}
+        onPress={() => setShowReportForm(true)}
         style={[styles.button, { backgroundColor: theme.colors.secondary }]}
       >
         <Text
@@ -242,29 +509,7 @@ export default function CallEndedScreen() {
         >
           {subtitle}
         </Text>
-
-        <View style={styles.ratingSection}>
-          <Text
-            style={[styles.ratingLabel, { color: theme.colors.typography }]}
-          >
-            Rate your partner
-          </Text>
-          <View style={styles.starsRow}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Text
-                key={star}
-                style={[styles.star, { color: theme.colors.muted }]}
-              >
-                ★
-              </Text>
-            ))}
-          </View>
-          <Text
-            style={[styles.comingSoon, { color: theme.colors.mutedForeground }]}
-          >
-            Coming soon
-          </Text>
-        </View>
+        {ratingSection}
       </View>
 
       <View style={styles.buttonContainer}>
@@ -291,6 +536,14 @@ export default function CallEndedScreen() {
             style={[styles.errorMsg, { color: theme.colors.destructive }]}
           >
             Failed to submit report. Please try again.
+          </Text>
+        )}
+        {ratingMutation.isError && (
+          <Text
+            nativeID="rating-error"
+            style={[styles.errorMsg, { color: theme.colors.destructive }]}
+          >
+            Failed to submit rating. Please try again.
           </Text>
         )}
 
@@ -336,45 +589,69 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: theme.fontSize.base,
     textAlign: "center",
   },
-  ratingSection: {
-    marginTop: 16,
-    alignItems: "center",
-    gap: 8,
+  // ── Rating styles ────────────────────────────────────────────────────
+  ratingForm: {
+    width: "100%",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 12,
   },
-  ratingLabel: {
-    fontSize: theme.fontSize.sm,
+  ratingFormTitle: {
+    fontSize: theme.fontSize.base,
     fontWeight: "600",
+    textAlign: "center",
   },
   starsRow: {
     flexDirection: "row",
-    gap: 4,
+    justifyContent: "center",
+    gap: 6,
+  },
+  starPressable: {
+    padding: 4,
   },
   star: {
-    fontSize: theme.fontSize["2xl"],
+    fontSize: 32,
   },
-  comingSoon: {
-    fontSize: theme.fontSize.xs,
+  ratingQuestion: {
+    fontSize: theme.fontSize.sm,
+    textAlign: "center",
   },
-  buttonContainer: {
-    width: "100%",
-    gap: 12,
+  helpedRow: {
+    flexDirection: "row",
+    gap: 10,
+    justifyContent: "center",
   },
-  button: {
-    width: "100%",
-    paddingVertical: 12,
+  helpedOption: {
+    flex: 1,
+    maxWidth: 100,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: "center",
+  },
+  helpedText: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: "500",
+  },
+  ratingActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 4,
+  },
+  ratingActionBtn: {
+    flex: 1,
+    paddingVertical: 10,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
-  buttonText: {
-    fontSize: theme.fontSize.base,
+  ratingActionText: {
+    fontSize: theme.fontSize.sm,
     fontWeight: "600",
   },
-  thanksText: {
-    fontSize: theme.fontSize.sm,
-    textAlign: "center",
-    paddingVertical: 8,
-  },
+  // ── Report styles ────────────────────────────────────────────────────
   reportForm: {
     width: "100%",
     padding: 16,
@@ -420,6 +697,26 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: theme.fontSize.sm,
     minHeight: 60,
     textAlignVertical: "top",
+  },
+  thanksText: {
+    fontSize: theme.fontSize.sm,
+    textAlign: "center",
+    paddingVertical: 8,
+  },
+  buttonContainer: {
+    width: "100%",
+    gap: 12,
+  },
+  button: {
+    width: "100%",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonText: {
+    fontSize: theme.fontSize.base,
+    fontWeight: "600",
   },
   errorMsg: {
     fontSize: theme.fontSize.sm,
