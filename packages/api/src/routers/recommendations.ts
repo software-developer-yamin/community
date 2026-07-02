@@ -387,7 +387,7 @@ export const recommendationsRouter = {
       return items[0];
     }),
 
-  createContent: protectedProcedure
+  createContent: adminProcedure
     .input(
       z.object({
         title: z.string().min(1).max(200),
