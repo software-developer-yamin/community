@@ -638,6 +638,52 @@ export const recommendationsRouter = {
       }));
     }),
 
+  updateContent: adminProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        title: z.string().min(1).max(200).optional(),
+        description: z.string().min(1).max(2000).optional(),
+        type: z.enum(["video", "article", "exercise", "dialogue"]).optional(),
+        cefrLevel: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]).optional(),
+        sourceUrl: z.string().url().optional().nullable(),
+        thumbnailUrl: z.string().url().optional().nullable(),
+        duration: z.number().int().min(1).optional().nullable(),
+        tags: z.array(z.string().min(1).max(50)).max(10).optional(),
+        metadata: z.record(z.string(), z.unknown()).optional().nullable(),
+      })
+    )
+    .handler(async ({ input }) => {
+      const { id, ...patch } = input;
+
+      const existing = await db
+        .select({ id: contentItem.id })
+        .from(contentItem)
+        .where(eq(contentItem.id, id))
+        .limit(1);
+
+      if (existing.length === 0) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "Content item not found",
+        });
+      }
+
+      const rows = await db
+        .update(contentItem)
+        .set(patch)
+        .where(eq(contentItem.id, id))
+        .returning();
+
+      if (patch.title !== undefined || patch.description !== undefined) {
+        await db
+          .update(contentEmbedding)
+          .set({ modelVersion: "pending" })
+          .where(eq(contentEmbedding.contentId, id));
+      }
+
+      return rows[0];
+    }),
+
   adminDeleteContent: adminProcedure
     .input(z.object({ id: z.string().uuid() }))
     .handler(async ({ input }) => {
