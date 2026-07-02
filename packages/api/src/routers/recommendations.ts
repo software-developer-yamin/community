@@ -952,20 +952,22 @@ export const recommendationsRouter = {
       const { items } = input;
 
       const inputTitles = items.map((i) => i.title);
-      const existingRows = await db
-        .select({ title: contentItem.title })
-        .from(contentItem)
-        .where(inArray(contentItem.title, inputTitles));
-      const existingTitles = new Set(existingRows.map((r) => r.title));
+      const existingTitles = new Set<string>();
+      if (inputTitles.length > 0) {
+        const existingRows = await db
+          .select({ title: contentItem.title })
+          .from(contentItem)
+          .where(inArray(contentItem.title, inputTitles));
+        for (const r of existingRows) {
+          existingTitles.add(r.title);
+        }
+      }
 
       type ImportError = { index: number; title: string; error: string };
       const errors: ImportError[] = [];
       const toInsert: (typeof items)[number][] = [];
 
-      for (let idx = 0; idx < items.length; idx++) {
-        const item = items[idx];
-        if (!item) continue;
-
+      for (const [idx, item] of items.entries()) {
         if (existingTitles.has(item.title)) {
           errors.push({
             index: idx,
