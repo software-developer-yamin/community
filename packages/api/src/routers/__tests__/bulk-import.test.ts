@@ -199,6 +199,25 @@ describe("validateImportItem", () => {
   });
 });
 
+describe("processBatch — edge cases", () => {
+  test("empty array → created=0, failed=0, errors=[]", () => {
+    const { result, toInsert } = processBatch([], new Set());
+    expect(result.created).toBe(0);
+    expect(result.failed).toBe(0);
+    expect(result.errors).toHaveLength(0);
+    expect(toInsert).toHaveLength(0);
+  });
+
+  test("all duplicates → created=0, all in errors", () => {
+    const items: ImportItem[] = [
+      { title: "Existing", description: "desc", type: "video", cefrLevel: "A1" },
+    ];
+    const { result } = processBatch(items, new Set(["Existing"]));
+    expect(result.created).toBe(0);
+    expect(result.failed).toBe(1);
+  });
+});
+
 describe("processBatch — AC1: all valid items", () => {
   const items: ImportItem[] = [
     {
