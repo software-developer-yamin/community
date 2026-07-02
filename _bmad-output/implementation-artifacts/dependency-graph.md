@@ -1,5 +1,5 @@
 # Story Dependency Graph
-_Last updated: 2026-06-26T17:40:00+06:00_
+_Last updated: 2026-07-02T21:48:00+06:00_
 
 ## Stories
 
@@ -25,13 +25,13 @@ _Last updated: 2026-06-26T17:40:00+06:00_
 | 5.3 | 5 | Refund Mechanism | blocked | #18 | — | — | 5.1 | ✅ Yes (5.1 done, blocked externally) |
 | 5.4 | 5 | SSLCommerz Payment Gateway | done | #65 | #63 | merged | none | ✅ Yes (done) |
 | 5.5 | 5 | Cancellation Preserves Access (FR15) | done | #66 | #67 | merged | 5.1, 5.4 | ✅ Yes (done) |
-| 6.1 | 6 | State Preservation Across Backgrounding | backlog | #19 | — | — | Epic 2 | ✅ Yes (Epic 2 done) |
-| 6.2 | 6 | Crash Resilience | backlog | #20 | — | — | 6.1 | ❌ No (6.1 not done) |
-| 6.3 | 6 | Reinstall Account Preservation | backlog | #36 | — | — | Epic 2 | ✅ Yes (Epic 2 done) |
-| 7.1 | 7 | Post-Call Rating Flow | backlog | #37 | — | — | Epic 2 | ✅ Yes (Epic 2 done) |
-| 7.2 | 7 | Rating Integration with Matching | backlog | #38 | — | — | 7.1 | ❌ No (7.1 not done) |
-| re-1.1 | RE-1 | Update Content Item | backlog | #43 | — | — | none | ✅ Yes |
-| re-1.2 | RE-1 | Bulk Content Import | backlog | #44 | — | — | none | ✅ Yes |
+| 6.1 | 6 | State Preservation Across Backgrounding | done | #19 | #69 | merged | Epic 2 | ✅ Yes (done) |
+| 6.2 | 6 | Crash Resilience | done | #20 | #70 | merged | 6.1 | ✅ Yes (done) |
+| 6.3 | 6 | Reinstall Account Preservation | done | #36 | #68 | merged | Epic 2 | ✅ Yes (done) |
+| 7.1 | 7 | Post-Call Rating Flow | done | #37 | #71 | merged | Epic 2 | ✅ Yes (done) |
+| 7.2 | 7 | Rating Integration with Matching | done | #38 | #72 | merged | 7.1 | ✅ Yes (done) |
+| re-1.1 | RE-1 | Update Content Item | done | #43 | #73 | merged | none | ✅ Yes (done) |
+| re-1.2 | RE-1 | Bulk Content Import | done | #44 | #74 | open | none | ✅ Yes (done) |
 | re-1.3 | RE-1 | Secure Content Creation | backlog | #45 | — | — | none | ✅ Yes |
 | re-2.1 | RE-2 | Compute Content Embedding on Creation | backlog | #46 | — | — | none | ✅ Yes |
 | re-2.2 | RE-2 | Recompute Content Embedding on Update | backlog | #47 | — | — | re-1.1, re-2.1 | ❌ No (re-1.1, re-2.1 not done) |
@@ -89,8 +89,9 @@ _Last updated: 2026-06-26T17:40:00+06:00_
 - **Epic 3 fully complete** — 3.1 + 3.2 + 3.3 done. 3.3 (PR #58) merged.
 - **Epic 4 fully done** — 4.1 + 4.2 + 4.3 (PR #60) + 4.4 (PR #61) all merged to master.
 - **Epic 5 in-progress** — 5.1 done, 5.2 done (PR #64), 5.3 blocked externally (unblocked dependency-wise), 5.4 done (PR #63, issue #65), 5.5 done (PR #67 merged, issue #66).
-- **Epic 6 backlog** — FR17, FR18, FR19 all unstarted. Epic 2 done, so 6.1 and 6.3 are unblocked.
-- **Epic 7 backlog** — FR23 post-call rating, unstarted. Epic 2 done, so 7.1 is unblocked.
+- **Epic 6 fully done** — 6.1 (PR #69), 6.2 (PR #70), 6.3 (PR #68) all merged to master.
+- **Epic 7 fully done** — 7.1 (PR #71) merged. 7.2 (PR #72) merged.
 - **RE-* epics are separate track** — recommendation engine independent of voice calling (Epics 2-7). Only depends on Epic 1 (auth/session, done).
+- **RE-1 in-progress** — re-1.1 (PR #73) merged. re-1.2 and re-1.3 ready for dev.
 - **max_parallel_stories=1**
 - Default branch: `master`
