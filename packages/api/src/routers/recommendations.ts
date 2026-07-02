@@ -681,7 +681,14 @@ export const recommendationsRouter = {
           .where(eq(contentEmbedding.contentId, id));
       }
 
-      return rows[0];
+      const updated = rows[0];
+      if (!updated) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "Content item not found after update",
+        });
+      }
+
+      return updated;
     }),
 
   adminDeleteContent: adminProcedure
