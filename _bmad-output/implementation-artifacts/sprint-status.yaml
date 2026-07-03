@@ -61,7 +61,7 @@ development_status:
   epic-re-2: in-progress
   re-2-1-compute-content-embedding-on-creation: done
   re-2-2-recompute-content-embedding-on-update: done
-  re-2-3-real-profile-embeddings-from-user-data: review
+  re-2-3-real-profile-embeddings-from-user-data: done
   epic-re-2-retrospective: optional
 
   epic-re-3: backlog
