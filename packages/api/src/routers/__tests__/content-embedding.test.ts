@@ -106,7 +106,7 @@ const VALID_ITEM = {
 };
 
 const MOCK_EMBEDDING_384 = Array.from({ length: 384 }, (_, i) => i * 0.001);
-const MOCK_EMBEDDING_256 = Array.from({ length: 256 }, (_, i) => i * 0.001); // wrong dim
+const MOCK_EMBEDDING_256 = Array.from({ length: 256 }, (_, i) => i * 0.001);
 
 // ─────────────────────────────────────────────────────────────────
 // buildEmbedText helper
