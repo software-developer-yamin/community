@@ -1149,6 +1149,12 @@ export const recommendationsRouter = {
         });
 
         if (!res.ok) {
+          console.error(
+            "[embed] retryPendingEmbeddings service returned",
+            res.status,
+            "for item",
+            item.id
+          );
           failed++;
           continue;
         }
