@@ -968,18 +968,80 @@ export const recommendationsRouter = {
         .where(eq(contentItem.id, id))
         .returning();
 
-      if (patch.title !== undefined || patch.description !== undefined) {
-        await db
-          .update(contentEmbedding)
-          .set({ modelVersion: "pending" })
-          .where(eq(contentEmbedding.contentId, id));
-      }
-
       const updated = rows[0];
       if (!updated) {
         throw new ORPCError("NOT_FOUND", {
           message: "Content item not found after update",
         });
+      }
+
+      const semanticChanged =
+        patch.title !== undefined ||
+        patch.description !== undefined ||
+        patch.tags !== undefined;
+
+      if (semanticChanged) {
+        try {
+          const text = buildContentEmbedText(updated);
+          const res = await fetch(`${EMBED_URL}/embed`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ text }),
+          });
+
+          if (res.ok) {
+            const { embedding } = embedSchema.parse(await res.json());
+            await db
+              .insert(contentEmbedding)
+              .values({
+                contentId: updated.id,
+                embedding,
+                modelVersion: "bge-small-en-v1.5-int8@1:f8.2",
+                updatedAt: new Date(),
+              })
+              .onConflictDoUpdate({
+                target: contentEmbedding.contentId,
+                set: {
+                  embedding,
+                  modelVersion: "bge-small-en-v1.5-int8@1:f8.2",
+                  updatedAt: new Date(),
+                },
+              });
+          } else {
+            await db
+              .insert(contentEmbedding)
+              .values({
+                contentId: updated.id,
+                embedding: [],
+                modelVersion: "pending",
+                updatedAt: new Date(),
+              })
+              .onConflictDoUpdate({
+                target: contentEmbedding.contentId,
+                set: {
+                  modelVersion: "pending",
+                  updatedAt: new Date(),
+                },
+              });
+          }
+        } catch (err) {
+          console.error("[embed] updateContent embedding failed", err);
+          await db
+            .insert(contentEmbedding)
+            .values({
+              contentId: updated.id,
+              embedding: [],
+              modelVersion: "pending",
+              updatedAt: new Date(),
+            })
+            .onConflictDoUpdate({
+              target: contentEmbedding.contentId,
+              set: {
+                modelVersion: "pending",
+                updatedAt: new Date(),
+              },
+            });
+        }
       }
 
       return updated;
