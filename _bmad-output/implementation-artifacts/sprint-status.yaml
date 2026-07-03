@@ -1,5 +1,5 @@
 generated: 2026-06-14T00:00:00+06:00
-last_updated: 2026-07-02T18:00:00+06:00
+last_updated: 2026-07-03T12:13:00+06:00
 project: community
 project_key: NOKEY
 tracking_system: file-system
@@ -52,7 +52,7 @@ development_status:
   7-2-rating-integration-with-matching: done
   epic-7-retrospective: optional
 
-  epic-re-1: in-progress
+  epic-re-1: done
   re-1-1-update-content-item: done
   re-1-2-bulk-content-import: done
   re-1-3-secure-content-creation: done
