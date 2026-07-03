@@ -1,5 +1,5 @@
 # Story Dependency Graph
-_Last updated: 2026-07-03T12:13:00+06:00_
+_Last updated: 2026-07-03T14:00:00+06:00_
 
 ## Stories
 
@@ -33,7 +33,7 @@ _Last updated: 2026-07-03T12:13:00+06:00_
 | re-1.1 | RE-1 | Update Content Item | done | #43 | #73 | merged | none | ✅ Yes (done) |
 | re-1.2 | RE-1 | Bulk Content Import | done | #44 | #74 | merged | none | ✅ Yes (done) |
 | re-1.3 | RE-1 | Secure Content Creation | done | #45 | #75 | merged | none | ✅ Yes (done) |
-| re-2.1 | RE-2 | Compute Content Embedding on Creation | backlog | #46 | — | — | none | ✅ Yes |
+| re-2.1 | RE-2 | Compute Content Embedding on Creation | done | #46 | #76 | merged | none | ✅ Yes (done) |
 | re-2.2 | RE-2 | Recompute Content Embedding on Update | backlog | #47 | — | — | re-1.1, re-2.1 | ❌ No (re-2.1 not done) |
 | re-2.3 | RE-2 | Real Profile Embeddings from User Data | backlog | #48 | — | — | none | ✅ Yes |
 | re-3.1 | RE-3 | Native Mobile Recommendation Feed (Expo) | backlog | #49 | — | — | re-2.1, re-2.2, re-2.3, re-5.1 | ❌ No (RE-2, RE-5 not done) |
