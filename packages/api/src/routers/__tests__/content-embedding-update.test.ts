@@ -77,7 +77,10 @@ async function tryComputeEmbedding(
       return null;
     }
     const data = (await res.json()) as { embedding: unknown[] };
-    if (!Array.isArray(data.embedding) || data.embedding.length !== EMBED_DIMENSION) {
+    if (
+      !Array.isArray(data.embedding) ||
+      data.embedding.length !== EMBED_DIMENSION
+    ) {
       onError?.(`invalid embedding dimension: ${data.embedding?.length}`);
       return null;
     }
@@ -96,7 +99,10 @@ const EXISTING_ITEM = {
   tags: ["food", "vocabulary"],
 };
 
-const MOCK_EMBEDDING_384_NEW = Array.from({ length: EMBED_DIMENSION }, (_, i) => (i + 1) / EMBED_DIMENSION);
+const MOCK_EMBEDDING_384_NEW = Array.from(
+  { length: EMBED_DIMENSION },
+  (_, i) => (i + 1) / EMBED_DIMENSION
+);
 const RE_NO_TRAILING_COMMA = /,\s*$/;
 
 // ─────────────────────────────────────────────────────────────────
@@ -155,7 +161,10 @@ describe("T-2.2: Semantic change detection", () => {
 
 describe("T-2.2: Happy path — recompute on semantic update", () => {
   test("T-2.2-01 — update title → embed service called → new embedding returned", async () => {
-    const updatedItem = { ...EXISTING_ITEM, title: "English Dinner Vocabulary" };
+    const updatedItem = {
+      ...EXISTING_ITEM,
+      title: "English Dinner Vocabulary",
+    };
 
     const mockFetch = () =>
       Promise.resolve({
@@ -167,7 +176,10 @@ describe("T-2.2: Happy path — recompute on semantic update", () => {
     const original = global.fetch;
     global.fetch = mockFetch as unknown as typeof fetch;
 
-    const result = await tryComputeEmbedding("http://localhost:9100", buildEmbedText(updatedItem));
+    const result = await tryComputeEmbedding(
+      "http://localhost:9100",
+      buildEmbedText(updatedItem)
+    );
 
     global.fetch = original;
 
@@ -178,7 +190,10 @@ describe("T-2.2: Happy path — recompute on semantic update", () => {
   });
 
   test("T-2.2-06 — embed text uses updated title (not old title)", () => {
-    const updatedItem = { ...EXISTING_ITEM, title: "English Dinner Vocabulary" };
+    const updatedItem = {
+      ...EXISTING_ITEM,
+      title: "English Dinner Vocabulary",
+    };
     const embedText = buildEmbedText(updatedItem);
     expect(embedText).toContain("English Dinner Vocabulary");
     expect(embedText).not.toContain("English Breakfast Vocabulary");
