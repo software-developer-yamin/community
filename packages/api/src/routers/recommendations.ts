@@ -963,7 +963,11 @@ export const recommendationsRouter = {
         }
       }
 
-      type ImportError = { index: number; title: string; error: string };
+      interface ImportError {
+        error: string;
+        index: number;
+        title: string;
+      }
       const errors: ImportError[] = [];
       const toInsert: (typeof items)[number][] = [];
 
