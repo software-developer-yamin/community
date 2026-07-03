@@ -112,20 +112,20 @@ export async function computeProfileEmbedding(
       .from(user)
       .where(eq(user.id, userId))
       .limit(1)
-      .then((r) => r[0]),
+      .then((rows) => rows[0]),
     db
       .select({ nativeLanguage: userProfile.nativeLanguage })
       .from(userProfile)
       .where(eq(userProfile.userId, userId))
       .limit(1)
-      .then((r) => r[0]),
+      .then((rows) => rows[0]),
     db
       .select({ level: cefrPlacement.level })
       .from(cefrPlacement)
       .where(eq(cefrPlacement.userId, userId))
       .orderBy(desc(cefrPlacement.createdAt))
       .limit(1)
-      .then((r) => r[0]),
+      .then((rows) => rows[0]),
     db
       .select({
         interests: userPreference.interests,
@@ -134,7 +134,7 @@ export async function computeProfileEmbedding(
       .from(userPreference)
       .where(eq(userPreference.userId, userId))
       .limit(1)
-      .then((r) => r[0]),
+      .then((rows) => rows[0]),
   ]);
 
   if (!u) {
