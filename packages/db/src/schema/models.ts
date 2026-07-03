@@ -3,11 +3,10 @@ import {
   integer,
   jsonb,
   pgTable,
-  real,
   text,
   timestamp,
+  vector,
 } from "drizzle-orm/pg-core";
-
 import { user } from "./auth";
 
 /**
@@ -61,19 +60,26 @@ export const modelInferenceLog = pgTable(
  * Recomputed on profile change only (not per call).
  * Model version tracked so we can re-embed on upgrade.
  */
-export const userProfileEmbedding = pgTable("user_profile_embedding", {
-  userId: text("user_id")
-    .primaryKey()
-    .references(() => user.id, { onDelete: "cascade" }),
-  // pgvector: `vector(384)` would be ideal, but we use real[] for zero-extension compatibility
-  // Switch to pgvector + sql`vector(384)` later if recall improves
-  embedding: real("embedding").array().notNull(),
-  modelVersion: text("model_version").notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
+export const userProfileEmbedding = pgTable(
+  "user_profile_embedding",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    embedding: vector("embedding", { dimensions: 384 }).notNull(),
+    modelVersion: text("model_version").notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("user_profile_embedding_hnsw_idx").using(
+      "hnsw",
+      table.embedding.op("vector_cosine_ops")
+    ),
+  ]
+);
 
 /**
  * Pronunciation scores per clip. Stored for analytics + peer comparison
