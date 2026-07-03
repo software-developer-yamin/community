@@ -41,6 +41,14 @@ import { EMBED_URL, embedSchema } from "./models";
 
 const cefrOrder = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 } as const;
 
+function buildContentEmbedText(item: {
+  title: string;
+  description: string;
+  tags?: string[] | null;
+}): string {
+  return `${item.title} ${item.description} ${(item.tags ?? []).join(", ")}`;
+}
+
 function getCefrLevel(userId: string): Promise<string | null> {
   return db
     .select({ level: cefrPlacement.level })
@@ -419,7 +427,7 @@ export const recommendationsRouter = {
       const item = items[0];
 
       try {
-        const text = `${item.title} ${item.description} ${(item.tags ?? []).join(", ")}`;
+        const text = buildContentEmbedText(item);
         const res = await fetch(`${EMBED_URL}/embed`, {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -1063,7 +1071,7 @@ export const recommendationsRouter = {
         throw new ORPCError("NOT_FOUND", { message: "Content not found" });
       }
 
-      const text = `${item.title} ${item.description} ${(item.tags ?? []).join(", ")}`;
+      const text = buildContentEmbedText(item);
       const res = await fetch(`${EMBED_URL}/embed`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -1133,7 +1141,7 @@ export const recommendationsRouter = {
         continue;
       }
       try {
-        const text = `${item.title} ${item.description} ${(item.tags ?? []).join(", ")}`;
+        const text = buildContentEmbedText(item);
         const res = await fetch(`${EMBED_URL}/embed`, {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -1387,7 +1395,7 @@ export const recommendationsRouter = {
       .from(contentItem);
 
     for (const item of allContent) {
-      const text = `${item.title} ${item.description} ${(item.tags ?? []).join(", ")}`;
+      const text = buildContentEmbedText(item);
       let embedding: number[];
       try {
         const res = await fetch(`${EMBED_URL}/embed`, {
