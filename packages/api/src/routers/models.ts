@@ -19,7 +19,7 @@ const MODEL_STACK = env.MODEL_STACK_VERSION ?? "f8.2";
 
 // Service URLs (localhost in docker-compose, set via .env in prod)
 const LLAMA_URL = env.LLAMA_URL ?? "http://127.0.0.1:8080";
-const EMBED_URL = env.EMBED_URL ?? "http://127.0.0.1:9100";
+export const EMBED_URL = env.EMBED_URL ?? "http://127.0.0.1:9100";
 const PRON_URL = env.PRON_URL ?? "http://127.0.0.1:9200";
 
 const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
@@ -53,7 +53,7 @@ const pronSchema = z.object({
   phoneme_error_rate: z.number().min(0).max(1),
 });
 
-const embedSchema = z.object({
+export const embedSchema = z.object({
   embedding: z.array(z.number()).length(384),
 });
 
