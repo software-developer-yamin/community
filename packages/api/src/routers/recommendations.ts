@@ -26,18 +26,28 @@ import {
   eq,
   gt,
   inArray,
+  isNull,
   ne,
   or,
   sql,
 } from "drizzle-orm";
 import z from "zod";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../index";
+import { EMBED_URL, embedSchema } from "./models";
 
 // ───────────────────────────────────────────────────────────────
 // Helpers
 // ───────────────────────────────────────────────────────────────
 
 const cefrOrder = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 } as const;
+
+function buildContentEmbedText(item: {
+  title: string;
+  description: string;
+  tags?: string[] | null;
+}): string {
+  return `${item.title} ${item.description} ${(item.tags ?? []).join(", ")}`;
+}
 
 function getCefrLevel(userId: string): Promise<string | null> {
   return db
@@ -409,7 +419,45 @@ export const recommendationsRouter = {
           metadata: input.metadata ?? null,
         })
         .returning();
-      return items[0];
+      if (!items[0]) {
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Insert failed",
+        });
+      }
+      const item = items[0];
+
+      try {
+        const text = buildContentEmbedText(item);
+        const res = await fetch(`${EMBED_URL}/embed`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+
+        if (res.ok) {
+          const { embedding } = embedSchema.parse(await res.json());
+          await db
+            .insert(contentEmbedding)
+            .values({
+              contentId: item.id,
+              embedding,
+              modelVersion: "bge-small-en-v1.5-int8@1:f8.2",
+              updatedAt: new Date(),
+            })
+            .onConflictDoUpdate({
+              target: contentEmbedding.contentId,
+              set: {
+                embedding,
+                modelVersion: "bge-small-en-v1.5-int8@1:f8.2",
+                updatedAt: new Date(),
+              },
+            });
+        }
+      } catch (err) {
+        console.error("[embed] createContent embedding failed", err);
+      }
+
+      return item;
     }),
 
   // ── Recommendations ─────────────────────────────────────────
@@ -420,9 +468,12 @@ export const recommendationsRouter = {
         recalculate: z.boolean().default(false),
       })
     )
-    .handler(async ({ input, context }) =>
-      getRecommendationsHandler(input, context)
-    ),
+    .handler(({ input, context }) => {
+      if (process.env.RECOMMENDATIONS_ENABLED !== "true") {
+        return Promise.resolve([]);
+      }
+      return getRecommendationsHandler(input, context);
+    }),
 
   // ── Interactions ────────────────────────────────────────────
   trackInteraction: protectedProcedure
@@ -963,6 +1014,7 @@ export const recommendationsRouter = {
         }
       }
 
+      // biome-ignore lint: local type alias preferred here
       type ImportError = { index: number; title: string; error: string };
       const errors: ImportError[] = [];
       const toInsert: (typeof items)[number][] = [];
@@ -1005,6 +1057,138 @@ export const recommendationsRouter = {
       await db.delete(contentItem).where(eq(contentItem.id, input.id));
       return { success: true };
     }),
+
+  retryContentEmbedding: adminProcedure
+    .input(z.object({ contentId: z.string().uuid() }))
+    .handler(async ({ input }) => {
+      const items = await db
+        .select()
+        .from(contentItem)
+        .where(eq(contentItem.id, input.contentId))
+        .limit(1);
+      const item = items[0];
+      if (!item) {
+        throw new ORPCError("NOT_FOUND", { message: "Content not found" });
+      }
+
+      const text = buildContentEmbedText(item);
+      const res = await fetch(`${EMBED_URL}/embed`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!res.ok) {
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: `Embedding service returned ${res.status}`,
+        });
+      }
+
+      const { embedding } = embedSchema.parse(await res.json());
+      await db
+        .insert(contentEmbedding)
+        .values({
+          contentId: item.id,
+          embedding,
+          modelVersion: "bge-small-en-v1.5-int8@1:f8.2",
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: contentEmbedding.contentId,
+          set: {
+            embedding,
+            modelVersion: "bge-small-en-v1.5-int8@1:f8.2",
+            updatedAt: new Date(),
+          },
+        });
+
+      return { success: true };
+    }),
+
+  listPendingEmbeddings: adminProcedure.handler(async () => {
+    const pending = await db
+      .select({
+        id: contentItem.id,
+        title: contentItem.title,
+        createdAt: contentItem.createdAt,
+      })
+      .from(contentItem)
+      .leftJoin(
+        contentEmbedding,
+        eq(contentItem.id, contentEmbedding.contentId)
+      )
+      .where(isNull(contentEmbedding.contentId))
+      .orderBy(desc(contentItem.createdAt));
+
+    return pending;
+  }),
+
+  retryPendingEmbeddings: adminProcedure.handler(async () => {
+    const pending = await db
+      .select()
+      .from(contentItem)
+      .leftJoin(
+        contentEmbedding,
+        eq(contentItem.id, contentEmbedding.contentId)
+      )
+      .where(isNull(contentEmbedding.contentId));
+
+    let succeeded = 0;
+    let failed = 0;
+
+    for (const { content_item: item } of pending) {
+      if (!item) {
+        continue;
+      }
+      try {
+        const text = buildContentEmbedText(item);
+        const res = await fetch(`${EMBED_URL}/embed`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+
+        if (!res.ok) {
+          console.error(
+            "[embed] retryPendingEmbeddings service returned",
+            res.status,
+            "for item",
+            item.id
+          );
+          failed++;
+          continue;
+        }
+
+        const { embedding } = embedSchema.parse(await res.json());
+        await db
+          .insert(contentEmbedding)
+          .values({
+            contentId: item.id,
+            embedding,
+            modelVersion: "bge-small-en-v1.5-int8@1:f8.2",
+            updatedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: contentEmbedding.contentId,
+            set: {
+              embedding,
+              modelVersion: "bge-small-en-v1.5-int8@1:f8.2",
+              updatedAt: new Date(),
+            },
+          });
+        succeeded++;
+      } catch (err) {
+        console.error(
+          "[embed] retryPendingEmbeddings failed for item",
+          item.id,
+          err
+        );
+        failed++;
+      }
+    }
+
+    return { succeeded, failed, total: pending.length };
+  }),
 
   // ── Seed ──────────────────────────────────────────────────────
   seed: publicProcedure.handler(async () => {
@@ -1208,23 +1392,46 @@ export const recommendationsRouter = {
       .onConflictDoNothing();
 
     const allContent = await db
-      .select({ id: contentItem.id })
+      .select({
+        id: contentItem.id,
+        title: contentItem.title,
+        description: contentItem.description,
+        tags: contentItem.tags,
+      })
       .from(contentItem);
 
     for (const item of allContent) {
+      const text = buildContentEmbedText(item);
+      let embedding: number[];
+      try {
+        const res = await fetch(`${EMBED_URL}/embed`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        if (res.ok) {
+          const parsed = embedSchema.parse(await res.json());
+          embedding = parsed.embedding;
+        } else {
+          embedding = Array.from({ length: 384 }, () => Math.random() * 2 - 1);
+        }
+      } catch {
+        embedding = Array.from({ length: 384 }, () => Math.random() * 2 - 1);
+      }
+
       await db
         .insert(contentEmbedding)
         .values({
           contentId: item.id,
-          embedding: Array.from({ length: 384 }, () => Math.random() * 2 - 1),
-          modelVersion: "v1",
+          embedding,
+          modelVersion: "bge-small-en-v1.5-int8@1:f8.2",
           updatedAt: new Date(),
         })
         .onConflictDoUpdate({
           target: contentEmbedding.contentId,
           set: {
-            embedding: Array.from({ length: 384 }, () => Math.random() * 2 - 1),
-            modelVersion: "v1",
+            embedding,
+            modelVersion: "bge-small-en-v1.5-int8@1:f8.2",
             updatedAt: new Date(),
           },
         });

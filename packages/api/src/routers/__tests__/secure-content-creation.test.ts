@@ -17,14 +17,14 @@ import { describe, expect, test } from "bun:test";
 // Auth guard helpers (mirrors adminProcedure middleware chain)
 // ─────────────────────────────────────────────────────────────────
 
-type SessionUser = {
+interface SessionUser {
   id: string;
   role?: string;
-};
+}
 
-type Session = {
+interface Session {
   user: SessionUser | null;
-};
+}
 
 /**
  * Simulates requireAuth middleware.
@@ -69,7 +69,7 @@ describe("re-1.3: Secure Content Creation — adminProcedure guard", () => {
       user: { id: "admin-1", role: "admin" },
     };
     const result = enforceAdminProcedure(adminSession);
-    expect(result.user!.role).toBe("admin");
+    expect(result.user?.role).toBe("admin");
   });
 
   // AC2: Non-admin user → passes requireAuth, fails requireAdmin → FORBIDDEN
