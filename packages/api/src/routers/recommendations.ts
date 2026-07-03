@@ -33,7 +33,7 @@ import {
 } from "drizzle-orm";
 import z from "zod";
 import { adminProcedure, protectedProcedure, publicProcedure } from "../index";
-import { EMBED_URL, embedSchema } from "./models";
+import { computeProfileEmbedding, EMBED_URL, embedSchema } from "./models";
 
 // ───────────────────────────────────────────────────────────────
 // Helpers
@@ -824,6 +824,20 @@ export const recommendationsRouter = {
         .set(data)
         .where(eq(userPreference.userId, userId))
         .returning();
+
+      const semanticPreferenceChanged =
+        input.interests !== undefined || input.goals !== undefined;
+      if (semanticPreferenceChanged) {
+        computeProfileEmbedding(userId).catch((err) => {
+          console.error("profile-embed recompute after updatePreferences failed", err);
+        });
+        db.delete(recommendationScore)
+          .where(eq(recommendationScore.userId, userId))
+          .catch((err) => {
+            console.error("cache-invalidate after updatePreferences failed", err);
+          });
+      }
+
       return rows[0];
     }),
 
