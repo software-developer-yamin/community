@@ -58,8 +58,8 @@ development_status:
   re-1-3-secure-content-creation: done
   epic-re-1-retrospective: optional
 
-  epic-re-2: backlog
-  re-2-1-compute-content-embedding-on-creation: backlog
+  epic-re-2: in-progress
+  re-2-1-compute-content-embedding-on-creation: ready-for-dev
   re-2-2-recompute-content-embedding-on-update: backlog
   re-2-3-real-profile-embeddings-from-user-data: backlog
   epic-re-2-retrospective: optional
