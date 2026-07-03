@@ -15,6 +15,13 @@
       "when": 1782417291111,
       "tag": "0001_lovely_pyro",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783083751948,
+      "tag": "0002_magical_wilson_fisk",
+      "breakpoints": true
     }
   ]
 }

@@ -8,6 +8,7 @@ import {
   text,
   timestamp,
   unique,
+  vector,
 } from "drizzle-orm/pg-core";
 
 import { user } from "./auth";
@@ -53,14 +54,20 @@ export const contentEmbedding = pgTable(
     contentId: text("content_id")
       .primaryKey()
       .references(() => contentItem.id, { onDelete: "cascade" }),
-    embedding: real("embedding").array().notNull(),
+    embedding: vector("embedding", { dimensions: 384 }).notNull(),
     modelVersion: text("model_version").notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  (table) => [index("content_embedding_model_idx").on(table.modelVersion)]
+  (table) => [
+    index("content_embedding_model_idx").on(table.modelVersion),
+    index("content_embedding_hnsw_idx").using(
+      "hnsw",
+      table.embedding.op("vector_cosine_ops")
+    ),
+  ]
 );
 
 /**

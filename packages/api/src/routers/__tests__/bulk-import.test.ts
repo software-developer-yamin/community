@@ -14,30 +14,43 @@
 
 import { describe, expect, test } from "bun:test";
 
+const RE_TITLE_REQUIRED = /title is required/;
+const RE_200_CHARS = /≤200/;
+const RE_DESCRIPTION_REQUIRED = /description is required/;
+const RE_2000_CHARS = /≤2000/;
+const RE_TYPE_MUST_BE = /type must be/;
+const RE_CEFR_MUST_BE = /cefrLevel must be/;
+const RE_10_ITEMS = /≤10 items/;
+const RE_200_NUMBER = /200/;
+
 // ─────────────────────────────────────────────────────────────────
 // Pure helpers extracted from the bulkImportContent handler
 // (mirroring the implementation for unit-testability)
 // ─────────────────────────────────────────────────────────────────
 
-type ImportItem = {
-  title: string;
-  description: string;
-  type: "video" | "article" | "exercise" | "dialogue";
+interface ImportItem {
   cefrLevel: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
-  sourceUrl?: string | null;
-  thumbnailUrl?: string | null;
+  description: string;
   duration?: number | null;
-  tags?: string[];
   metadata?: Record<string, unknown> | null;
-};
+  sourceUrl?: string | null;
+  tags?: string[];
+  thumbnailUrl?: string | null;
+  title: string;
+  type: "video" | "article" | "exercise" | "dialogue";
+}
 
-type ImportError = { index: number; title: string; error: string };
+interface ImportError {
+  error: string;
+  index: number;
+  title: string;
+}
 
-type ImportResult = {
+interface ImportResult {
   created: number;
-  failed: number;
   errors: ImportError[];
-};
+  failed: number;
+}
 
 const VALID_TYPES = ["video", "article", "exercise", "dialogue"] as const;
 const VALID_CEFR = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
@@ -150,40 +163,42 @@ describe("validateImportItem", () => {
 
   test("missing title returns error", () => {
     const { title: _, ...noTitle } = valid;
-    expect(validateImportItem(noTitle)).toMatch(/title is required/);
+    expect(validateImportItem(noTitle)).toMatch(RE_TITLE_REQUIRED);
   });
 
   test("title > 200 chars returns error", () => {
     expect(validateImportItem({ ...valid, title: "a".repeat(201) })).toMatch(
-      /≤200/
+      RE_200_CHARS
     );
   });
 
   test("missing description returns error", () => {
     const { description: _, ...noDesc } = valid;
-    expect(validateImportItem(noDesc)).toMatch(/description is required/);
+    expect(validateImportItem(noDesc)).toMatch(RE_DESCRIPTION_REQUIRED);
   });
 
   test("description > 2000 chars returns error", () => {
     expect(
       validateImportItem({ ...valid, description: "a".repeat(2001) })
-    ).toMatch(/≤2000/);
+    ).toMatch(RE_2000_CHARS);
   });
 
   test("invalid type returns error", () => {
-    expect(validateImportItem({ ...valid, type: "podcast" })).toMatch(/type must be/);
+    expect(validateImportItem({ ...valid, type: "podcast" })).toMatch(
+      RE_TYPE_MUST_BE
+    );
   });
 
   test("invalid cefrLevel returns error", () => {
     expect(validateImportItem({ ...valid, cefrLevel: "D1" })).toMatch(
-      /cefrLevel must be/
+      RE_CEFR_MUST_BE
     );
   });
 
   test("tags > 10 items returns error", () => {
     expect(
       validateImportItem({ ...valid, tags: new Array(11).fill("tag") })
-    ).toMatch(/≤10 items/);
+    ).toMatch(RE_10_ITEMS);
   });
 
   test("all valid types accepted", () => {
@@ -210,7 +225,12 @@ describe("processBatch — edge cases", () => {
 
   test("all duplicates → created=0, all in errors", () => {
     const items: ImportItem[] = [
-      { title: "Existing", description: "desc", type: "video", cefrLevel: "A1" },
+      {
+        title: "Existing",
+        description: "desc",
+        type: "video",
+        cefrLevel: "A1",
+      },
     ];
     const { result } = processBatch(items, new Set(["Existing"]));
     expect(result.created).toBe(0);
@@ -297,9 +317,9 @@ describe("processBatch — AC2: mixed valid/invalid (50 items, 3 invalid)", () =
 
   test("AC2: error messages are specific", () => {
     const { result } = processBatch(items, new Set());
-    expect(result.errors.at(0)?.error).toMatch(/title is required/);
-    expect(result.errors.at(1)?.error).toMatch(/type must be/);
-    expect(result.errors.at(2)?.error).toMatch(/≤200/);
+    expect(result.errors.at(0)?.error).toMatch(RE_TITLE_REQUIRED);
+    expect(result.errors.at(1)?.error).toMatch(RE_TYPE_MUST_BE);
+    expect(result.errors.at(2)?.error).toMatch(RE_200_CHARS);
   });
 });
 
@@ -324,7 +344,9 @@ describe("processBatch — AC4: duplicate title detection", () => {
     const { result, toInsert } = processBatch(items, existingTitles);
     expect(result.created).toBe(1);
     expect(result.failed).toBe(1);
-    expect(result.errors.at(0)?.error).toContain("Duplicate title: Existing Content");
+    expect(result.errors.at(0)?.error).toContain(
+      "Duplicate title: Existing Content"
+    );
     expect(toInsert).toHaveLength(1);
     expect(toInsert.at(0)?.title).toBe("New Content");
   });
@@ -376,7 +398,7 @@ describe("AC5: batch size validation", () => {
     const result = bulkSchema.safeParse({ items: tooMany });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toMatch(/200/);
+      expect(result.error.issues[0].message).toMatch(RE_200_NUMBER);
     }
   });
 });
