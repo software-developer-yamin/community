@@ -8,6 +8,7 @@ import {
   userProfileEmbedding,
 } from "@community/db/schema/models";
 import { userProfile } from "@community/db/schema/rebuild";
+import { userPreference } from "@community/db/schema/recommendations";
 import { env } from "@community/env/server";
 import { and, cosineDistance, desc, eq, gt, sql } from "drizzle-orm";
 import z from "zod";
@@ -62,10 +63,12 @@ const PROFILE_TEMPLATE = (p: {
   interests: string[];
   goals: string[];
   native: string;
-  age: number;
-  style: string;
-}) =>
-  `CEFR: ${p.cefr}. Interests: ${p.interests.join(", ")}. Goals: ${p.goals.join(", ")}. Native: ${p.native}. Age: ${p.age}. Style: ${p.style}.`;
+}) => {
+  const interestsPart =
+    p.interests.length > 0 ? `Interests: ${p.interests.join(", ")}. ` : "";
+  const goalsPart = p.goals.length > 0 ? `Goals: ${p.goals.join(", ")}. ` : "";
+  return `CEFR: ${p.cefr}. Native: ${p.native}. ${interestsPart}${goalsPart}`.trim();
+};
 
 async function callLLM(
   prompt: string,
@@ -98,6 +101,82 @@ async function callLLM(
     text: data.choices[0]?.message.content ?? "",
     usage: { completion_tokens: data.usage?.completion_tokens ?? 0 },
   };
+}
+
+export async function computeProfileEmbedding(
+  userId: string
+): Promise<{ ok: boolean; latencyMs: number }> {
+  const [u, profileRow, cefrRow, prefRow] = await Promise.all([
+    db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1)
+      .then((rows) => rows[0]),
+    db
+      .select({ nativeLanguage: userProfile.nativeLanguage })
+      .from(userProfile)
+      .where(eq(userProfile.userId, userId))
+      .limit(1)
+      .then((rows) => rows[0]),
+    db
+      .select({ level: cefrPlacement.level })
+      .from(cefrPlacement)
+      .where(eq(cefrPlacement.userId, userId))
+      .orderBy(desc(cefrPlacement.createdAt))
+      .limit(1)
+      .then((rows) => rows[0]),
+    db
+      .select({
+        interests: userPreference.interests,
+        goals: userPreference.goals,
+      })
+      .from(userPreference)
+      .where(eq(userPreference.userId, userId))
+      .limit(1)
+      .then((rows) => rows[0]),
+  ]);
+
+  if (!u) {
+    throw new Error(`user not found: ${userId}`);
+  }
+
+  const profileText = PROFILE_TEMPLATE({
+    cefr: cefrRow?.level ?? "A2",
+    native: profileRow?.nativeLanguage ?? "unknown",
+    interests: prefRow?.interests ?? [],
+    goals: prefRow?.goals ?? [],
+  });
+
+  const started = Date.now();
+  const res = await fetch(`${EMBED_URL}/embed`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text: profileText }),
+  });
+  if (!res.ok) {
+    throw new Error(`embed service error: ${res.status}`);
+  }
+  const { embedding } = embedSchema.parse(await res.json());
+  const latencyMs = Date.now() - started;
+
+  await db
+    .insert(userProfileEmbedding)
+    .values({
+      userId,
+      embedding,
+      modelVersion: `bge-small-en-v1.5-int8@1:${MODEL_STACK}`,
+    })
+    .onConflictDoUpdate({
+      target: userProfileEmbedding.userId,
+      set: {
+        embedding,
+        modelVersion: `bge-small-en-v1.5-int8@1:${MODEL_STACK}`,
+        updatedAt: new Date(),
+      },
+    });
+
+  return { ok: true, latencyMs };
 }
 
 export const modelsRouter = {
@@ -146,7 +225,6 @@ export const modelsRouter = {
         },
       });
 
-      // Persist placement history
       await db.insert(cefrPlacement).values({
         userId: context.session.user.id,
         level: parsed.cefr,
@@ -154,6 +232,10 @@ export const modelsRouter = {
         source: "voice",
         modelVersion: `qwen2.5-7b-q5@1:${MODEL_STACK}`,
         transcript: input.transcript.slice(0, 2000),
+      });
+
+      computeProfileEmbedding(context.session.user.id).catch((err) => {
+        console.error("profile-embed recompute after gradeCEFR failed", err);
       });
 
       return {
@@ -223,70 +305,9 @@ export const modelsRouter = {
 
   recomputeEmbedding: protectedProcedure
     .input(z.object({ profileId: z.string().optional() }))
-    .handler(async ({ input, context }) => {
+    .handler(({ input, context }) => {
       const userId = input.profileId ?? context.session.user.id;
-      const [u, profileRow] = await Promise.all([
-        db
-          .select()
-          .from(user)
-          .where(eq(user.id, userId))
-          .limit(1)
-          .then((r) => r[0]),
-        db
-          .select({ nativeLanguage: userProfile.nativeLanguage })
-          .from(userProfile)
-          .where(eq(userProfile.userId, userId))
-          .limit(1)
-          .then((r) => r[0]),
-      ]);
-      if (!u) {
-        throw new Error("user not found");
-      }
-
-      // Stored value (e.g. "bangla") → display name for embedding prompt (e.g. "Bangla")
-      const nativeDisplay = profileRow?.nativeLanguage
-        ? profileRow.nativeLanguage.charAt(0).toUpperCase() +
-          profileRow.nativeLanguage.slice(1)
-        : "Bangla";
-
-      const profileText = PROFILE_TEMPLATE({
-        cefr: "B1", // TODO: load from cefrPlacement table
-        interests: [], // TODO: load from userInterests
-        goals: [], // TODO: load from userGoals
-        native: nativeDisplay,
-        age: 25,
-        style: "gentle correction, slow pace",
-      });
-
-      const started = Date.now();
-      const res = await fetch(`${EMBED_URL}/embed`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text: profileText }),
-      });
-      if (!res.ok) {
-        throw new Error(`embed service error: ${res.status}`);
-      }
-      const { embedding } = embedSchema.parse(await res.json());
-      const latency = Date.now() - started;
-
-      await db
-        .insert(userProfileEmbedding)
-        .values({
-          userId,
-          embedding,
-          modelVersion: `bge-small-en-v1.5-int8@1:${MODEL_STACK}`,
-        })
-        .onConflictDoUpdate({
-          target: userProfileEmbedding.userId,
-          set: {
-            embedding,
-            modelVersion: `bge-small-en-v1.5-int8@1:${MODEL_STACK}`,
-            updatedAt: new Date(),
-          },
-        });
-
-      return { ok: true, latencyMs: latency };
+      return computeProfileEmbedding(userId);
     }),
 
   matchPartners: protectedProcedure
