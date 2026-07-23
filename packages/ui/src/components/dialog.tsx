@@ -1,43 +1,42 @@
 "use client";
 
+import { Dialog } from "@base-ui/react/dialog";
 import { cn } from "@community/ui/lib/utils";
-import {
-  Close,
-  Content,
-  Description,
-  Overlay,
-  Portal,
-  Root,
-  Title,
-  Trigger,
-} from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import type { ComponentProps, ComponentPropsWithoutRef } from "react";
 
-function Dialog({ ...props }: ComponentPropsWithoutRef<typeof Root>) {
-  return <Root data-slot="dialog" {...props} />;
+function DialogRoot({
+  ...props
+}: ComponentPropsWithoutRef<typeof Dialog.Root>) {
+  return <Dialog.Root data-slot="dialog" {...props} />;
 }
 
-function DialogTrigger({ ...props }: ComponentPropsWithoutRef<typeof Trigger>) {
-  return <Trigger data-slot="dialog-trigger" {...props} />;
+function DialogTrigger({
+  ...props
+}: ComponentPropsWithoutRef<typeof Dialog.Trigger>) {
+  return <Dialog.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
-function DialogPortal({ ...props }: ComponentPropsWithoutRef<typeof Portal>) {
-  return <Portal data-slot="dialog-portal" {...props} />;
+function DialogPortal({
+  ...props
+}: ComponentPropsWithoutRef<typeof Dialog.Portal>) {
+  return <Dialog.Portal data-slot="dialog-portal" {...props} />;
 }
 
-function DialogClose({ ...props }: ComponentPropsWithoutRef<typeof Close>) {
-  return <Close data-slot="dialog-close" {...props} />;
+function DialogClose({
+  ...props
+}: ComponentPropsWithoutRef<typeof Dialog.Close>) {
+  return <Dialog.Close data-slot="dialog-close" {...props} />;
 }
 
 function DialogOverlay({
   className,
   ...props
-}: ComponentPropsWithoutRef<typeof Overlay>) {
+}: ComponentPropsWithoutRef<typeof Dialog.Backdrop>) {
   return (
-    <Overlay
+    <Dialog.Backdrop
       className={cn(
-        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80 data-[state=closed]:animate-out data-[state=open]:animate-in",
+        "fixed inset-0 z-50 bg-black/80 transition-opacity data-closed:opacity-0 data-open:opacity-100",
         className
       )}
       data-slot="dialog-overlay"
@@ -50,25 +49,25 @@ function DialogContent({
   className,
   children,
   ...props
-}: ComponentPropsWithoutRef<typeof Content>) {
+}: ComponentPropsWithoutRef<typeof Dialog.Popup>) {
   return (
-    <DialogPortal data-slot="dialog-portal">
+    <Dialog.Portal data-slot="dialog-portal">
       <DialogOverlay />
-      <Content
+      <Dialog.Popup
         className={cn(
-          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in sm:max-w-lg",
+          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg transition-all data-closed:scale-95 data-open:scale-100 data-closed:opacity-0 data-open:opacity-100 sm:max-w-lg",
           className
         )}
         data-slot="dialog-content"
         {...props}
       >
         {children}
-        <Close className="absolute top-4 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0">
+        <Dialog.Close className="absolute top-4 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0">
           <X />
           <span className="sr-only">Close</span>
-        </Close>
-      </Content>
-    </DialogPortal>
+        </Dialog.Close>
+      </Dialog.Popup>
+    </Dialog.Portal>
   );
 }
 
@@ -98,9 +97,9 @@ function DialogFooter({ className, ...props }: ComponentProps<"div">) {
 function DialogTitle({
   className,
   ...props
-}: ComponentPropsWithoutRef<typeof Title>) {
+}: ComponentPropsWithoutRef<typeof Dialog.Title>) {
   return (
-    <Title
+    <Dialog.Title
       className={cn("font-semibold text-lg leading-none", className)}
       data-slot="dialog-title"
       {...props}
@@ -111,9 +110,9 @@ function DialogTitle({
 function DialogDescription({
   className,
   ...props
-}: ComponentPropsWithoutRef<typeof Description>) {
+}: ComponentPropsWithoutRef<typeof Dialog.Description>) {
   return (
-    <Description
+    <Dialog.Description
       className={cn("text-muted-foreground text-sm", className)}
       data-slot="dialog-description"
       {...props}
@@ -122,7 +121,6 @@ function DialogDescription({
 }
 
 export {
-  Dialog,
   DialogClose,
   DialogContent,
   DialogDescription,
@@ -130,6 +128,7 @@ export {
   DialogHeader,
   DialogOverlay,
   DialogPortal,
+  DialogRoot as Dialog,
   DialogTitle,
   DialogTrigger,
 };

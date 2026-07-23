@@ -12,11 +12,9 @@ export default function BillingCancelPage() {
         You cancelled the payment. No charge was made.
       </p>
       <div className="flex gap-3">
-        <Button asChild>
-          <Link href="/billing">Try Again</Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href="/">Go Home</Link>
+        <Button render={<Link href="/billing" />}>Try Again</Button>
+        <Button render={<Link href="/" />} variant="outline">
+          Go Home
         </Button>
       </div>
     </div>

@@ -27,7 +27,6 @@ import {
 import { type EvlogVariables, evlog } from "evlog/hono";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import { compress } from "hono/compress";
 import { cors } from "hono/cors";
 import { type RequestIdVariables, requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
@@ -68,9 +67,6 @@ app.use("*", secureHeaders());
 
 // Block known AI scrapers and crawlers
 app.use("*", uaBlocker({ blocklist: aiBots }));
-
-// ── Tier 3: Compression ──────────────────────────────────────────
-app.use("*", compress());
 
 // ── Tier 4: CORS ─────────────────────────────────────────────────
 app.use(

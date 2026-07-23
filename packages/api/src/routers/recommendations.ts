@@ -68,6 +68,66 @@ async function getUserEmbedding(userId: string) {
   return rows[0]?.embedding ?? null;
 }
 
+function scoreCandidate(
+  c: {
+    id: string;
+    embedding: number[] | null;
+    type: string;
+    cefr: string;
+    tags: string[] | null;
+  },
+  userVec: number[] | null,
+  myLevel: number,
+  prefs:
+    | { interests: string[] | null; preferredTypes: string[] | null }
+    | undefined,
+  feedbackAdjustments: Record<string, number>
+): { contentId: string; score: number; reason: string } {
+  let score = 0;
+  const reasons: string[] = [];
+
+  if (userVec) {
+    const sim = cosineSimilarity(userVec, c.embedding as number[]);
+    score += sim * 0.4;
+    if (sim > 0.7) {
+      reasons.push("matches your interests");
+    }
+  }
+
+  const cLevel = cefrOrder[c.cefr as keyof typeof cefrOrder] ?? 2;
+  const cefrDiff = Math.abs(cLevel - myLevel);
+  const cefrScore = 1 - cefrDiff / 3;
+  score += cefrScore * 0.3;
+  reasons.push(`${c.cefr} level`);
+
+  if (prefs?.interests != null && c.tags) {
+    const overlap = c.tags.filter((tag) =>
+      (prefs.interests as string[]).includes(tag)
+    ).length;
+    if (overlap > 0) {
+      const tagScore = Math.min(overlap / 3, 1);
+      score += tagScore * 0.2;
+      reasons.push("topics you like");
+    }
+  }
+
+  if (prefs?.preferredTypes?.includes(c.type)) {
+    score += 0.1;
+  }
+
+  const fbAdj = feedbackAdjustments[c.id] ?? 0;
+  if (fbAdj !== 0) {
+    score += fbAdj;
+    reasons.push(fbAdj > 0 ? "feedback boost" : "dismissed similar");
+  }
+
+  return {
+    contentId: c.id,
+    score: Math.min(Math.max(score, 0), 1.0),
+    reason: reasons.join(", ") || "recommended for you",
+  };
+}
+
 async function computeHybridScores(
   userId: string,
   limit: number
@@ -125,56 +185,117 @@ async function computeHybridScores(
     )
     .limit(200);
 
-  // 4. Score candidates
+  // 4a. Load feedback interactions for interaction-weighted scoring (re-4.1)
+  const feedbackInteractions = await db
+    .select({
+      action: userInteraction.action,
+      tags: contentItem.tags,
+    })
+    .from(userInteraction)
+    .innerJoin(contentItem, eq(contentItem.id, userInteraction.contentId))
+    .where(
+      and(
+        eq(userInteraction.userId, userId),
+        inArray(userInteraction.action, [
+          "like",
+          "bookmark",
+          "complete",
+          "dismiss",
+        ])
+      )
+    );
+
+  const feedbackAdjustments = applyFeedbackLoop(
+    feedbackInteractions.map((i) => ({
+      action: i.action,
+      contentTags: i.tags ?? [],
+    })),
+    candidates.map((c) => ({ id: c.id, tags: c.tags ?? [] }))
+  );
+
+  // 4b. Score candidates
   const scored = candidates
     .filter((c) => c.embedding != null)
-    .map((c) => {
-      let score = 0;
-      const reasons: string[] = [];
-
-      // Content-based: embedding similarity
-      if (userVec) {
-        const sim = cosineSimilarity(userVec, c.embedding as number[]);
-        score += sim * 0.4;
-        if (sim > 0.7) {
-          reasons.push("matches your interests");
-        }
-      }
-
-      // CEFR closeness
-      const cLevel = cefrOrder[c.cefr as keyof typeof cefrOrder] ?? 2;
-      const cefrDiff = Math.abs(cLevel - myLevel);
-      const cefrScore = 1 - cefrDiff / 3; // 0.33, 0.66, 1.0
-      score += cefrScore * 0.3;
-      reasons.push(`${c.cefr} level`);
-
-      // Tag overlap with preferences
-      if (prefs?.interests && c.tags) {
-        const overlap = c.tags.filter((tag) =>
-          prefs.interests.includes(tag)
-        ).length;
-        if (overlap > 0) {
-          const tagScore = Math.min(overlap / 3, 1);
-          score += tagScore * 0.2;
-          reasons.push("topics you like");
-        }
-      }
-
-      // Type preference
-      if (prefs?.preferredTypes?.includes(c.type)) {
-        score += 0.1;
-      }
-
-      return {
-        contentId: c.id,
-        score: Math.min(score, 1.0),
-        reason: reasons.join(", ") || "recommended for you",
-      };
-    });
+    .map((c) =>
+      scoreCandidate(c, userVec, myLevel, prefs, feedbackAdjustments)
+    );
 
   // 5. Sort and return top N
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, limit);
+}
+
+/**
+ * Interaction weight map: action → score adjustment.
+ *
+ * | Action     | Weight | Rationale                                    |
+ * |------------|--------|----------------------------------------------|
+ * | `like`     | +0.3   | Strong positive signal                       |
+ * | `bookmark` | +0.2   | Intent to revisit                            |
+ * | `complete` | +0.1   | Completion, but may not indicate enjoyment   |
+ * | `dismiss`  | -0.2   | Explicit negative signal                     |
+ * | `view`     | 0.0    | Neutral — just a look                        |
+ * | `share`    | 0.0    | Ambiguous — could be for others, not self    |
+ */
+export const INTERACTION_WEIGHTS: Record<string, number> = {
+  like: 0.3,
+  bookmark: 0.2,
+  complete: 0.1,
+  dismiss: -0.2,
+  view: 0,
+  share: 0,
+};
+
+/**
+ * Compute per-candidate score adjustments based on past user interactions.
+ *
+ * 1. Aggregate interaction weights per tag (summing weights when multiple
+ *    interactions share the same tag).
+ * 2. For each candidate, sum the weights of its matching tags.
+ * 3. Clamp the per-candidate adjustment to [adjustmentFloor, adjustmentCeiling].
+ *
+ * @param interactions      — user's past interactions (action + content's tags)
+ * @param candidates        — content items being scored (id + tags)
+ * @param adjustmentFloor   — minimum allowed adjustment (default -0.2)
+ * @param adjustmentCeiling — maximum allowed adjustment (default +0.5)
+ * @returns                 Record<candidateId, adjustment>
+ */
+export function applyFeedbackLoop(
+  interactions: Array<{ action: string; contentTags: string[] }>,
+  candidates: Array<{ id: string; tags: string[] }>,
+  adjustmentFloor = -0.2,
+  adjustmentCeiling = 0.5
+): Record<string, number> {
+  if (interactions.length === 0) {
+    return Object.fromEntries(candidates.map((c) => [c.id, 0]));
+  }
+
+  const tagWeights: Record<string, number> = {};
+
+  for (const interaction of interactions) {
+    const weight = INTERACTION_WEIGHTS[interaction.action];
+    if (weight === undefined || weight === 0) {
+      continue;
+    }
+
+    for (const tag of interaction.contentTags) {
+      tagWeights[tag] = (tagWeights[tag] ?? 0) + weight;
+    }
+  }
+
+  const adjustments: Record<string, number> = {};
+  for (const candidate of candidates) {
+    let total = 0;
+    for (const tag of candidate.tags) {
+      total += tagWeights[tag] ?? 0;
+    }
+    adjustments[candidate.id] = Math.min(
+      Math.max(total, adjustmentFloor),
+      adjustmentCeiling
+    );
+  }
+
+  return adjustments;
 }
 
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -522,6 +643,18 @@ export const recommendationsRouter = {
           },
         })
         .returning();
+
+      if (input.action !== "view") {
+        await db
+          .delete(recommendationScore)
+          .where(
+            and(
+              eq(recommendationScore.userId, userId),
+              eq(recommendationScore.scoreType, "hybrid")
+            )
+          );
+      }
+
       return rows[0];
     }),
 
@@ -829,12 +962,18 @@ export const recommendationsRouter = {
         input.interests !== undefined || input.goals !== undefined;
       if (semanticPreferenceChanged) {
         computeProfileEmbedding(userId).catch((err) => {
-          console.error("profile-embed recompute after updatePreferences failed", err);
+          console.error(
+            "profile-embed recompute after updatePreferences failed",
+            err
+          );
         });
         db.delete(recommendationScore)
           .where(eq(recommendationScore.userId, userId))
           .catch((err) => {
-            console.error("cache-invalidate after updatePreferences failed", err);
+            console.error(
+              "cache-invalidate after updatePreferences failed",
+              err
+            );
           });
       }
 

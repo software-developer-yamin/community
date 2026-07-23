@@ -1,5 +1,5 @@
 # Story Dependency Graph
-_Last updated: 2026-07-03T14:00:00+06:00_
+_Last updated: 2026-07-05T01:35:00+06:00_
 
 ## Stories
 
@@ -34,14 +34,14 @@ _Last updated: 2026-07-03T14:00:00+06:00_
 | re-1.2 | RE-1 | Bulk Content Import | done | #44 | #74 | merged | none | ✅ Yes (done) |
 | re-1.3 | RE-1 | Secure Content Creation | done | #45 | #75 | merged | none | ✅ Yes (done) |
 | re-2.1 | RE-2 | Compute Content Embedding on Creation | done | #46 | #76 | merged | none | ✅ Yes (done) |
-| re-2.2 | RE-2 | Recompute Content Embedding on Update | backlog | #47 | — | — | re-1.1, re-2.1 | ❌ No (re-2.1 not done) |
-| re-2.3 | RE-2 | Real Profile Embeddings from User Data | backlog | #48 | — | — | none | ✅ Yes |
-| re-3.1 | RE-3 | Native Mobile Recommendation Feed (Expo) | backlog | #49 | — | — | re-2.1, re-2.2, re-2.3, re-5.1 | ❌ No (RE-2, RE-5 not done) |
+| re-2.2 | RE-2 | Recompute Content Embedding on Update | done | #47 | #77 | merged | re-1.1, re-2.1 | ✅ Yes (done) |
+| re-2.3 | RE-2 | Real Profile Embeddings from User Data | done | #48 | #79 | merged | none | ✅ Yes (done) |
+| re-3.1 | RE-3 | Native Mobile Recommendation Feed (Expo) | backlog | #49 | — | — | re-2.1, re-2.2, re-2.3, re-5.1 | ❌ No (re-5.1 not done) |
 | re-3.2 | RE-3 | Recommendation Feed Empty State Design | backlog | #50 | — | — | re-3.1 | ❌ No (re-3.1 not done) |
 | re-4.1 | RE-4 | Interaction-Weighted Scoring (v2) | backlog | #51 | — | — | none | ✅ Yes |
 | re-5.1 | RE-5 | User Preferences Native UI | backlog | #52 | — | — | none | ✅ Yes |
 | re-6.1 | RE-6 | Admin Content Analytics | backlog | #53 | — | — | RE-1 (content lib) | ✅ Yes (RE-1 complete) |
-| re-7.1 | RE-7 | Secure Seed Endpoint for Production | backlog | #54 | — | — | re-1.3, RE-2 | ❌ No (RE-2 not done) |
+| re-7.1 | RE-7 | Secure Seed Endpoint for Production | backlog | #54 | — | — | re-1.3, RE-2 | ✅ Yes (RE-2 complete) |
 
 ## Dependency Chains
 
@@ -93,5 +93,9 @@ _Last updated: 2026-07-03T14:00:00+06:00_
 - **Epic 7 fully done** — 7.1 (PR #71) merged. 7.2 (PR #72) merged.
 - **RE-* epics are separate track** — recommendation engine independent of voice calling (Epics 2-7). Only depends on Epic 1 (auth/session, done).
 - **RE-1 fully complete** — re-1.1 (PR #73), re-1.2 (PR #74), re-1.3 (PR #75) all merged to master.
+- **RE-2 fully complete** — re-2.1 (PR #76), re-2.2 (PR #77), and re-2.3 (PR #79, merged 2026-07-04T19:04:31Z) all merged to master. Note: PR #78 was a stale duplicate opened on the already-merged `story-re-2-2-recompute-content-embedding` branch after PR #77 merged — auto-closed during Phase 0 when that branch/worktree was cleaned up.
+- **re-7.1 unblocked** — with RE-2 now fully merged and re-1.3 already done, re-7.1's dependencies are satisfied; flipped to ✅ Ready to Work.
 - **max_parallel_stories=1**
 - Default branch: `master`
+- Phase 0 re-run (01:33): no new stories found (sprint-status.yaml unchanged in story list vs. last graph). Detected PR #79 (re-2.3) had merged since the 00:59 snapshot — reconciled sprint-status.yaml (`epic-re-2` set to `done`) and this graph accordingly, per "GitHub is always right." No open PRs remain repo-wide. No local worktrees or stale-worktree directories found. Remote still carries several already-merged story branches (e.g. `story-2.4-explicit-call-end`, `story-3-2-native-language-field`, `story-3-3-match-timeout`, `story-4-2-skip-button`, `story-4-4-visible-moderation-state`, `story-5-2-support-tickets`, `story-5-4-sslcommerz-payment-gateway`, `story-5-5-cancellation-preserves-access`, `story-6-1/6-2/6-3`, `story-7-1-post-call-rating-flow`) but none have a corresponding local worktree, so step 5 cleanup did not touch them — flagging for manual `git push origin --delete` if desired.
+- Phase 0 re-run (01:35): repo confirmed on `master`, up to date with origin (no switch/restore needed). Re-checked `gh pr list --state all` (26 PRs, all merged or closed except none open) and `gh pr list --state open` (empty) — matches the 01:33 snapshot exactly, no new merges in the intervening 2 minutes. All 35 stories across epics.md and epics-recommendation-engine.md already carry `**GH Issue:**` fields (#1–#20, #36–#38, #43–#54) and the `bad` label exists — no new issues to create. `.worktrees/` directory does not exist locally (already cleaned in a prior run); nothing to remove in step 5. `git pull --ff-only origin master` reported already up to date at `844d5f8`. No changes to sprint-status.yaml or the Stories table were needed this pass — graph and tracker remain fully reconciled.

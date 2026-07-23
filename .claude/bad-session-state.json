@@ -1,50 +1,41 @@
 {
-  "session_id": "78b33156-2c15-4d76-9fd1-ed1291d0e6bd",
-  "transcript_path": "/home/yamin/.claude/projects/-home-yamin-Documents-Yamin-Company-community/78b33156-2c15-4d76-9fd1-ed1291d0e6bd.jsonl",
+  "session_id": "5e56dd76-2d9b-4bfa-b523-fbe7e91b3be4",
+  "transcript_path": "/home/yamin/.claude/projects/-home-yamin-Documents-Yamin-Company-community/5e56dd76-2d9b-4bfa-b523-fbe7e91b3be4.jsonl",
   "cwd": "/home/yamin/Documents/Yamin Company/community",
-  "effort": { "level": "low" },
-  "session_name": "Set up markitdown MCP server",
-  "model": { "id": "claude-sonnet-4-6", "display_name": "Sonnet 4.6" },
+  "effort": { "level": "high" },
+  "model": { "id": "claude-sonnet-5", "display_name": "Sonnet 5" },
   "workspace": {
     "current_dir": "/home/yamin/Documents/Yamin Company/community",
     "project_dir": "/home/yamin/Documents/Yamin Company/community",
-    "added_dirs": [
-      "/home/yamin/.config/Claude",
-      "/home/yamin/.config/opencode"
-    ],
+    "added_dirs": [],
     "repo": {
       "host": "github.com",
       "owner": "software-developer-yamin",
       "name": "community"
     }
   },
-  "version": "2.1.187",
+  "version": "2.1.201",
   "output_style": { "name": "default" },
   "cost": {
-    "total_cost_usd": 0.7863419999999998,
-    "total_duration_ms": 746985,
-    "total_api_duration_ms": 173495,
-    "total_lines_added": 15,
-    "total_lines_removed": 1
+    "total_cost_usd": 0,
+    "total_duration_ms": 4553,
+    "total_api_duration_ms": 0,
+    "total_lines_added": 0,
+    "total_lines_removed": 0
   },
   "context_window": {
-    "total_input_tokens": 55602,
-    "total_output_tokens": 8,
-    "context_window_size": 200000,
-    "current_usage": {
-      "input_tokens": 3,
-      "output_tokens": 8,
-      "cache_creation_input_tokens": 1735,
-      "cache_read_input_tokens": 53864
-    },
-    "used_percentage": 28,
-    "remaining_percentage": 72
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "context_window_size": 1000000,
+    "current_usage": null,
+    "used_percentage": null,
+    "remaining_percentage": null
   },
   "exceeds_200k_tokens": false,
   "fast_mode": false,
   "thinking": { "enabled": true },
   "rate_limits": {
-    "five_hour": { "used_percentage": 65, "resets_at": 1782338400 },
-    "seven_day": { "used_percentage": 20, "resets_at": 1782612000 }
+    "five_hour": { "used_percentage": 35, "resets_at": 1783369800 },
+    "seven_day": { "used_percentage": 23, "resets_at": 1783677600 }
   }
 }

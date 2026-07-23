@@ -87,10 +87,8 @@ export function ReportPartnerDialog() {
   if (step === "success") {
     return (
       <Dialog onOpenChange={handleOpenChange} open={open}>
-        <DialogTrigger asChild>
-          <Button className="w-full" variant="outline">
-            Report an Issue
-          </Button>
+        <DialogTrigger render={<Button className="w-full" variant="outline" />}>
+          Report an Issue
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
@@ -111,10 +109,8 @@ export function ReportPartnerDialog() {
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogTrigger asChild>
-        <Button className="w-full" variant="outline">
-          Report an Issue
-        </Button>
+      <DialogTrigger render={<Button className="w-full" variant="outline" />}>
+        Report an Issue
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

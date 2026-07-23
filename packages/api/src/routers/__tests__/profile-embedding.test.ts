@@ -17,6 +17,8 @@
 
 import { describe, expect, test } from "bun:test";
 
+const UNDEFINED_OR_NULL_PATTERN = /undefined|null/;
+
 // ─────────────────────────────────────────────────────────────────
 // Pure helpers — mirrors of the profile text construction logic
 // in computeProfileEmbedding, extracted for unit-testability.
@@ -51,13 +53,20 @@ function cosineSimilarity(a: number[], b: number[]): number {
     normA += (a[i] ?? 0) ** 2;
     normB += (b[i] ?? 0) ** 2;
   }
-  if (normA === 0 || normB === 0) return 0;
+  if (normA === 0 || normB === 0) {
+    return 0;
+  }
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
 /** Detect whether profile text includes any hardcoded sentinel values. */
 function containsHardcodedValues(text: string): boolean {
-  const HARDCODED = ["age: 25", "gentle correction", "slow pace", "food/travel"];
+  const HARDCODED = [
+    "age: 25",
+    "gentle correction",
+    "slow pace",
+    "food/travel",
+  ];
   return HARDCODED.some((sentinel) =>
     text.toLowerCase().includes(sentinel.toLowerCase())
   );
@@ -200,7 +209,7 @@ describe("T-2.3-02: Cosine similarity correctness", () => {
     const a = [1, 0, 0];
     const b = [1, 1, 0];
     // cos(45°) ≈ 0.707
-    expect(cosineSimilarity(a, b)).toBeCloseTo(0.7071, 3);
+    expect(cosineSimilarity(a, b)).toBeCloseTo(Math.SQRT1_2, 3);
   });
 });
 
@@ -223,15 +232,15 @@ describe("T-2.3-03: updatePreferences triggers profile recompute", () => {
   }
 
   test("interests update → should trigger recompute", () => {
-    expect(
-      shouldRecomputeOnPreferenceUpdate({ interests: ["science"] })
-    ).toBe(true);
+    expect(shouldRecomputeOnPreferenceUpdate({ interests: ["science"] })).toBe(
+      true
+    );
   });
 
   test("goals update → should trigger recompute", () => {
-    expect(
-      shouldRecomputeOnPreferenceUpdate({ goals: ["fluency"] })
-    ).toBe(true);
+    expect(shouldRecomputeOnPreferenceUpdate({ goals: ["fluency"] })).toBe(
+      true
+    );
   });
 
   test("interests + goals update → should trigger recompute", () => {
@@ -281,7 +290,7 @@ describe("T-2.3-05: No-preferences fallback is valid", () => {
       goals: [],
     });
     expect(text.length).toBeGreaterThan(0);
-    expect(text).not.toMatch(/undefined|null/);
+    expect(text).not.toMatch(UNDEFINED_OR_NULL_PATTERN);
   });
 
   test("missing cefrLevel → defaults to A2 fallback (not crash)", () => {

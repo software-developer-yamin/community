@@ -31,7 +31,7 @@ This document provides the epic and story breakdown for the AceFluency **Persona
 | FR-4 | Update content item | ❌ Not implemented | Medium |
 | FR-5 | Bulk content import | ❌ Not implemented | Medium |
 | FR-6 | Compute content embedding on creation | ⚠️ Partially | **Blocker** |
-| FR-7 | Recompute content embedding on update | ❌ Not implemented | Medium |
+| FR-7 | Recompute content embedding on update | ✅ Implemented | Medium |
 | FR-8 | Hybrid scoring algorithm | ✅ Implemented | — |
 | FR-9 | Candidate filtering | ✅ Implemented | — |
 | FR-10 | Score caching with 24h TTL | ✅ Implemented | — |
@@ -72,7 +72,7 @@ SIR-3: Replace hardcoded profile embeddings with real user data
 | FR-4 | Epic RE-1 | ❌ Not implemented |
 | FR-5 | Epic RE-1 | ❌ Not implemented |
 | FR-6 | Epic RE-2 | ⚠️ Partially |
-| FR-7 | Epic RE-2 | ❌ Not implemented |
+| FR-7 | Epic RE-2 | ✅ Implemented |
 | FR-8 | Epic RE-3 | ✅ Implemented |
 | FR-9 | Epic RE-3 | ✅ Implemented |
 | FR-10 | Epic RE-3 | ✅ Implemented |

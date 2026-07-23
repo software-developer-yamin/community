@@ -39,9 +39,7 @@ function SuccessContent() {
           You&apos;re now on <strong>{tierLabel}</strong>. Enjoy your upgraded
           experience.
         </p>
-        <Button asChild>
-          <Link href="/">Go to Dashboard</Link>
-        </Button>
+        <Button render={<Link href="/" />}>Go to Dashboard</Button>
       </div>
     );
   }
@@ -54,8 +52,8 @@ function SuccessContent() {
         We couldn&apos;t confirm your payment. If you were charged, contact
         support.
       </p>
-      <Button asChild variant="outline">
-        <Link href="/billing">Try Again</Link>
+      <Button render={<Link href="/billing" />} variant="outline">
+        Try Again
       </Button>
     </div>
   );
