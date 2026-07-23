@@ -6,7 +6,9 @@ import {
   strikeEvent,
   userProfile,
 } from "@community/db/schema/rebuild";
+
 import { and, eq, isNotNull, or, sql } from "drizzle-orm";
+
 import { z } from "zod";
 
 import { protectedProcedure } from "../index";
@@ -240,14 +242,6 @@ export const moderationRouter = {
         count: skipResult.count,
       };
     }),
-
-  /**
-   * Report a partner after a call ends.
-   *
-   * Sets the flaggedForReview flag on the partner's profile so that moderators
-   * can review the call. Also records a strike if the reason indicates abuse
-   * (manual strike not auto-decayed; tied to the report).
-   */
   reportPartner: protectedProcedure
     .input(
       z.object({
