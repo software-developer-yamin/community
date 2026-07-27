@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-28T00:00:00.000Z",
+  "title": "AceFluency Design System",
+  "extensions": {
+    "colorMeta": {
+      "tonalRamps": {
+        "ink": {
+          "description": "Primary text greyscale ramp — zero chroma, lightness only",
+          "steps": [
+            { "step": 1, "value": "oklch(0.985 0 0)", "name": "ink-50" },
+            { "step": 2, "value": "oklch(0.87 0 0)", "name": "ink-100" },
+            { "step": 3, "value": "oklch(0.708 0 0)", "name": "ink-200" },
+            { "step": 4, "value": "oklch(0.556 0 0)", "name": "ink-300" },
+            { "step": 5, "value": "oklch(0.371 0 0)", "name": "ink-400" },
+            { "step": 6, "value": "oklch(0.269 0 0)", "name": "ink-500" },
+            { "step": 7, "value": "oklch(0.205 0 0)", "name": "ink-600" },
+            { "step": 8, "value": "oklch(0.145 0 0)", "name": "ink-700" }
+          ]
+        },
+        "alert": {
+          "description": "Destructive warm ramp — only chromatic non-chart family",
+          "steps": [
+            { "step": 1, "value": "oklch(0.97 0.02 27)", "name": "alert-50" },
+            { "step": 2, "value": "oklch(0.92 0.05 25)", "name": "alert-100" },
+            { "step": 3, "value": "oklch(0.85 0.10 26)", "name": "alert-200" },
+            { "step": 4, "value": "oklch(0.78 0.14 26)", "name": "alert-300" },
+            {
+              "step": 5,
+              "value": "oklch(0.704 0.191 22.216)",
+              "name": "alert-400"
+            },
+            { "step": 6, "value": "oklch(0.65 0.20 25)", "name": "alert-500" },
+            { "step": 7, "value": "oklch(0.58 0.22 27)", "name": "alert-600" },
+            { "step": 8, "value": "oklch(0.45 0.20 26)", "name": "alert-700" }
+          ]
+        },
+        "chart": {
+          "description": "Chart blue family — data-only, hues 251-265",
+          "steps": [
+            {
+              "step": 1,
+              "value": "oklch(0.809 0.105 251.813)",
+              "name": "chart-1"
+            },
+            {
+              "step": 2,
+              "value": "oklch(0.623 0.214 259.815)",
+              "name": "chart-2"
+            },
+            {
+              "step": 3,
+              "value": "oklch(0.546 0.245 262.881)",
+              "name": "chart-3"
+            },
+            {
+              "step": 4,
+              "value": "oklch(0.488 0.243 264.376)",
+              "name": "chart-4"
+            },
+            {
+              "step": 5,
+              "value": "oklch(0.424 0.199 265.638)",
+              "name": "chart-5"
+            }
+          ]
+        }
+      },
+      "nativeStatus": {
+        "success": "#22C55E",
+        "warning": "#F59E0B",
+        "info": "#3B82F6",
+        "destructive": "#EF4444",
+        "note": "Native-only. Web admin has no equivalent status palette."
+      }
+    },
+    "typographyMeta": {
+      "webFace": "Inter Variable",
+      "nativeFaces": {
+        "ios": "SF Pro (system)",
+        "android": "Roboto (system)"
+      },
+      "nativeFontSizeAnchors": {
+        "xs": 12,
+        "sm": 14,
+        "base": 16,
+        "lg": 18,
+        "xl": 20,
+        "2xl": 24,
+        "3xl": 30,
+        "4xl": 36
+      },
+      "rule": "Native surfaces must honor Dynamic Type (iOS) and Material type scale (Android). Anchors are floors, not ceilings."
+    },
+    "shadows": {
+      "policy": "Borders carry depth, not shadows. Shadows are last-resort and must be greyscale, near-zero blur, and absent in dark mode.",
+      "maxLightShadow": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+      "darkMode": "no-shadow",
+      "bannedPatterns": [
+        "colored glow",
+        "blue glow",
+        "warm glow",
+        "multi-layer elevation"
+      ]
+    },
+    "motion": {
+      "policy": "No motion tokens are declared in the codebase. The system is quiet by default — transitions exist but are minimal and not branded as a design token tier. Honor Reduce Motion (iOS) and Remove Animations (Android) on native.",
+      "defaults": {
+        "duration": "150ms",
+        "easing": "ease-out"
+      },
+      "nativeConventions": {
+        "ios": "System transitions; honor Reduce Motion",
+        "android": "Material motion (container transform, shared-axis, fade-through); honor Remove Animations"
+      }
+    },
+    "breakpoints": {
+      "web": {
+        "sm": 640,
+        "md": 768,
+        "lg": 1024,
+        "xl": 1280,
+        "2xl": 1536
+      },
+      "native": {
+        "xs": 0,
+        "sm": 576,
+        "md": 768,
+        "lg": 992,
+        "xl": 1200,
+        "superLarge": 2000,
+        "tvLike": 4000
+      }
+    },
+    "radiusScale": {
+      "none": 0,
+      "xs": 6,
+      "sm": 8,
+      "base": 10,
+      "md": 12,
+      "lg": 16,
+      "xl": 14,
+      "full": 9999,
+      "note": "Web --radius base is 0.625rem (10px). Tailwind derives sm/base-4, md/base-2, lg/base, xl/base+4, 2xl/base+8..."
+    },
+    "spacingScale": {
+      "xs": 4,
+      "sm": 8,
+      "base": 10,
+      "md": 16,
+      "lg": 24,
+      "xl": 32,
+      "xxl": 48
+    }
+  },
+  "components": [
+    {
+      "name": "ButtonPrimary",
+      "kind": "action",
+      "refersTo": [
+        "primary-action",
+        "primary-action-fg",
+        "label",
+        "rounded.none"
+      ],
+      "description": "The brand signature button: sharp-cornered (rounded-none), compact (h-8, text-xs), dark fill with near-white text. Icon slots via data attributes.",
+      "html": "<button class=\"ds-btn ds-btn-primary\" data-icon=\"inline-start\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/></svg>Start Practice</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:0;border:1px solid transparent;background-clip:padding-box;font-family:'Inter Variable',sans-serif;font-size:12px;font-weight:500;line-height:1.2;letter-spacing:0.01em;padding:0 10px;height:32px;outline:none;transition:background-color 150ms ease-out,border-color 150ms ease-out;cursor:pointer;}.ds-btn-primary{background-color:oklch(0.205 0 0);color:oklch(0.985 0 0);}.ds-btn-primary:hover{background-color:oklch(0.205 0 0 / 80%);}.ds-btn-primary:focus-visible{border-color:oklch(0.708 0 0);box-shadow:0 0 0 1px oklch(0.708 0 0 / 50%);}.ds-btn-primary:disabled{pointer-events:none;opacity:0.5;}.ds-icon{width:16px;height:16px;pointer-events:none;flex-shrink:0;}.ds-btn[data-icon='inline-start'] .ds-icon{margin-right:-2px;}.ds-btn[data-icon='inline-end'] .ds-icon{margin-left:-2px;}"
+    },
+    {
+      "name": "ButtonOutline",
+      "kind": "action",
+      "refersTo": ["paper", "ink", "rule", "label", "rounded.none"],
+      "description": "Outlined button: Paper background, Rule border, Ink text. The neutral alternative to primary.",
+      "html": "<button class=\"ds-btn ds-btn-outline\">Cancel</button>",
+      "css": ".ds-btn-outline{background-color:oklch(1 0 0);color:oklch(0.145 0 0);border:1px solid oklch(0.922 0 0);}.ds-btn-outline:hover{background-color:oklch(0.97 0 0);}.ds-btn-outline:focus-visible{border-color:oklch(0.708 0 0);box-shadow:0 0 0 1px oklch(0.708 0 0 / 50%);}.ds-btn-outline:disabled{pointer-events:none;opacity:0.5;}"
+    },
+    {
+      "name": "ButtonDestructive",
+      "kind": "action",
+      "refersTo": ["alert", "rounded.none", "label"],
+      "description": "Destructive button: tinted Alert at 10% alpha, Alert text. Never a solid red block. The tint is the pattern.",
+      "html": "<button class=\"ds-btn ds-btn-destructive\">End Session</button>",
+      "css": ".ds-btn-destructive{background-color:oklch(0.58 0.22 27 / 10%);color:oklch(0.58 0.22 27);border:1px solid transparent;}.ds-btn-destructive:hover{background-color:oklch(0.58 0.22 27 / 20%);}.ds-btn-destructive:focus-visible{border-color:oklch(0.58 0.22 27);box-shadow:0 0 0 1px oklch(0.58 0.22 27 / 20%);}.ds-btn-destructive:disabled{pointer-events:none;opacity:0.5;}.dark .ds-btn-destructive{background-color:oklch(0.704 0.191 22.216 / 20%);color:oklch(0.704 0.191 22.216);}.dark .ds-btn-destructive:hover{background-color:oklch(0.704 0.191 22.216 / 30%);}"
+    },
+    {
+      "name": "Card",
+      "kind": "surface",
+      "refersTo": ["card", "ink", "rule", "rounded.lg"],
+      "description": "Structural container: Paper background, Rule border, rounded-lg. Sits on borders, not shadows.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><h3 class=\"ds-card-title\">Session History</h3></div><div class=\"ds-card-body\"><p class=\"ds-card-text\">12 sessions this week. Average talk time: 8m 32s.</p></div></div>",
+      "css": ".ds-card{background-color:oklch(1 0 0);color:oklch(0.145 0 0);border:1px solid oklch(0.922 0 0);border-radius:16px;padding:16px;font-family:'Inter Variable',sans-serif;}.ds-card-header{margin-bottom:12px;}.ds-card-title{font-size:24px;font-weight:600;line-height:1.25;letter-spacing:-0.01em;margin:0;}.ds-card-body{font-size:16px;font-weight:400;line-height:1.5;}.ds-card-text{margin:0;}.dark .ds-card{background-color:oklch(0.205 0 0);color:oklch(0.985 0 0);border-color:oklch(1 0 0 / 10%);}"
+    },
+    {
+      "name": "Input",
+      "kind": "form",
+      "refersTo": ["ink", "rule", "rounded.md", "body"],
+      "description": "Transparent-fill input, Rule border, rounded-md. Focus lights the ring, not the fill.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search sessions...\" aria-label=\"Search sessions\" />",
+      "css": ".ds-input{background-color:transparent;color:oklch(0.145 0 0);border:1px solid oklch(0.922 0 0);border-radius:12px;padding:0 12px;height:40px;width:100%;font-family:'Inter Variable',sans-serif;font-size:16px;font-weight:400;line-height:1.5;outline:none;transition:border-color 150ms ease-out,box-shadow 150ms ease-out;}.ds-input::placeholder{color:oklch(0.556 0 0);}.ds-input:focus-visible{border-color:oklch(0.708 0 0);box-shadow:0 0 0 1px oklch(0.708 0 0 / 50%);}.ds-input:disabled{opacity:0.5;cursor:not-allowed;}.dark .ds-input{color:oklch(0.985 0 0);border-color:oklch(1 0 0 / 10%);}.dark .ds-input::placeholder{color:oklch(0.708 0 0);}.dark .ds-input:focus-visible{border-color:oklch(0.556 0 0);box-shadow:0 0 0 1px oklch(0.556 0 0 / 50%);}"
+    },
+    {
+      "name": "Label",
+      "kind": "form",
+      "refersTo": ["label-quiet", "label"],
+      "description": "Form label: label-quiet text, text-xs, no border, minimal padding. Leads into inputs without competing.",
+      "html": "<label class=\"ds-label\" for=\"email\">Email address</label>",
+      "css": ".ds-label{display:inline-block;color:oklch(0.556 0 0);font-family:'Inter Variable',sans-serif;font-size:12px;font-weight:500;line-height:1.2;letter-spacing:0.01em;padding:4px 0;}.dark .ds-label{color:oklch(0.708 0 0);}"
+    },
+    {
+      "name": "Checkbox",
+      "kind": "form",
+      "refersTo": ["ink", "rounded.xs", "rule"],
+      "description": "16px square checkbox with xs radius (6px). Stays square-ish without crying iOS.",
+      "html": "<label class=\"ds-checkbox-wrap\"><input class=\"ds-checkbox\" type=\"checkbox\" /><span class=\"ds-checkbox-box\"></span><span class=\"ds-checkbox-label\">Remember me</span></label>",
+      "css": ".ds-checkbox-wrap{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-family:'Inter Variable',sans-serif;font-size:12px;font-weight:500;color:oklch(0.145 0 0);}.ds-checkbox{position:absolute;opacity:0;width:0;height:0;}.ds-checkbox-box{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1px solid oklch(0.922 0 0);border-radius:6px;background-color:transparent;transition:background-color 150ms ease-out,border-color 150ms ease-out;}.ds-checkbox:checked + .ds-checkbox-box{background-color:oklch(0.205 0 0);border-color:oklch(0.205 0 0);}.ds-checkbox:checked + .ds-checkbox-box::after{content:'';width:8px;height:5px;border-left:2px solid oklch(0.985 0 0);border-bottom:2px solid oklch(0.985 0 0);transform:rotate(-45deg) translate(1px,-1px);}.ds-checkbox:focus-visible + .ds-checkbox-box{border-color:oklch(0.708 0 0);box-shadow:0 0 0 1px oklch(0.708 0 0 / 50%);}.dark .ds-checkbox-wrap{color:oklch(0.985 0 0);}.dark .ds-checkbox-box{border-color:oklch(1 0 0 / 10%);}.dark .ds-checkbox:checked + .ds-checkbox-box{background-color:oklch(0.87 0 0);border-color:oklch(0.87 0 0);}.dark .ds-checkbox:checked + .ds-checkbox-box::after{border-color:oklch(0.205 0 0);}"
+    },
+    {
+      "name": "DropdownItem",
+      "kind": "navigation",
+      "refersTo": ["card", "ink", "rule", "rounded.lg", "body"],
+      "description": "Dropdown menu item. Inherits Card surface + Rule border conventions. No special elevation treatment.",
+      "html": "<div class=\"ds-dropdown\"><button class=\"ds-dropdown-item ds-dropdown-item-active\" type=\"button\">Edit profile</button><button class=\"ds-dropdown-item\" type=\"button\">Sign out</button></div>",
+      "css": ".ds-dropdown{display:flex;flex-direction:column;min-width:180px;background-color:oklch(1 0 0);border:1px solid oklch(0.922 0 0);border-radius:16px;padding:4px;font-family:'Inter Variable',sans-serif;box-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);}.ds-dropdown-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background-color:transparent;border:none;border-radius:12px;color:oklch(0.145 0 0);font-size:14px;font-weight:400;line-height:1.4;text-align:left;cursor:pointer;outline:none;transition:background-color 150ms ease-out;}.ds-dropdown-item:hover,.ds-dropdown-item-active{background-color:oklch(0.97 0 0);}.ds-dropdown-item:focus-visible{box-shadow:0 0 0 1px oklch(0.708 0 0 / 50%);}.dark .ds-dropdown{background-color:oklch(0.205 0 0);border-color:oklch(1 0 0 / 10%);box-shadow:none;}.dark .ds-dropdown-item{color:oklch(0.985 0 0);}.dark .ds-dropdown-item:hover,.dark .ds-dropdown-item-active{background-color:oklch(0.269 0 0);}.dark .ds-dropdown-item:focus-visible{box-shadow:0 0 0 1px oklch(0.556 0 0 / 50%);}"
+    },
+    {
+      "name": "DialogHeader",
+      "kind": "surface",
+      "refersTo": ["card", "ink", "rule", "rounded.lg", "title"],
+      "description": "Dialog header. Inherits Card surface + Rule border conventions. Title-level typography.",
+      "html": "<div class=\"ds-dialog\"><div class=\"ds-dialog-header\"><h2 class=\"ds-dialog-title\">End practice session?</h2><button class=\"ds-dialog-close\" aria-label=\"Close\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button></div><div class=\"ds-dialog-body\"><p class=\"ds-dialog-text\">Your progress will be saved. You can resume anytime.</p></div></div>",
+      "css": ".ds-dialog{background-color:oklch(1 0 0);border:1px solid oklch(0.922 0 0);border-radius:16px;padding:0;font-family:'Inter Variable',sans-serif;box-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);max-width:420px;}.ds-dialog-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid oklch(0.922 0 0);}.ds-dialog-title{font-size:18px;font-weight:600;line-height:1.4;letter-spacing:0;margin:0;color:oklch(0.145 0 0);}.ds-dialog-close{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background-color:transparent;border:none;border-radius:0;color:oklch(0.556 0 0);cursor:pointer;outline:none;transition:color 150ms ease-out;}.ds-dialog-close:hover{color:oklch(0.145 0 0);}.ds-dialog-close:focus-visible{box-shadow:0 0 0 1px oklch(0.708 0 0 / 50%);}.ds-dialog-close svg{width:16px;height:16px;}.ds-dialog-body{padding:16px 20px;}.ds-dialog-text{font-size:16px;font-weight:400;line-height:1.5;color:oklch(0.145 0 0);margin:0;}.dark .ds-dialog{background-color:oklch(0.205 0 0);border-color:oklch(1 0 0 / 10%);box-shadow:none;}.dark .ds-dialog-header{border-color:oklch(1 0 0 / 10%);}.dark .ds-dialog-title{color:oklch(0.985 0 0);}.dark .ds-dialog-close{color:oklch(0.708 0 0);}.dark .ds-dialog-close:hover{color:oklch(0.985 0 0);}.dark .ds-dialog-text{color:oklch(0.985 0 0);}"
+    },
+    {
+      "name": "Skeleton",
+      "kind": "feedback",
+      "refersTo": ["accent-grey", "rounded.lg"],
+      "description": "Loading placeholder. Accent-grey fill, rounded-lg, no text. The quiet shimmer target.",
+      "html": "<div class=\"ds-skeleton\" aria-hidden=\"true\"></div>",
+      "css": ".ds-skeleton{display:block;background-color:oklch(0.97 0 0);border-radius:16px;height:20px;width:100%;animation:ds-skeleton-pulse 1.5s ease-in-out infinite;}@keyframes ds-skeleton-pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}@media (prefers-reduced-motion:reduce){.ds-skeleton{animation:none;}}.dark .ds-skeleton{background-color:oklch(0.269 0 0);}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Quiet Studio — brushed steel at room temperature. Equipment ready, nothing decorative. The interface recedes; the work of speaking and improving is the focus.",
+    "overview": "AceFluency is a voice-first English fluency product for South Asian learners, running on two surfaces: a native mobile app (Expo, primary) and a web admin (Next.js + shadcn/ui, internal). The visual system is editorial monochrome — neutrals carry zero chroma — with sharp-cornered buttons breaking an otherwise rounded surface vocabulary. Depth comes from hairline borders, not shadows. A single warm alert color (tinted, never solid) is the only departure from greyscale. Status colors (green/amber/blue) stay native; charts hold a narrow blue family for data only.",
+    "keyCharacteristics": [
+      "Editorial monochrome — zero chroma on primary/secondary/muted/accent/border/ring; only Alert and Charts carry chroma",
+      "Sharp actions, soft surfaces — buttons are rounded-none; cards/inputs are rounded-md/lg",
+      "Hairline depth — 1px borders carry the visual hierarchy; shadows are last-resort and greyscale-only",
+      "One warm voice — Alert (destructive) is the only chromatic non-chart color; always tinted",
+      "Status stays native — green/amber/blue live only in the native app's sharedColors",
+      "Charts hold blue — the chart family (oklch hues 251-265) is data-only; the dark-mode sidebar-primary exception is documented, not precedent",
+      "One web face — Inter Variable is the only font-family on web; native honors SF Pro / Roboto + Dynamic Type / Material type scale",
+      "Platform-respect native — 44×44pt iOS / 48×48dp Android min touch; safe-area insets; system nav; Dynamic Type honored"
+    ],
+    "rules": [
+      {
+        "name": "Zero-Chroma Rule",
+        "body": "Primary, secondary, muted, accent, border, and ring tokens must carry 0 chroma (oklch) or 0% saturation (hsl). The system is greyscale by construction.",
+        "section": "Colors"
+      },
+      {
+        "name": "Tinted Destructive Rule",
+        "body": "Destructive is always rendered as a tint (10% light / 20% dark for hover), never as a solid fill.",
+        "section": "Colors"
+      },
+      {
+        "name": "Alpha-White Dark Borders Rule",
+        "body": "Dark-mode borders use oklch(1 0 0 / 10%) (alpha white), not solid grey, preserving the etched-on-glass quality.",
+        "section": "Colors"
+      },
+      {
+        "name": "One Face Rule",
+        "body": "Inter Variable is the only web font-family. Variation is by weight and size.",
+        "section": "Typography"
+      },
+      {
+        "name": "Platform-Respect Rule",
+        "body": "Native surfaces must honor Dynamic Type and Material type scale; font sizes are floors, not ceilings.",
+        "section": "Typography"
+      },
+      {
+        "name": "12px Label Floor Rule",
+        "body": "No web text renders below 12px. The button base is text-xs; compactness is intentional.",
+        "section": "Typography"
+      },
+      {
+        "name": "Hairline-Led Structure Rule",
+        "body": "Layout sections separate via 1px Rule borders, not gaps with shadows.",
+        "section": "Layout"
+      },
+      {
+        "name": "Touch-Target Rule",
+        "body": "Native minimum 44×44pt (iOS) / 48×48dp (Android). Compact web button sizes do not apply to native.",
+        "section": "Layout"
+      },
+      {
+        "name": "Border-Not-Shadow Rule",
+        "body": "Prefer a 1px Rule border over any box-shadow. If a shadow is added, audit whether a border would have sufficed.",
+        "section": "Elevation & Depth"
+      },
+      {
+        "name": "Dark-Mode No-Shadow Rule",
+        "body": "Dark mode adds no shadows. Surface value difference + alpha-white border is the depth cue.",
+        "section": "Elevation & Depth"
+      },
+      {
+        "name": "Sharp Actions Rule",
+        "body": "Buttons are rounded-none on web. Native platform button shape conventions may apply, but the brand intent is square corners.",
+        "section": "Shapes"
+      },
+      {
+        "name": "Soft Surfaces Rule",
+        "body": "Cards, inputs, dialogs, and popovers are rounded (md or lg). The contrast with sharp buttons is the shape signature.",
+        "section": "Shapes"
+      },
+      {
+        "name": "No Full-Radius Buttons Rule",
+        "body": "Buttons are never pills. full radius is reserved for status badges and avatars.",
+        "section": "Shapes"
+      }
+    ],
+    "dos": [
+      "Let borders carry structure — a 1px Rule line is the default separator",
+      "Tint destructive actions (bg-destructive/10), never fill them solid",
+      "Keep buttons rounded-none on web — it is the shape signature",
+      "Honor platform conventions on native (Dynamic Type, Material type scale, safe-area, 44/48dp touch)",
+      "Use Inter Variable as the only web typeface",
+      "Let chart colors stay in charts — the blue family is data-only",
+      "Use alpha-white borders in dark mode (oklch(1 0 0 / 10%))"
+    ],
+    "donts": [
+      "Don't add box-shadows to cards, inputs, or dialogs on light mode unless absolutely needed; prefer borders",
+      "Don't add shadows at all in dark mode — surface value + border is the depth cue",
+      "Don't introduce chroma into primary/secondary/muted/accent/border/ring tokens",
+      "Don't render destructive as a solid red block — it is a tint, always",
+      "Don't use status colors (green/amber/blue) in the web admin UI — they belong to native semantic contexts",
+      "Don't hard-code point sizes in native components — honor Dynamic Type / Material type scale",
+      "Don't make buttons pills (rounded-full) — pills are for status badges and avatars",
+      "Don't use chart colors in general UI chrome, except the documented dark-mode sidebar-primary",
+      "Don't add a display serif, monospace, or second sans-serif face on web"
+    ]
+  }
+}

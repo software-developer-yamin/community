@@ -1074,8 +1074,10 @@ function isIgnoredFindingValue(finding, ignoreValues) {
     }
     const wildcardValue = entry.value === "*";
     if (
-      !wildcardValue &&
-      !(value && ignoreValueMatches(rule, entry.value, value))
+      !(
+        wildcardValue ||
+        (value && ignoreValueMatches(rule, entry.value, value))
+      )
     ) {
       return false;
     }
