@@ -10,9 +10,10 @@ if [ -z "$STAGED_FILES" ]; then
   exit 0
 fi
 
-# Run formatter
-pnpm dlx ultracite fix
-FORMAT_EXIT_CODE=$?
+# Run formatter on staged files only, so pre-existing issues elsewhere
+# in the repo don't block commits that don't touch them.
+FORMAT_EXIT_CODE=0
+echo "$STAGED_FILES" | tr '\n' '\0' | xargs -0 pnpm dlx ultracite fix -- || FORMAT_EXIT_CODE=$?
 
 # Re-stage files that were already staged
 echo "$STAGED_FILES" | while IFS= read -r file; do
