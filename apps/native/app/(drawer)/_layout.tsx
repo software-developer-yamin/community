@@ -1,4 +1,4 @@
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { Drawer } from "expo-router/drawer";
 import { useUnistyles } from "react-native-unistyles";
@@ -40,15 +40,25 @@ const DrawerLayout = () => {
       <Drawer.Screen
         name="(tabs)"
         options={{
-          headerTitle: "Tabs",
-          drawerLabel: "Tabs",
+          headerTitle: "Practice",
+          drawerLabel: "Practice",
           drawerIcon: ({ size, color }) => (
-            <MaterialIcons color={color} name="border-bottom" size={size} />
+            <Ionicons color={color} name="apps-outline" size={size} />
           ),
           headerRight: () => (
             <Link asChild href="/modal">
               <HeaderButton />
             </Link>
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="rooms"
+        options={{
+          headerTitle: "Voice Clubs",
+          drawerLabel: "Voice Clubs",
+          drawerIcon: ({ size, color }) => (
+            <Ionicons color={color} name="people-outline" size={size} />
           ),
         }}
       />
@@ -63,6 +73,16 @@ const DrawerLayout = () => {
               name="chatbubble-ellipses-outline"
               size={size}
             />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="settings"
+        options={{
+          headerTitle: "Settings",
+          drawerLabel: "Settings",
+          drawerIcon: ({ size, color }) => (
+            <Ionicons color={color} name="settings-outline" size={size} />
           ),
         }}
       />

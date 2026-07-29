@@ -758,7 +758,15 @@ function ControlsBar({ onLeave }: { onLeave?: () => void }) {
       </Pressable>
       <Pressable
         onPress={leave}
-        style={[styles.leaveBtn, { backgroundColor: theme.colors.destructive }]}
+        style={[
+          styles.leaveBtn,
+          {
+            backgroundColor: theme.colors.destructiveSurface,
+            borderColor: theme.colors.destructive,
+            borderWidth: 1,
+            borderRadius: theme.borderRadius.none,
+          },
+        ]}
       >
         <Ionicons
           color={theme.colors.destructiveForeground}
@@ -855,7 +863,9 @@ function ConnectionLostBanner({
         style={[
           styles.banner,
           {
-            backgroundColor: theme.colors.destructive ?? "#DC2626",
+            backgroundColor: theme.colors.destructiveSurface,
+            borderColor: theme.colors.destructive,
+            borderWidth: 1,
           },
         ]}
       >
@@ -892,13 +902,18 @@ function ConnectionLostBanner({
           onPress={onEndCall}
           style={[
             styles.ctaBtn,
-            { backgroundColor: theme.colors.secondary ?? "#6B7280" },
+            {
+              backgroundColor: theme.colors.destructiveSurface,
+              borderColor: theme.colors.destructive,
+              borderWidth: 1,
+              borderRadius: theme.borderRadius.none,
+            },
           ]}
         >
           <Text
             style={[
               styles.ctaText,
-              { color: theme.colors.secondaryForeground ?? "#FFFFFF" },
+              { color: theme.colors.destructiveForeground },
             ]}
           >
             End call
@@ -980,7 +995,7 @@ const styles = StyleSheet.create((theme) => ({
     fontWeight: "500",
   },
   unstableText: {
-    color: "#FCD34D",
+    color: theme.colors.warning,
     fontSize: theme.fontSize.xs,
     marginTop: 2,
     fontWeight: "500",

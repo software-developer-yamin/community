@@ -21,24 +21,45 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "Practice",
           tabBarIcon: ({ color }) => <TabBarIcon color={color} name="home" />,
+        }}
+      />
+      <Tabs.Screen
+        name="rooms"
+        options={{
+          title: "Rooms",
+          tabBarIcon: ({ color }) => <TabBarIcon color={color} name="users" />,
+        }}
+      />
+      <Tabs.Screen
+        name="ai"
+        options={{
+          title: "AI",
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon color={color} name="comments" />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="progress"
+        options={{
+          title: "Progress",
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon color={color} name="line-chart" />
+          ),
         }}
       />
       <Tabs.Screen
         name="recommendations"
         options={{
-          title: "Recommendations",
-          tabBarIcon: ({ color }) => <TabBarIcon color={color} name="star" />,
+          href: null,
         }}
       />
       <Tabs.Screen
         name="two"
         options={{
-          title: "Explore",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon color={color} name="compass" />
-          ),
+          href: null,
         }}
       />
     </Tabs>

@@ -26,7 +26,9 @@ export const lightTheme = {
     accentForeground: "hsl(0 0% 0%)",
     border: "hsl(0 0% 90%)",
     input: "hsl(0 0% 90%)",
-    ring: "hsl(0 0% 20%)",
+    ring: "hsl(0 0% 70%)",
+    destructiveSurface: "rgba(239, 68, 68, 0.1)",
+    destructiveForeground: "hsl(0 0% 0%)",
   },
   spacing: {
     xs: 4,
@@ -37,10 +39,12 @@ export const lightTheme = {
     xxl: 48,
   },
   borderRadius: {
+    none: 0,
     sm: 6,
     md: 8,
     lg: 12,
     xl: 16,
+    full: 9999,
   },
   fontSize: {
     xs: 12,
@@ -60,7 +64,7 @@ export const darkTheme = {
     typography: "hsl(0 0% 100%)",
     background: "hsl(0 0% 0%)",
     foreground: "hsl(0 0% 100%)",
-    card: "hsl(0 0% 2%)",
+    card: "hsl(0 0% 20%)",
     cardForeground: "hsl(0 0% 100%)",
     primary: "hsl(0 0% 90%)",
     primaryForeground: "hsl(0 0% 0%)",
@@ -73,6 +77,8 @@ export const darkTheme = {
     border: "hsl(0 0% 15%)",
     input: "hsl(0 0% 15%)",
     ring: "hsl(0 0% 80%)",
+    destructiveSurface: "rgba(239, 68, 68, 0.1)",
+    destructiveForeground: "hsl(0 0% 100%)",
   },
   spacing: {
     xs: 4,
@@ -83,10 +89,12 @@ export const darkTheme = {
     xxl: 48,
   },
   borderRadius: {
+    none: 0,
     sm: 6,
     md: 8,
     lg: 12,
     xl: 16,
+    full: 9999,
   },
   fontSize: {
     xs: 12,

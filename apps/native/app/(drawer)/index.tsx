@@ -30,6 +30,10 @@ export default function Home() {
   const [recoveryDismissed, setRecoveryDismissed] = useState(false);
   const [pendingLang, setPendingLang] = useState<string | null>(null);
 
+  const recomputeEmbedding = useMutation(
+    orpc.models.recomputeEmbedding.mutationOptions({})
+  );
+
   const updateProfile = useMutation(
     orpc.rebuild.updateProfile.mutationOptions({
       async onSuccess() {
@@ -38,7 +42,7 @@ export default function Home() {
 
         // Trigger embedding recompute on language change
         try {
-          await orpc.models.recomputeEmbedding({});
+          await recomputeEmbedding.mutateAsync({});
         } catch {
           // Non-critical; old embedding remains until next interaction
         }
