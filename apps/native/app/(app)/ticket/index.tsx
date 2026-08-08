@@ -216,7 +216,7 @@ export default function TicketListScreen() {
                       onPress={() =>
                         router.push({
                           // biome-ignore lint/suspicious/noExplicitAny: Expo Router typed routes stale for new ticket dir
-                          pathname: "/(drawer)/ticket/[id]" as any,
+                          pathname: "/(app)/ticket/[id]" as any,
                           params: { id: ticket.id },
                         })
                       }

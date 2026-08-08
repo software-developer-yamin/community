@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "#4a3306",
+        "createdAt": "2026-07-30T01:33:43.397Z",
+        "reason": "Documented in apps/native/DESIGN.md ProBadge.textColor — on-gold legible text color for the Pro/premium badge"
+      }
+    ]
+  }
+}

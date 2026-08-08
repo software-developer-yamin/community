@@ -1,7 +1,7 @@
 import { NATIVE_LANG_MAP } from "@community/api/lib/native-lang";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Link } from "expo-router";
-import { useState } from "react";
+import { Link, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -22,6 +22,7 @@ import { clearCallState } from "@/utils/call-state-storage";
 import { orpc, queryClient } from "@/utils/orpc";
 
 export default function Home() {
+  const router = useRouter();
   const healthCheck = useQuery(orpc.healthCheck.queryOptions());
   const privateData = useQuery(orpc.privateData.queryOptions());
   const { data: session } = authClient.useSession();
@@ -29,6 +30,16 @@ export default function Home() {
 
   const [recoveryDismissed, setRecoveryDismissed] = useState(false);
   const [pendingLang, setPendingLang] = useState<string | null>(null);
+
+  // Signed-in users with a resolved profile skip this scaffold screen and
+  // land on the real product home. Profile === null (no profile yet) or the
+  // account-recovery prompt still routes through this screen first.
+  useEffect(() => {
+    const hasProfile = profile.isSuccess && profile.data !== null;
+    if (session?.user && hasProfile) {
+      router.replace("/(app)/(tabs)/home");
+    }
+  }, [session, profile.isSuccess, profile.data, router]);
 
   const recomputeEmbedding = useMutation(
     orpc.models.recomputeEmbedding.mutationOptions({})

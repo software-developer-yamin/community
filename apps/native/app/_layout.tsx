@@ -1,7 +1,16 @@
 import "@/polyfills";
 import { TokenRefreshProvider } from "@community/ui/components/token-refresh-provider";
+import {
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+} from "@expo-google-fonts/manrope";
+import { Sora_600SemiBold, Sora_700Bold } from "@expo-google-fonts/sora";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
+// biome-ignore lint/performance/noNamespaceImport: expo-splash-screen has no named SplashScreen export
+import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -9,19 +18,35 @@ import { useUnistyles } from "react-native-unistyles";
 import { CallStateRestoreGuard } from "@/components/call-state-restore-guard";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { SessionRestoreGuard } from "@/components/session-restore-guard";
+import { ToastProvider } from "@/components/ui/toast";
 import { authClient } from "@/lib/auth-client";
 import { reportCrash } from "@/utils/crash-reporter";
 import { queryClient } from "@/utils/orpc";
 
 export const unstable_settings = {
-  initialRouteName: "(drawer)",
+  initialRouteName: "(app)",
 };
 
 const BACKGROUND_STATE_REGEX = /inactive|background/;
 
+SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
 export default function RootLayout() {
   const { theme } = useUnistyles();
   const appState = useRef(AppState.currentState);
+  const [fontsLoaded] = useFonts({
+    Sora_700Bold,
+    Sora_600SemiBold,
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync().catch(() => undefined);
+    }
+  }, [fontsLoaded]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener(
@@ -53,6 +78,10 @@ export default function RootLayout() {
     };
   }, []);
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
@@ -60,30 +89,32 @@ export default function RootLayout() {
           <TokenRefreshProvider authClient={authClient}>
             <SessionRestoreGuard>
               <CallStateRestoreGuard>
-                <Stack
-                  screenOptions={{
-                    headerStyle: {
-                      backgroundColor: theme.colors.background,
-                    },
-                    headerTitleStyle: {
-                      color: theme.colors.foreground,
-                    },
-                    headerTintColor: theme.colors.foreground,
-                  }}
-                >
-                  <Stack.Screen
-                    name="(drawer)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="call/[room]"
-                    options={{ title: "Call", headerShown: true }}
-                  />
-                  <Stack.Screen
-                    name="modal"
-                    options={{ title: "Modal", presentation: "modal" }}
-                  />
-                </Stack>
+                <ToastProvider>
+                  <Stack
+                    screenOptions={{
+                      headerStyle: {
+                        backgroundColor: theme.colors.background,
+                      },
+                      headerTitleStyle: {
+                        color: theme.colors.foreground,
+                      },
+                      headerTintColor: theme.colors.foreground,
+                    }}
+                  >
+                    <Stack.Screen
+                      name="(app)"
+                      options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                      name="call/[room]"
+                      options={{ title: "Call", headerShown: true }}
+                    />
+                    <Stack.Screen
+                      name="modal"
+                      options={{ title: "Modal", presentation: "modal" }}
+                    />
+                  </Stack>
+                </ToastProvider>
               </CallStateRestoreGuard>
             </SessionRestoreGuard>
           </TokenRefreshProvider>

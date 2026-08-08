@@ -98,7 +98,7 @@ export default function SettingsScreen() {
             >
               <Text style={styles.signOutText}>Sign out</Text>
             </Pressable>
-            <Link asChild href="/(drawer)/subscription">
+            <Link asChild href="/(app)/subscription">
               <Pressable
                 accessibilityHint="Open subscription and billing options."
                 accessibilityLabel="Manage billing"
@@ -158,7 +158,7 @@ export default function SettingsScreen() {
           </Text>
         </View>
 
-        <Link asChild href="/(drawer)/ticket">
+        <Link asChild href="/(app)/ticket">
           <Pressable
             accessibilityHint="Reach the support team about account or call issues."
             accessibilityLabel="Open a support ticket"
