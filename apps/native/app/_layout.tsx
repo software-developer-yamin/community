@@ -15,6 +15,7 @@ import { useEffect, useRef } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useUnistyles } from "react-native-unistyles";
+import { AuthRedirectGuard } from "@/components/auth-redirect-guard";
 import { CallStateRestoreGuard } from "@/components/call-state-restore-guard";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { SessionRestoreGuard } from "@/components/session-restore-guard";
@@ -88,34 +89,40 @@ export default function RootLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
           <TokenRefreshProvider authClient={authClient}>
             <SessionRestoreGuard>
-              <CallStateRestoreGuard>
-                <ToastProvider>
-                  <Stack
-                    screenOptions={{
-                      headerStyle: {
-                        backgroundColor: theme.colors.background,
-                      },
-                      headerTitleStyle: {
-                        color: theme.colors.foreground,
-                      },
-                      headerTintColor: theme.colors.foreground,
-                    }}
-                  >
-                    <Stack.Screen
-                      name="(app)"
-                      options={{ headerShown: false }}
-                    />
-                    <Stack.Screen
-                      name="call/[room]"
-                      options={{ title: "Call", headerShown: true }}
-                    />
-                    <Stack.Screen
-                      name="modal"
-                      options={{ title: "Modal", presentation: "modal" }}
-                    />
-                  </Stack>
-                </ToastProvider>
-              </CallStateRestoreGuard>
+              <AuthRedirectGuard>
+                <CallStateRestoreGuard>
+                  <ToastProvider>
+                    <Stack
+                      screenOptions={{
+                        headerStyle: {
+                          backgroundColor: theme.colors.background,
+                        },
+                        headerTitleStyle: {
+                          color: theme.colors.foreground,
+                        },
+                        headerTintColor: theme.colors.foreground,
+                      }}
+                    >
+                      <Stack.Screen
+                        name="(app)"
+                        options={{ headerShown: false }}
+                      />
+                      <Stack.Screen
+                        name="call/[room]"
+                        options={{ title: "Call", headerShown: true }}
+                      />
+                      <Stack.Screen
+                        name="modal"
+                        options={{ title: "Modal", presentation: "modal" }}
+                      />
+                      <Stack.Screen
+                        name="(auth)"
+                        options={{ headerShown: false }}
+                      />
+                    </Stack>
+                  </ToastProvider>
+                </CallStateRestoreGuard>
+              </AuthRedirectGuard>
             </SessionRestoreGuard>
           </TokenRefreshProvider>
         </GestureHandlerRootView>
