@@ -1,12 +1,12 @@
 generated: 2026-06-14T00:00:00+06:00
-last_updated: 2026-07-05T01:33:00+06:00
+last_updated: 2026-10-09T23:40:00+06:00
 project: community
 project_key: NOKEY
 tracking_system: file-system
-story_location: /home/yamin/Documents/Yamin Company/community/_bmad-output/implementation-artifacts
+story_location: /home/yamin/Documents/Yamin Portfolio/community/_bmad-output/implementation-artifacts
 
 development_status:
-  epic-1: in-progress
+  epic-1: done
   1-1-persistent-session-with-secure-storage: done
   1-2-silent-token-refresh: done
   1-3-phone-number-authentication-with-otp: done
@@ -64,8 +64,8 @@ development_status:
   re-2-3-real-profile-embeddings-from-user-data: done
   epic-re-2-retrospective: optional
 
-  epic-re-3: backlog
-  re-3-1-native-mobile-recommendation-feed-expo: backlog
+  epic-re-3: in-progress
+  re-3-1-native-mobile-recommendation-feed-expo: in-progress
   re-3-2-recommendation-feed-empty-state-design: backlog
   epic-re-3-retrospective: optional
 
@@ -84,3 +84,21 @@ development_status:
   epic-re-7: backlog
   re-7-1-secure-seed-endpoint-for-production: backlog
   epic-re-7-retrospective: optional
+
+  # Native rebuild track. Mirrors the phased roadmap in
+  # apps/native/ARCHITECTURE.md section 7, which no epic previously tracked.
+  # Screen inventory: apps/native/ARCHITECTURE.md section 2 (125 spec'd routes).
+  # Audit: _bmad-output/STATE-AUDIT.md
+  epic-native: in-progress
+  native-phase-0-foundation-tab-shell: done
+  native-phase-1-flagship-screens: in-progress
+  native-phase-2-core-loops-classes-rooms: backlog
+  native-phase-3-learning-content: backlog
+  native-phase-4-social-gamification: backlog
+  native-phase-5-account-support-settings-legal: backlog
+  native-phase-6-hardening-a11y-perf-i18n: backlog
+  native-auth-onboarding-routes: backlog
+  native-trainer-marketplace-routes: backlog
+  native-live-room-session-routes: backlog
+  native-subscription-stack-routes: backlog
+  epic-native-retrospective: optional
