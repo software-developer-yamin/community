@@ -85,6 +85,8 @@ stale reference to a route the refactor deleted.
 
 ## Problem 3 — no automated test coverage at all
 
+> **Partially resolved 2026-10-09.** See "What changed" below.
+
 - `tests/` holds 153 Playwright specs, of which **153 are skipped** and **0 are active**.
   Every one is an ATDD red-phase stub with the body commented out.
 - No test script exists in any `package.json`.
@@ -97,15 +99,55 @@ So the nav refactor — ~1,400 lines across 22 route files — has zero automate
 verification. The type errors it introduced were invisible until this audit added a
 `check-types` script to `apps/native`, which immediately surfaced three.
 
+## What changed — 2026-10-09
+
+Auth and onboarding routes were built, and a native test runner was stood up. Two
+integration defects found during verification are also fixed.
+
+### Route coverage: 11 → 28 of 125
+
+Added 18 routes:
+
+| Area | Routes added |
+|---|---|
+| Credential + recovery | `(auth)/index`, `_layout`, `splash`, `loading`, `login`, `signup`, `verify-phone`, `verify-email`, `forgot-password`, `reset-password` |
+| Onboarding | `(auth)/onboarding/` — `welcome`, `features`, `language`, `goal`, `level`, `daily-goal`, `profile`, `avatar`, `permissions` |
+
+New shared modules: `components/ui/text-field.tsx` (themed labelled input with
+focus/error states), `components/onboarding-progress.tsx` (module-scoped store behind
+`useSyncExternalStore`, since a context provider would reset on every Stack push),
+`components/auth-redirect-guard.tsx`.
+
+`app/_layout.tsx` now nests `AuthRedirectGuard` inside `SessionRestoreGuard` and outside
+the `Stack`, so an unauthenticated cold start lands on `/(auth)` while the existing
+retry/skeleton logic still runs first.
+
+### Two integration defects found and fixed
+
+1. **`(auth)/` had no `index.tsx`.** `AuthRedirectGuard` redirects to `/(auth)`, which was
+   an unmatched route. Added an `index.tsx` that redirects to `/(auth)/login`.
+2. **Onboarding was unreachable.** Nothing linked to `onboarding/welcome`, and `signup`
+   replaced straight to `/(app)`. `signup` now replaces to `/(auth)/onboarding/welcome`.
+
+### Test runner
+
+`apps/native` now has `jest-expo` + `@testing-library/react-native` and a `test` script,
+with `jest.setup.ts` mocking unistyles, reanimated, and the native Expo modules that
+cannot load in Node. **9 tests across 3 suites pass**, covering the 5-tab shell (names,
+titles, no duplicates, auxiliary routes hidden), `TextField` error/typing behaviour, and
+`AuthRedirectGuard` pending/resolved states.
+
+The root `tests/` Playwright stubs are untouched — still 153 skipped. There is still **no
+CI**: `.github/workflows/` does not exist, so nothing runs on push.
+
 ## Recommended next actions
 
-1. **Create a native-rebuild epic track** in `sprint-status.yaml` mirroring
-   `ARCHITECTURE.md` §7 phases 0-6, with Phase 0 marked done (it shipped in `b91b059`)
-   and Phase 1 partial (Home and Subscription exist; AI results screen does not).
-2. **Build `app/(auth)/` first.** It is the highest-priority gap: the app currently has
-   no reachable login. Every other screen is behind an auth wall that does not exist.
-3. **Stand up a native test runner** (`jest-expo` + `@testing-library/react-native`) and
-   un-skip or write real specs for the tab shell. Without this, every subsequent screen
-   lands unverified — the same way `b91b059` did.
-4. **Delete `two.tsx` and `ai.tsx`** and the stale `progress` tab entry once the Learning
+1. ~~**Build `app/(auth)/` first.**~~ **Done 2026-10-09** — 18 routes added, see above.
+2. ~~**Stand up a native test runner.**~~ **Done 2026-10-09** — `jest-expo` + RNTL, 9
+   tests passing. The 153 Playwright stubs remain skipped.
+3. **Add CI.** Nothing runs on push. `.github/workflows/` does not exist, so both the
+   typecheck and the new jest suite are advisory only until a workflow runs them.
+4. **Build `app/classes/` next** (9 spec'd routes, 0 built). The Classes tab is a 149-line
+   static shell; the trainer marketplace is the largest coherent remaining block.
+5. **Delete `two.tsx` and `ai.tsx`** and the stale `progress` tab entry once the Learning
    tab absorbs the AI speaking test entry point, per `ARCHITECTURE.md:22`.

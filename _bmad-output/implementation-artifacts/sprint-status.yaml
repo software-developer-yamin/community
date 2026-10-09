@@ -97,7 +97,7 @@ development_status:
   native-phase-4-social-gamification: backlog
   native-phase-5-account-support-settings-legal: backlog
   native-phase-6-hardening-a11y-perf-i18n: backlog
-  native-auth-onboarding-routes: backlog
+  native-auth-onboarding-routes: done
   native-trainer-marketplace-routes: backlog
   native-live-room-session-routes: backlog
   native-subscription-stack-routes: backlog
