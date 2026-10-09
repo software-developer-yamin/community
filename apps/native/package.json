@@ -8,6 +8,7 @@
     "android": "expo run:android",
     "check-types": "tsc --noEmit",
     "ios": "expo run:ios",
+    "test": "jest",
     "web": "expo start --web"
   },
   "dependencies": {
@@ -67,8 +68,12 @@
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@community/config": "workspace:*",
+    "@testing-library/react-native": "^14.1.0",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.2.14",
     "ajv": "^8.20.0",
+    "jest-expo": "~56.0.5",
+    "react-test-renderer": "19.2.3",
     "typescript": "catalog:"
   }
 }
