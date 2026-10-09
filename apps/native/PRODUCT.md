@@ -4,6 +4,14 @@
 
 > This file overrides the root `PRODUCT.md` for the native app surface only. It inherits everything in the root file except the sections below, which record a 2026-07-30 scope decision: the native app rebuild now targets the **full consumer-social product** (the historical AceFluency feature set, see `docs/screenshots.md`), not the narrower v1 slice previously scoped in `_bmad-output/planning-artifacts/ux-designs/ux-community-2026-06-10/EXPERIENCE.md`.
 
+## Platform
+
+adaptive
+
+This surface is React Native + Expo (`apps/native`, Expo SDK ~56, RN 0.85) and ships **both iOS and Android from one codebase**, so `adaptive` is the accurate value — not `web`. Without this section the record is platform-less and Impeccable falls back to `web`, applying web design guidance to a native app and never loading its iOS/Android references.
+
+This is consistent with the root `PRODUCT.md` `## Platform: adaptive` stance: the monorepo is cross-platform, and each surface owns its own visual world (see **Design system override** below).
+
 ## Scope decision (supersedes prior v1 deferrals)
 
 The prior UX spec (`_bmad-output/.../EXPERIENCE.md`) explicitly marked the following **out of scope for v1**: Voice Clubs, AI conversation partner, Friend list/re-match, Video call, iOS-specific polish, in-app paywall A/B testing, Bangla UI strings, biometric unlock. That deferral is **superseded** for this rebuild — confirmed by the product owner 2026-07-30. The rebuild's target surface area is the full historical app:
