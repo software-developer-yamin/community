@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "expo start --clear",
     "android": "expo run:android",
+    "check-types": "tsc --noEmit",
     "ios": "expo run:ios",
     "web": "expo start --web"
   },

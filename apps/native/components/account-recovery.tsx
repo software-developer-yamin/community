@@ -60,7 +60,7 @@ export function AccountRecovery({ onComplete }: AccountRecoveryProps) {
 
     const result = phoneSchema.safeParse({ phoneNumber });
     if (!result.success) {
-      const firstMessage = result.error.errors[0]?.message;
+      const firstMessage = result.error.issues[0]?.message;
       setValidationError(firstMessage ?? "Invalid phone number");
       return;
     }

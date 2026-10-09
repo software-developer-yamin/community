@@ -13,6 +13,7 @@ import { z } from "zod";
 
 import { protectedProcedure } from "../index";
 import { recordSkip } from "../lib/skip-tracker";
+import type { ModerationState } from "../lib/strike-logic";
 import {
   computeActiveStrikes24h,
   computeReadableState,
@@ -29,7 +30,7 @@ import { roomClient } from "./livekit";
 function expandModerationState(
   activeCount: number,
   dbState: string | null
-): string {
+): ModerationState {
   if (dbState === "suspended") {
     return "suspended";
   }
