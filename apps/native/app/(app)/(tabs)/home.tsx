@@ -28,10 +28,9 @@ import {
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 
 import { Avatar } from "@/components/ui/avatar";
-import { Badge, LiveDot, ProBadge, StreakChip } from "@/components/ui/badge";
+import { Badge, LiveDot, ProBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ProgressBar } from "@/components/ui/progress-bar";
 import { SectionHeader } from "@/components/ui/section-header";
 import { orpc } from "@/utils/orpc";
 
@@ -75,25 +74,8 @@ function readMatchData(data: unknown): MatchData | null {
   return { partners, reason };
 }
 
-const DAILY_GOAL_MIN = 10;
-const TODAY_TALK_PLACEHOLDER_MIN = 0;
 const MATCH_PULL_MS = 30_000;
 const PARTNER_CARDS_PREVIEW = 4;
-const STREAK_DAYS = 0;
-
-// Illustrative until the trainer-marketplace and course-catalog endpoints
-// land (ARCHITECTURE.md Phase 2/3) — visual system, not committed data.
-const TRAINER_PREVIEW = [
-  { id: "t1", name: "Raj", rating: "4.8", tag: "IELTS Speaking" },
-  { id: "t2", name: "Mira", rating: "4.9", tag: "Interview Prep" },
-  { id: "t3", name: "Heena", rating: "4.7", tag: "Business English" },
-];
-
-const COURSE_PREVIEW = [
-  { id: "c1", title: "Grammar Made Easy", minutes: 42 },
-  { id: "c2", title: "Interview Preparation", minutes: 58 },
-  { id: "c3", title: "Public Speaking", minutes: 36 },
-];
 
 export default function Home() {
   const { theme } = useUnistyles();
@@ -116,9 +98,6 @@ export default function Home() {
   const handleRefresh = useCallback(() => {
     matchQuery.refetch();
   }, [matchQuery]);
-
-  const talkSummaryText = `${TODAY_TALK_PLACEHOLDER_MIN} / ${DAILY_GOAL_MIN} min`;
-  const progressPct = Math.min(TODAY_TALK_PLACEHOLDER_MIN / DAILY_GOAL_MIN, 1);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -153,7 +132,8 @@ export default function Home() {
             <Avatar name="You" ring="streak" size="md" />
             <View>
               <Text style={styles.greeting}>{greeting} 👋</Text>
-              <StreakChip days={STREAK_DAYS} />
+              {/* Streaks need a stored streak; none exists yet, so the chip is
+                  withheld rather than pinned at a permanent zero. */}
             </View>
           </View>
           <View style={styles.headerRight}>
@@ -229,17 +209,8 @@ export default function Home() {
           </LinearGradient>
         </Pressable>
 
-        {/* Today's talk time */}
-        <Card style={styles.progressCard}>
-          <View style={styles.progressHeaderRow}>
-            <Text style={styles.progressLabel}>Today's talk time</Text>
-            <Text style={styles.progressValue}>{talkSummaryText}</Text>
-          </View>
-          <ProgressBar progress={progressPct} />
-          <Text style={styles.progressHint}>
-            Tap "Talk now" to clock your first minutes today.
-          </Text>
-        </Card>
+        {/* Talk time needs a recorded per-day total; nothing stores one yet, so the
+            card is withheld rather than showing a progress bar stuck at zero. */}
 
         {/* Advanced learner practice */}
         <Card style={styles.advancedCard}>
@@ -326,57 +297,9 @@ export default function Home() {
           })()}
         </View>
 
-        {/* Trainer recommendation */}
-        <SectionHeader
-          actionLabel="See all"
-          onAction={() => undefined}
-          title="Recommended trainers"
-        />
-        <ScrollView
-          contentContainerStyle={styles.hScrollContent}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
-          {TRAINER_PREVIEW.map((trainer) => (
-            <Card key={trainer.id} style={styles.trainerCard}>
-              <Avatar name={trainer.name} size="lg" />
-              <Text style={styles.trainerName}>{trainer.name}</Text>
-              <View style={styles.trainerRatingRow}>
-                <Ionicons color={theme.colors.aurum} name="star" size={14} />
-                <Text style={styles.trainerRating}>{trainer.rating}</Text>
-              </View>
-              <Badge>{trainer.tag}</Badge>
-            </Card>
-          ))}
-        </ScrollView>
-
-        {/* Recorded courses */}
-        <SectionHeader
-          actionLabel="See all"
-          onAction={() => undefined}
-          title="Recorded courses"
-        />
-        <ScrollView
-          contentContainerStyle={styles.hScrollContent}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
-          {COURSE_PREVIEW.map((course) => (
-            <Card key={course.id} style={styles.courseCard}>
-              <View style={styles.courseThumb}>
-                <Ionicons
-                  color={theme.colors.primary}
-                  name="play-circle"
-                  size={28}
-                />
-              </View>
-              <Text numberOfLines={2} style={styles.courseTitle}>
-                {course.title}
-              </Text>
-              <Text style={styles.courseMeta}>{course.minutes} min</Text>
-            </Card>
-          ))}
-        </ScrollView>
+        {/* Trainer and course catalogs have no endpoint behind them. PRODUCT.md:97
+            forbids fabricating the absent, so these sections stay out until
+            real data can back them. */}
 
         {/* Premium promotion */}
         <Link asChild href="/(app)/subscription">

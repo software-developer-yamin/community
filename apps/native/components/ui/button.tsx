@@ -37,6 +37,7 @@ function getTextStyle({
     labelSecondary: TextStyle;
     labelGhost: TextStyle;
     labelDestructive: TextStyle;
+    labelDisabledPrimary: TextStyle;
     labelDisabled: TextStyle;
   };
 }): TextStyle[] {
@@ -52,6 +53,9 @@ function getTextStyle({
   }
   if (variant === "destructive") {
     textStyles.push(styles.labelDestructive);
+  }
+  if (variant === "primary" && isDisabled) {
+    textStyles.push(styles.labelDisabledPrimary);
   }
   if (isDisabled) {
     textStyles.push(styles.labelDisabled);
@@ -190,6 +194,7 @@ export function Button({
         variant === "secondary" && styles.secondary,
         variant === "ghost" && styles.ghost,
         variant === "destructive" && styles.destructive,
+        variant === "primary" && isDisabled && styles.disabledPrimary,
         isDisabled && styles.disabled,
         style,
       ]}
@@ -231,6 +236,15 @@ const styles = StyleSheet.create((theme) => ({
   destructive: {
     backgroundColor: theme.colors.destructiveSurface,
   },
+  // A disabled primary button falls through to the unstyled branch, which has no
+  // background at all. Opacity alone left `#FFFFFF` text on the page background,
+  // so "Sign in" was invisible until the form validated. Disabled keeps a real
+  // surface and leans on a border instead of a colored glow (DESIGN.md).
+  disabledPrimary: {
+    backgroundColor: theme.colors.muted,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+  },
   disabled: {
     opacity: 0.5,
   },
@@ -250,6 +264,9 @@ const styles = StyleSheet.create((theme) => ({
   },
   labelDestructive: {
     color: theme.colors.destructive,
+  },
+  labelDisabledPrimary: {
+    color: theme.colors.mutedForeground,
   },
   labelDisabled: {
     opacity: 0.7,

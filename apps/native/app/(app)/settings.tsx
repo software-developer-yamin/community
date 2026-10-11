@@ -235,7 +235,10 @@ const styles = StyleSheet.create((theme) => ({
     opacity: 0.7,
   },
   signOutText: {
-    color: theme.colors.destructiveForeground,
+    // `destructiveForeground` is #FFFFFF, meant for a solid fill. On the 10%
+    // `destructiveSurface` tint that rendered unreadable (~1.2:1), so the label
+    // takes `destructive` per DESIGN.md's ButtonDestructive spec.
+    color: theme.colors.destructive,
     fontSize: theme.fontSize.base,
     fontWeight: "600",
   },

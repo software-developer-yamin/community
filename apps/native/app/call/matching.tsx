@@ -130,8 +130,9 @@ export default function MatchingScreen() {
     router.back();
   }, [router]);
 
+  // No filter editor exists yet, so this cannot claim to adjust anything.
   const handleAdjustFilters = useCallback(() => {
-    router.back();
+    router.replace("/call/lobby");
   }, [router]);
 
   const statusMessage = (() => {
@@ -198,7 +199,12 @@ export default function MatchingScreen() {
               { color: theme.colors.mutedForeground },
             ]}
           >
-            Connecting you to the call room...
+            {/*
+              The partner match is real, but joining them needs a room this
+              query does not return yet. Say what is true and send them to the
+              lobby rather than showing a call that cannot connect.
+            */}
+            {foundPartner.name} is ready. Take the call from the lobby.
           </Text>
         </View>
       );
@@ -328,8 +334,22 @@ export default function MatchingScreen() {
               </Text>
             </Pressable>
           )}
+          {/*
+            `matchPartners` returns a partner profile only — no room name and no
+            join token — so there is no room to route to yet. Rather than send
+            the user backwards off a button labelled "Go to Call", the found
+            state now sends them to the call lobby, which is the surface that
+            can actually put them in a room.
+          */}
           <Pressable
-            onPress={handleExit}
+            accessibilityLabel={
+              status === "found" ? "Go to the call lobby" : "Stop searching"
+            }
+            onPress={
+              status === "found"
+                ? () => router.replace("/call/lobby")
+                : handleExit
+            }
             style={[
               styles.actionButton,
               status === "found"
@@ -348,7 +368,7 @@ export default function MatchingScreen() {
                   : { color: theme.colors.typography },
               ]}
             >
-              {status === "found" ? "Go to Call" : "Exit"}
+              {status === "found" ? "Go to call lobby" : "Exit"}
             </Text>
           </Pressable>
         </View>
