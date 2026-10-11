@@ -169,19 +169,23 @@ refund API); India needs a parallel provider.
 `[source: rebuild.ts paymentProviderEnum; prd.md OQ-1, OQ-9]`
 
 **Refund request** — A refund classified into exactly one of three paths: `auto_approve`, `auto_deny`, or `human_review`.
-: Auto-approve triggers include ≥3 critical crashes in the first 7 days, never connecting to a
-completed call, or a login failure over 72h. Auto-deny triggers include >14 days since
-charge or >5 completed sessions. Everything else goes to human review with a 7-day SLA.
-`[source: prd.md FR-20; addendum.md §B]`
+: Auto-approve requires an explicit fault *and* a recent purchase: ≥3 critical crashes within 7
+days of the charge, no completed session within 14 days, or a reported login failure lasting
+over 72h within 14 days. Auto-deny requires **both** more than 5 completed sessions **and**
+more than 14 days since the charge — either condition alone routes to human review, so a light
+user who recently hit a fault is never auto-denied. Auto-approve is evaluated first and wins.
+Everything else goes to human review with a 7-day SLA.
+`[source: prd.md FR-20; threshold matrix resolved in epic-005-story-053 §Decision Records, 2026-10-11 — supersedes the contradictory OR rule in addendum.md §B]`
 
 **Refund status** — The state of a refund request.
 : Values `pending | auto_approved | auto_denied | human_review | approved | denied | processing |
 completed`. An auto-deny carries a plain-language denial reason — never a silent no.
 `[source: rebuild.ts refundStatusEnum]`
 
-**7-day refund window** — The consumer-facing guarantee, independent of the three-path classification.
-: Refund within 7 days, no questions asked. `[inferred — from F5.3 and in-app help copy;
-distinct from the PRD's 14-day auto-deny window]`
+**Auto-deny threshold** — The two conditions that must *both* hold before a refund is refused without human input.
+: Deliberately conjunctive. An earlier OR reading would have refused the exact learner this
+feature exists for — one short call followed by 72 hours of being unable to sign in.
+`[source: epic-005-story-053 §Decision Records]`
 
 **Crash event** — A critical client failure recorded per user.
 : Types `force_close | anr | black_screen`, with app version, OS version, device model, and
