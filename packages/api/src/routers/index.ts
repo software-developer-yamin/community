@@ -8,6 +8,7 @@ import { moderationRouter } from "./moderation";
 import { ratingRouter } from "./rating";
 import { rebuildRouter } from "./rebuild";
 import { recommendationsRouter } from "./recommendations";
+import { refundRouter } from "./refund";
 import { todoRouter } from "./todo";
 
 export const appRouter = {
@@ -23,6 +24,7 @@ export const appRouter = {
   recommendations: recommendationsRouter,
   rebuild: rebuildRouter,
   billing: billingRouter,
+  refund: refundRouter,
   rating: ratingRouter,
 };
 export type AppRouter = typeof appRouter;
