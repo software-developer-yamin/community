@@ -199,11 +199,8 @@ export default function MatchingScreen() {
               { color: theme.colors.mutedForeground },
             ]}
           >
-            {/*
-              The partner match is real, but joining them needs a room this
-              query does not return yet. Say what is true and send them to the
-              lobby rather than showing a call that cannot connect.
-            */}
+            {/* The match is real; joining this partner needs a room the query does not
+                return yet, so it is named as a lobby hand-off. */}
             {foundPartner.name} is ready. Take the call from the lobby.
           </Text>
         </View>
@@ -334,13 +331,8 @@ export default function MatchingScreen() {
               </Text>
             </Pressable>
           )}
-          {/*
-            `matchPartners` returns a partner profile only — no room name and no
-            join token — so there is no room to route to yet. Rather than send
-            the user backwards off a button labelled "Go to Call", the found
-            state now sends them to the call lobby, which is the surface that
-            can actually put them in a room.
-          */}
+          {/* `matchPartners` returns no room to join, so the found state routes to the
+            lobby — the surface that can actually seat the user in a call. */}
           <Pressable
             accessibilityLabel={
               status === "found" ? "Go to the call lobby" : "Stop searching"
