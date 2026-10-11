@@ -35,9 +35,12 @@ export default function RefundRequestScreen() {
   const queryClient = useQueryClient();
   const [reason, setReason] = useState("");
 
-  const { data: subscription, isLoading } = useQuery(
-    orpc.rebuild.getSubscription.queryOptions()
-  );
+  const {
+    data: subscription,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery(orpc.rebuild.getSubscription.queryOptions());
 
   const submit = useMutation(
     orpc.refund.requestRefund.mutationOptions({
@@ -63,6 +66,24 @@ export default function RefundRequestScreen() {
       <Container>
         <View style={styles.centered}>
           <ActivityIndicator size="large" />
+        </View>
+      </Container>
+    );
+  }
+
+  if (error) {
+    // Without this, a failed load falls through to the "No paid plan" branch
+    // below and tells a paying user they have nothing to refund.
+    return (
+      <Container>
+        <View style={styles.centered}>
+          <EmptyState
+            actionLabel="Try again"
+            body="We could not load your plan. Check your connection and try again."
+            emoji="📡"
+            onAction={() => refetch()}
+            title="Could not load your plan"
+          />
         </View>
       </Container>
     );
@@ -95,8 +116,9 @@ export default function RefundRequestScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.lede}>
-          If the app did not work for you, request a refund. We check every
-          request against the same rules, so the answer is usually immediate.
+          If the app did not work for you, request a refund. Most requests are
+          decided straight away; some need a person, and we answer those within
+          7 days.
         </Text>
 
         <Card style={styles.card}>

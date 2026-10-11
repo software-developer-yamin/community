@@ -253,8 +253,13 @@ const getRefundStatus = protectedProcedure
         providerRefundStatus: refundRequest.providerRefundStatus,
         createdAt: refundRequest.createdAt,
         resolvedAt: refundRequest.resolvedAt,
+        currency: paymentTransaction.currency,
       })
       .from(refundRequest)
+      .leftJoin(
+        paymentTransaction,
+        eq(refundRequest.paymentTransactionId, paymentTransaction.id)
+      )
       .where(
         and(
           eq(refundRequest.id, input.refundId),

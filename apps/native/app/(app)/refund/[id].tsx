@@ -89,35 +89,97 @@ const STATUS_VIEW: Record<Status, StatusView> = {
 };
 
 const PROCESSING_BODY =
-  "Your refund is approved and moving through the payment provider. Banks typically settle this in 5–7 working days.";
+  "Your refund is approved and is on its way back to your payment method. Your bank or provider decides how long that last step takes.";
 
 const REVIEW_BODY =
   "A person is reviewing your request. We answer every refund within 7 days.";
 
 const FALLBACK_BODY = "Your refund request has been updated.";
 
-function resolveBody(status: Status, reason: string | null): string {
+/** Story 5-3g adds provider statuses, so an app build can be older than the
+ *  server enum. Rendering the generic view beats a white screen. */
+const UNKNOWN_VIEW: StatusView = {
+  badgeBg: "#6B647820",
+  badgeText: "#6B6478",
+  headline: "Refund updated",
+  icon: "time",
+};
+
+function isStatus(value: string): value is Status {
+  return Object.hasOwn(STATUS_VIEW, value);
+}
+
+function resolveBody(status: Status | null, reason: string | null): string {
   if (status === "processing") {
     return PROCESSING_BODY;
   }
-  if (IN_REVIEW.includes(status)) {
+  if (status !== null && IN_REVIEW.includes(status)) {
     return REVIEW_BODY;
   }
   return reason ?? FALLBACK_BODY;
 }
 
-function formatPrice(amount: number | null): string {
+function formatPrice(amount: number | null, currency: string | null): string {
   if (amount === null) {
     return "—";
   }
-  return `৳${amount}`;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency ?? "BDT",
+    }).format(amount);
+  } catch {
+    // Intl rejects an unknown or malformed currency code; the raw amount is
+    // still more useful to the learner than a formatted "NaN".
+    return `${amount} ${currency ?? ""}`.trim();
+  }
+}
+
+function isNotFound(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "NOT_FOUND"
+  );
+}
+
+function RefundLoadError({
+  error,
+  isFetching,
+  onRetry,
+}: {
+  error: unknown;
+  isFetching: boolean;
+  onRetry: () => void;
+}) {
+  const missing = isNotFound(error);
+  const retryLabel = isFetching ? "Retrying…" : "Try again";
+
+  return (
+    <Container>
+      <View style={styles.centered}>
+        <EmptyState
+          actionLabel={missing ? undefined : retryLabel}
+          body={
+            missing
+              ? "That refund request does not exist, or it belongs to another account."
+              : "We could not load your refund status. Check your connection and try again."
+          }
+          emoji={missing ? "🔍" : "📡"}
+          onAction={missing ? undefined : onRetry}
+          title={missing ? "Request not found" : "Could not load status"}
+        />
+      </View>
+    </Container>
+  );
 }
 
 export default function RefundStatusScreen() {
   const { id } = useGlobalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery(
+  const { data, isLoading, error, refetch, isFetching } = useQuery(
     orpc.refund.getRefundStatus.queryOptions({ input: { refundId: id } })
   );
 
@@ -147,27 +209,28 @@ export default function RefundStatusScreen() {
 
   if (error || !data) {
     return (
-      <Container>
-        <View style={styles.centered}>
-          <EmptyState
-            body="We could not find that refund request."
-            emoji="🔍"
-            title="Request not found"
-          />
-        </View>
-      </Container>
+      <RefundLoadError
+        error={error}
+        isFetching={isFetching}
+        onRetry={() => refetch()}
+      />
     );
   }
 
-  const status = data.status as Status;
-  const view = STATUS_VIEW[status];
-  const isDeclined = DECLINED.includes(status);
+  const status = isStatus(data.status) ? data.status : null;
+  const view = status === null ? UNKNOWN_VIEW : STATUS_VIEW[status];
+  const isDeclined = status !== null && DECLINED.includes(status);
   const reason = isDeclined ? data.denialReason : data.approvalReason;
 
   return (
     <Container>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.badge, { backgroundColor: view.badgeBg }]}>
+        <View
+          accessibilityLabel={view.headline}
+          accessibilityRole="text"
+          accessible
+          style={[styles.badge, { backgroundColor: view.badgeBg }]}
+        >
           <Ionicons color={view.badgeText} name={view.icon} size={14} />
           <Text style={[styles.badgeText, { color: view.badgeText }]}>
             {view.headline}
@@ -182,7 +245,7 @@ export default function RefundStatusScreen() {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Amount</Text>
               <Text style={styles.detailValue}>
-                {formatPrice(data.refundAmount)}
+                {formatPrice(data.refundAmount, data.currency)}
               </Text>
             </View>
             <View style={styles.detailRow}>
@@ -210,7 +273,7 @@ export default function RefundStatusScreen() {
           </View>
         </Card>
 
-        {APPEALABLE.includes(status) ? (
+        {status !== null && APPEALABLE.includes(status) ? (
           <>
             {appeal.error ? (
               <Text style={styles.errorText}>
