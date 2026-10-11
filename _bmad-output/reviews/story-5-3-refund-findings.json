@@ -1,0 +1,576 @@
+[
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/lib/refund-classifier.ts:64-69",
+    "trigger_condition": "`loginFailureAutoApproves` has no `daysSinceCharge` bound, so the 72h-open-ticket path auto-approves a full refund at any age, violating the matrix row \"First 14 days post-charge\".",
+    "guard_snippet": "function loginFailureAutoApproves(input: RefundClassifierInput): boolean {\n  return (\n    input.daysSinceCharge <= NEVER_CONNECTED_WINDOW_DAYS &&\n    input.hasOpenLoginFailureTicket &&\n    input.hoursSinceLastSuccessfulLogin !== null &&\n    input.hoursSinceLastSuccessfulLogin >= LOGIN_FAILURE_HOURS\n  );\n}\n// verified today: daysSinceCharge=400, completedSessionCount=1,\n// hasOpenLoginFailureTicket=true, hoursSinceLastSuccessfulLogin=96\n//   -> {\"path\":\"auto_approve\", ...}",
+    "potential_consequence": "An account 13 months old with one completed session and any open ticket is auto-approved for a full refund with no human in the loop, and auto-approve wins over auto-deny so the age/session protections never run."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/lib/__tests__/refund-classifier.test.ts:171-181",
+    "trigger_condition": "Test 5.3d-UNIT-016 is the only case covering the login-failure row at `daysSinceCharge: 40`, and it asserts only `not.toBe(\"auto_deny\")`, so the actual result `auto_approve` passes silently.",
+    "guard_snippet": "test(\"5.3d-UNIT-016: login-failure auto-approve is bounded by the 14-day window\", () => {\n  const result = classifyRefundRequest(\n    input({ completedSessionCount: 1, daysSinceCharge: 40, hasOpenLoginFailureTicket: true, hoursSinceLastSuccessfulLogin: 96 }),\n    NOW\n  );\n  expect(result.path).toBe(\"human_review\"); // not merely \"not auto_deny\"\n});",
+    "potential_consequence": "The one test guarding this boundary is written so it cannot fail on the money-losing outcome; the suite reports 23/23 green while a full-refund leak is live."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:90-102",
+    "trigger_condition": "`hasOpenLoginFailureTicket` counts ANY support ticket with `category IN ('technical','other')` and never inspects subject, description, or any login-failure marker.",
+    "guard_snippet": "inArray(supportTicket.category, [\"billing\", \"technical\", \"other\"]),\n// and require an explicit login-failure signal, e.g.\ninArray(supportTicket.category, [\"billing\"]) // plus a recorded loginFailure row\n// Minimum: match on a structured marker, not an open-row heuristic:\nand(gte(supportTicket.createdAt, chargeDate), eq(supportTicket.category, \"technical\"))",
+    "potential_consequence": "A user with a benign open \"call audio cuts out\" ticket who happens not to have opened the app for 72 hours is auto-approved a full refund. Any technical support ticket becomes a money trigger."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:96",
+    "trigger_condition": "The login-failure trigger deliberately excludes `category = 'billing'`, which is the category a user files for \"I paid and cannot access my account\".",
+    "guard_snippet": "inArray(supportTicket.category, [\"billing\", \"technical\", \"other\"])\n// or, better, key on an explicit structured reason column rather than category",
+    "potential_consequence": "The most probable real login-failure report never qualifies; the trigger fires on the least probable one instead — inverted signal with direct financial consequences."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:63-75",
+    "trigger_condition": "`completedSessionCount` counts only `callRoom.status = 'ended'`; `callStatusEnum` also has `'failed'`, so a user whose every call failed is indistinguishable from a user who never connected.",
+    "guard_snippet": "inArray(callRoom.status, [\"ended\", \"failed\"]),\n// and treat 'failed' as attempted-but-broken so AC-3's\n// \"never completed a session\" cannot be satisfied by a broken product.",
+    "potential_consequence": "A user with twenty failed calls is classified `everCompletedSession: false` and auto-approved a full refund for \"no completed session\" — the exact population FR-20 exists to refund correctly, funnelled to the unconditional approve branch instead of human review."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:38-56,154-160",
+    "trigger_condition": "`latestCompletedCharge(userId)` selects the latest completed charge for the whole user, while `sub` is the latest active/cancelled subscription — the two are never joined, even though `paymentTransaction.subscriptionId` exists.",
+    "guard_snippet": "async function latestCompletedCharge(userId: string, subscriptionId: string) {\n  // ...\n  .where(and(\n    eq(paymentTransaction.userId, userId),\n    eq(paymentTransaction.subscriptionId, subscriptionId),\n    eq(paymentTransaction.status, \"completed\")\n  ))\n  .orderBy(desc(paymentTransaction.completedAt))\n}\n// and reject rather than guess when the count != 1.",
+    "potential_consequence": "`refundAmount` and `paymentTransactionId` are taken from a charge that may belong to a different subscription or billing period — a ৳299 premium user is refunded a ৳599 premium_plus charge, and reconciliation later cannot tell which charge was refunded."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:130-206",
+    "trigger_condition": "`requestRefund` has no idempotency key, no existing-request lookup, and no unique constraint on `refund_request` (`refund_request_user_idx` is a plain index), so repeat calls insert additional rows.",
+    "guard_snippet": "const existing = await db.select().from(refundRequest)\n  .where(and(eq(refundRequest.userId, userId),\n               inArray(refundRequest.status, [\"pending\",\"auto_approved\",\"auto_approved\",\"human_review\",\"approved\",\"processing\"])))\n  .limit(1);\nif (existing[0]) return { id: existing[0].id, /* already in flight */ };\n// plus a partial unique index in the schema:\n// uniqueIndex(\"refund_request_one_active_uq\").on(table.userId).where(sql`status in (...)`)",
+    "potential_consequence": "N `auto_approved` rows for one charge exist the moment 5-3f's executor lands; the executor drains all of them and the gateway executes N real refunds for one purchase — a double-refund created entirely by this story's code."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:167-169",
+    "trigger_condition": "The `slaDeadline` NOT-NULL fallback for non-human-review paths is computed from `AUTO_DENY_DAYS_SINCE_CHARGE * 86_400_000`, coupling an unrelated denial threshold constant to the human-review SLA length.",
+    "guard_snippet": "const slaDeadline =\n  decision.slaDeadline ??\n  new Date(now.getTime() + HUMAN_REVIEW_SLA_DAYS * 86_400_000); // import HUMAN_REVIEW_SLA_DAYS",
+    "potential_consequence": "Tuning the auto-deny threshold silently changes the deadline the user is shown and the SLA the admin queue is sorted by; the two concerns drift with no compile or test signal."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:263",
+    "trigger_condition": "`appealRefund` hardcodes `7 * 24 * 60 * 60 * 1000` instead of importing `HUMAN_REVIEW_SLA_DAYS`, and reads `row.status` then updates without `status` in the UPDATE predicate (read-then-write TOCTOU).",
+    "guard_snippet": "const updated = await db.update(refundRequest)\n  .set({\n    path: \"human_review\",\n    status: \"human_review\",\n    slaDeadline: new Date(Date.now() + HUMAN_REVIEW_SLA_DAYS * DAY_MS),\n  })\n  .where(and(eq(refundRequest.id, row.id), eq(refundRequest.status, \"auto_denied\")))\n  .returning();\nif (!updated[0]) throw new ORPCError(\"CONFLICT\", { message: \"Status changed; reload\" });",
+    "potential_consequence": "A concurrent admin decision made between the read and the write is silently overwritten back to `human_review`, discarding `reviewedBy`/`reviewedAt`/`reviewNotes` on a money record."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:271-309",
+    "trigger_condition": "`reviewRefund` accepts any refund id in any state and writes `approved`/`denied` with no status precondition, so a `processing` or `completed` refund can be flipped back to `denied`.",
+    "guard_snippet": "if (!inArray(row.status, [\"human_review\", \"pending\"])) {\n  throw new ORPCError(\"CONFLICT\", { message: `Cannot review a refund in state ${row.status}` });\n}\nconst updated = await db.update(refundRequest)\n  .set({ ... })\n  .where(and(eq(refundRequest.id, row.id), inArray(refundRequest.status, [\"human_review\",\"pending\"])))\n  .returning();",
+    "potential_consequence": "An operator replay or double-click reverses a refund that has already been sent to the gateway and possibly settled; the DB then asserts `denied` while money left the account."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:311-318",
+    "trigger_condition": "`listPendingReviews` filters `status IN ('human_review','pending')`, so every `auto_approved` row — the ones5-3f will turn into real money movement — is invisible to operators.",
+    "guard_snippet": "// expose a second read-only queue so auto-approvals are auditable before execution:\nlistAutoApprovals: adminProcedure.handler(() =>\n  db.select().from(refundRequest)\n    .where(inArray(refundRequest.status, [\"auto_approved\", \"approved\", \"processing\"]))\n    .orderBy(refundRequest.createdAt).limit(100)\n)",
+    "potential_consequence": "There is no way to see, sample, or halt mis-classified auto-approvals before the executor drains them; a classifier regression pays out invisibly and is only discovered in reconciliation."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:185-187",
+    "trigger_condition": "`denialReason` is set to the user's free-text complaint for every path except `auto_deny`, so an auto-approved refund stores the user's grievance in the field named for a denial, and no column anywhere holds the user's actual message.",
+    "guard_snippet": ".values({\n  // ...\n  userMessage: input.reason ?? null,        // new column, or reuse reviewNotes-as-input\n  denialReason: decision.path === \"auto_deny\" ? REFUND_DENIAL_TEMPLATE.replace(\"[reason]\", decision.reason) : null,\n  approvalReason: decision.path === \"auto_approve\" ? decision.reason : null,\n})",
+    "potential_consequence": "An admin reading the denial queue sees \"the app crashed every time\" labelled as a denial reason, so auto-approved refunds read as denials; and the user's stated reason is unreadable to triage even though it is stored."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:180-183",
+    "trigger_condition": "`triggerCrashes`, `triggerLoginFailure`, and `triggerNeverConnected` are written unconditionally from the classifier input, including values that did not fire the decision (e.g. `triggerLoginFailure: 1` on a never-connected approve).",
+    "guard_snippet": "triggerCrashes: decision.reason.includes(\"crashes\") ? classifierInput.crashCount : null,\ntriggerLoginFailure: loginFailureAutoApproves(classifierInput) ? classifierInput.hoursSinceLastSuccessfulLogin : null,\ntriggerNeverConnected: neverConnectedAutoApproves(classifierInput) ? 1 : null,\n// or store the single fired reason:\ntriggerReason: decision.reason,",
+    "potential_consequence": "The trigger columns cannot be used to answer \"why did this refund pay out?\", which is the only question the human-review queue, the threshold-tuning loop, and any fraud review need answered; the persisted evidence contradicts the decision."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:136-160",
+    "trigger_condition": "`daysBetween` uses `Math.floor`, so a charge dated in the future by clock skew, an IPN-completedAt ahead of `new Date()`, or a timezone mismatch yields a negative `daysSinceCharge`, and every `<= window` comparison passes.",
+    "guard_snippet": "export function daysBetween(from: Date, to: Date): number {\n  return Math.max(0, Math.floor((to.getTime() - from.getTime()) / DAY_MS));\n}\n// verified today: daysSinceCharge=-3, crashCount=5 -> path \"auto_approve\"",
+    "potential_consequence": "A mis-stamped `completedAt` (IPN replay, restored backup, container clock) instantly satisfies all three auto-approve windows, turning a data-integrity glitch into an unconditional payout."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:104-166",
+    "trigger_condition": "The classifier reads `paymentTransaction`, `crashEvent`, `callRoom`, `supportTicket`, and `userProfile` in six independent queries and then inserts the decision, with no transaction and no lock — the inputs are not a consistent snapshot of the decision.",
+    "guard_snippet": "await db.transaction(async (tx) => {\n  const charge = await latestCompletedCharge(tx, userId, sub.id); // FOR UPDATE\n  const classifierInput = await buildClassifierInput(tx, userId, chargeDate, now);\n  const decision = classifyRefundRequest(classifierInput, now);\n  return tx.insert(refundRequest).values({ ... }).returning();\n});",
+    "potential_consequence": "A session completing between the count query and the insert flips `everCompletedSession` after the decision; a concurrent IPN lands a new charge and the refund is priced against a charge that is no longer current. The stored `trigger*` snapshot and the actual decision moment diverge with no record of it."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/routers/refund.ts:267-272",
+    "trigger_condition": "`requestRefund` accepts `status IN ('active','cancelled')` subscriptions and nothing ever writes `subscription.status = 'refunded'` anywhere in the codebase, so a refunded subscriber remains refund-eligible indefinitely.",
+    "guard_snippet": "// after the refund reaches a terminal state (executor, 5-3f):\nawait tx.update(subscription).set({ status: \"refunded\" }).where(eq(subscription.id, sub.id));\n// and until that exists, refuse a second refund for the same charge:\nand(notExists(refundRequestForCharge(charge.id)))",
+    "potential_consequence": "The lifecycle has no dead end: a user whose refund completed can request again the next day and be auto-approved against the same `paymentTransaction`, compounding with the missing duplicate guard into unbounded repeated refunds."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/db/src/schema/rebuild.ts:283-285",
+    "trigger_condition": "`paymentTransactionId` is a nullable FK with `onDelete: \"set null\"` on the one column that identifies which charge a refund reverses.",
+    "guard_snippet": "paymentTransactionId: text(\"payment_transaction_id\")\n  .notNull()\n  .references(() => paymentTransaction.id, { onDelete: \"restrict\" }),\nrefundAmount: integer(\"refund_amount\").notNull(), // in poisha (BDT × 100)",
+    "potential_consequence": "Deleting or pruning a `paymentTransaction` row silently orphans an executed refund record: the row keeps a `refundAmount` with no charge to reconcile against, which is exactly the ambiguity AC-13 was added to remove."
+  },
+  {
+    "lens": "adversarial",
+    "location": "apps/native/app/(app)/refund/[id].tsx:158-159,166",
+    "trigger_condition": "`const status = data.status as Status` is an unchecked cast used immediately as `STATUS_VIEW[status]`, so any server value outside the 8 local members yields `view === undefined` and `view.badgeBg` throws during render.",
+    "guard_snippet": "const status = data.status as Status;\nconst view = STATUS_VIEW[status] ?? STATUS_VIEW.pending;\nif (!STATUS_VIEW[status]) {\n  // render the raw value rather than crashing the screen\n}",
+    "potential_consequence": "Adding a ninth status to `refundStatusEnum` — the thing 5-3g will do when it maps gateway `cancelled`/`refunded` — makes the refund screen crash to a white screen for exactly the users with the most unusual refund outcomes."
+  },
+  {
+    "lens": "adversarial",
+    "location": "apps/native/app/(app)/refund/[id].tsx:33,111-126",
+    "trigger_condition": "`DECLINED` contains `['auto_denied', 'denied']` and drives the appeal button, but `appealRefund` only accepts `row.status === 'auto_denied'`.",
+    "guard_snippet": "const DECLINED: Status[] = [\"auto_denied\", \"denied\"];\nconst CAN_APPEAL: Status[] = [\"auto_denied\"]; // only auto_denied is appealable\n// ...\n{isDeclined ? <Reason text={reason} /> : null}\n{CAN_APPEAL.includes(status) ? <Button …/> : null}",
+    "potential_consequence": "A learner whose refund a human denied is shown an \"Ask a human to review\" button that always fails; they tap it, read \"Only an auto-denied refund can be appealed\", and conclude the appeal route is closed."
+  },
+  {
+    "lens": "adversarial",
+    "location": "apps/native/app/(app)/refund/[id].tsx:105-110,181",
+    "trigger_condition": "`formatPrice` renders `৳${amount}` on the raw integer, but `rebuild.ts` documents both `refund_amount` and `payment_transaction.amount` as poisha (BDT × 100) while `TIER_PRICING` stores 299.",
+    "guard_snippet": "function formatMinor(amount: number | null): string {\n  if (amount === null) return \"—\";\n  return `৳${(amount / 100).toFixed(2)}`; // amount is poisha per AC-12\n}\n// and settle the TIER_PRICING unit question before shipping either formatter.",
+    "potential_consequence": "The two units in the codebase disagree and nothing records which is which, so the learner is shown either a 100×-inflated refund amount or a fractional one — and whoever implements 5-3f's AC-12 boundary conversion will inherit the same ambiguity and could refund 100×."
+  },
+  {
+    "lens": "adversarial",
+    "location": "apps/native/app/(app)/refund/[id].tsx:198-203",
+    "trigger_condition": "The screen renders `data.providerRefundStatus` verbatim as the \"Provider\" row, with no mapping function, even though AC-14 requires an explicit gateway→`refundStatusEnum` mapping and notes the gateway word is `refunded`, not `completed`.",
+    "guard_snippet": "import { mapProviderStatus } from \"@community/api/lib/refund-status\";\nconst PROVIDER_LABEL: Record<string, string> = {\n  refunded: \"Refunded by provider\",\n  processing: \"Provider processing\",\n  cancelled: \"Cancelled by provider\",\n  failed: \"Provider declined\",\n};\n// ...\n{PROVIDER_LABEL[data.providerRefundStatus] ?? \"Unknown\"}",
+    "potential_consequence": "Gateway vocabulary leaks straight into the user-facing UI, the learner sees a raw API token where a money outcome should be, and the reserved mapping responsibility gets half-built here, one story before 5-3g is supposed to own it."
+  },
+  {
+    "lens": "adversarial",
+    "location": "apps/native/app/(app)/refund/request.tsx:70-83,90-99",
+    "trigger_condition": "The screen's `hasPaidPlan` gate is derived from `rebuild.getSubscription`, which selects `subscription` with `.limit(1)` and **no** `orderBy`, while `requestRefund` independently selects with `status IN ('active','cancelled') ORDER BY created_at DESC` — two different, unordered/ordered reads of the same table.",
+    "guard_snippet": "// rebuild.ts getSubscription:\n.orderBy(desc(subscription.createdAt))\n// or better, one shared predicate used by both the screen and the router:\nexport const REFUNDABLE_SUBSCRIPTION = and(\n  inArray(subscription.status, [\"active\", \"cancelled\"])\n);",
+    "potential_consequence": "For a user with more than one subscription row (an expired one plus a current one) Postgres may return the expired row, so the screen shows \"No paid plan\" while the server would accept the request — the user is told they cannot refund and the reason is invisible."
+  },
+  {
+    "lens": "adversarial",
+    "location": "apps/native/app/(app)/refund/request.tsx:52-59,65-70",
+    "trigger_condition": "The submit mutation sends no client-generated idempotency key; only `disabled={submit.isPending}` guards the tap, and any transport-level retry or user-driven re-entry re-runs the whole classify-and-insert.",
+    "guard_snippet": "const clientRequestId = useRef(crypto.randomUUID());\nsubmit.mutate({ reason: trimmed, clientRequestId: clientRequestId.current });\n// server: unique index on (userId, clientRequestId) and\n// .onConflictDoNothing() -> return the existing row",
+    "potential_consequence": "The mobile client is the least reliable caller in the system and has the most retry pressure (backgrounding, flaky networks); without a key its retries become duplicate refund rows that the executor will each pay."
+  },
+  {
+    "lens": "adversarial",
+    "location": "apps/native/utils/crash-reporter.ts:130-146, apps/native/app/_layout.tsx:68-70",
+    "trigger_condition": "`submitCrashReport` is wired at exactly one call site, and a repo-wide search shows `anr` and `black_screen` have **no** producer anywhere — the only refund-qualifying crash the app can emit is `force_close` from the AppState listener.",
+    "guard_snippet": "// Until anr/black_screen detectors exist, do not let force_close alone\n// drive money. Either instrument them, or qualify the crash trigger:\ncrashAutoApproves(input) && input.crashCount >= CRASH_AUTO_APPROVE_COUNT &&\n  input.hasNonBackgroundCrash // requires anr|black_screen|verified signal",
+    "potential_consequence": "\"≥3 critical crashes\" currently means \"the user backgrounded the app three times in a week\". A user who swipes the app away three times gets a full unconditional refund, while every genuine ANR or black screen — the bugs the trigger exists for — is recorded nowhere and never auto-approves."
+  },
+  {
+    "lens": "adversarial",
+    "location": "apps/native/utils/crash-reporter.ts:136-141",
+    "trigger_condition": "`persistCrashReport` sends only `type`, `appVersion`, `osVersion`, `deviceModel`; `CrashReport.message` is dropped and `crashEvent.stackTrace` — a column the server already accepts at 2000 chars — is never populated.",
+    "guard_snippet": "await client.rebuild.reportCrash({\n  type,\n  appVersion: report.appVersion,\n  osVersion: report.osVersion,\n  deviceModel: report.deviceModel,\n  stackTrace: report.message.slice(0, 2000),\n});",
+    "potential_consequence": "Persisted crash rows carry no description of what crashed, so when a refund is auto-approved on `triggerCrashes >= 3` neither the reviewer nor an engineer can tell whether three genuine defects or three spurious background kills justified the payout."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/auth/src/index.ts:73-88",
+    "trigger_condition": "`lastLoginAt` is written from a `session.create` hook while `session.updateAge` is 86_400, so a 24-hour session rotation creates a new session row and rewrites the value; the write is wrapped in a bare `catch {}` and the column is nullable with no backfill.",
+    "guard_snippet": "databaseHooks: {\n  session: {\n    create: {\n      after: async (createdSession) => {\n        await db.update(userProfile)\n          .set({ lastLoginAt: new Date() })\n          .where(eq(userProfile.userId, createdSession.userId))\n          .catch((e) => logger.error({ err: e }, \"lastLoginAt write failed\"));\n      },\n    },\n  },\n}\n// and name/document it as lastSessionCreatedAt, not lastLoginAt",
+    "potential_consequence": "The column is documented and consumed as \"last successful login\" but measures \"time since a session row was created\", and every pre-existing user reads `null` — so AC-8's duration is neither measured nor recorded, and the one trigger that silently swallows its own write failures degrades to never firing without any signal."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/package.json:12",
+    "trigger_condition": "`\"scripts\": {}` means `turbo check-types` has no task for `packages/api`; the router is only typechecked transitively because `apps/native/utils/orpc.ts` imports `AppRouterClient`, and the new test file is in no consumer's program at all.",
+    "guard_snippet": "\"scripts\": {\n  \"check-types\": \"tsc --noEmit\"\n}\n// verify with: turbo check-types --filter=@community/api\n// (today: `turbo check-types --dry=json | jq '.tasks[]|select(.taskId|test(\"api\"))'` returns nothing)",
+    "potential_consequence": "Any `packages/api` file not reachable from a consumer — a new export, a utility, or `src/lib/__tests__/refund-classifier.test.ts` — is never typechecked in CI, so the money path's type safety depends on an accidental import chain in a different app."
+  },
+  {
+    "lens": "adversarial",
+    "location": "turbo.json:7-30, package.json:30",
+    "trigger_condition": "`turbo.json` declares no `test` task, and the new root `test` script is a raw three-part shell chain mixing two runners (`bun test` and `pnpm --filter native test`) outside turbo's cache and dependency graph.",
+    "guard_snippet": "\"tasks\": {\n  // ...\n  \"test\": { \"dependsOn\": [\"^test\"], \"outputs\": [] }\n}\n// and declare a \"test\" script in every package that has tests,\n// so `turbo test` is the single entry point.",
+    "potential_consequence": "There is no declared, cacheable, CI-visible way to run the refund tests; the classifier suite that gates money movement is reachable only through a hand-typed root script, and `bunfig.toml`'s preload applies to only one of the two runner invocations."
+  },
+  {
+    "lens": "adversarial",
+    "location": "_bmad-output/implementation-artifacts/stories/epic-005-story-053.md:15",
+    "trigger_condition": "The story file's `## Status` is still `ready-for-dev`, and `sprint-status.yaml` marks `5-3b-instrument-login-failure: review` even though AC-8 in the same document states no login failure or success counter exists and instructs \"either instrument … or drop the row … do not ship a trigger that can never fire\".",
+    "guard_snippet": "## Status\nreview\n\n// and in sprint-status.yaml:\n5-3b-instrument-login-failure: in-progress   # AC-8 unmet: trigger fires on\n//   an unfiltered technical ticket, no failure counter exists",
+    "potential_consequence": "The tracking record asserts the login-failure trigger was instrumented when only the success side was, so the AC that AC-2's third row depends on reads as delivered and will not be revisited before the executor pays out on it."
+  },
+  {
+    "lens": "adversarial",
+    "location": "packages/api/src/lib/refund-classifier.ts:39-40",
+    "trigger_condition": "`REFUND_DENIAL_TEMPLATE` is exported and never imported anywhere; `requestRefund` stores the bare classifier string, and `resolveBody` in the status screen returns that string raw for declined rows.",
+    "guard_snippet": "export function denialMessage(reason: string): string {\n  return REFUND_DENIAL_TEMPLATE.replace(\"[reason]\", reason);\n}\n// requestRefund:\ndenialReason: decision.path === \"auto_deny\" ? denialMessage(decision.reason) : null,",
+    "potential_consequence": "AC-4's plain-language explanation with the appeal invitation is never rendered; the learner is told only \"6 completed sessions and more than 14 days since the charge\" with no indication that an appeal exists on this screen, and the template sits in the codebase looking implemented."
+  },
+  {
+    "lens": "adversarial",
+    "location": "GLOSSARY.md:294-297",
+    "trigger_condition": "The new glossary entry states \"Auto-deny triggers include >14 days since charge **or** >5 completed sessions\" and cites `addendum.md §B` as its source — the exact OR rule the story's Decision Records section superseded on 2026-10-11, and the rule the adversarial review already rejected as harmful.",
+    "guard_snippet": "**Refund request** — A refund classified into exactly one of three paths.\n: Auto-approve triggers include ≥3 critical crashes in the first 7 days, never completing\n  a session within 14 days, or a login failure over 72h within the first 14 days.\n  Auto-deny requires **both** >5 completed sessions **and** >14 days since charge.\n  Everything else goes to human review with a 7-day SLA.\n  `[source: epic-005-story-053.md §Decision Records, resolved 2026-10-11]`",
+    "potential_consequence": "The canonical domain vocabulary now teaches the wrong rule and attributes it to the superseded source, so any future work — a new threshold, a reviewer, an admin UI — reads \"or\" and re-introduces the auto-denial of the users FR-20 protects."
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:38-56",
+    "trigger_condition": "Newest completed charge may belong to a different subscription than the one refunded",
+    "guard_snippet": "and(eq(paymentTransaction.userId, userId), eq(paymentTransaction.status, \"completed\"), eq(paymentTransaction.subscriptionId, sub.id))",
+    "potential_consequence": "refundAmount and paymentTransactionId point at an unrelated purchase"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:130-175",
+    "trigger_condition": "Repeat request for the same subscription inserts another row, no existing-request check",
+    "guard_snippet": "const open = await db.select().from(refundRequest).where(and(eq(refundRequest.subscriptionId, sub.id), inArray(refundRequest.status, OPEN_STATUSES))); if (open.length) throw new ORPCError(\"CONFLICT\", { message: \"Refund already requested\" });",
+    "potential_consequence": "Several auto-approved rows can each trigger a payout for one charge"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:167-169",
+    "trigger_condition": "Auto-approve and auto-deny rows get a fabricated 14-day SLA deadline",
+    "guard_snippet": "slaDeadline: decision.path === \"human_review\" ? slaDeadline : null  // requires nullable sla_deadline",
+    "potential_consequence": "Decided refunds display a fake \"Decision by\" date to the user"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:311-317",
+    "trigger_condition": "auto_approved rows are written but no query in the router ever reads them",
+    "guard_snippet": "inArray(refundRequest.status, [\"human_review\", \"pending\", \"auto_approved\"])",
+    "potential_consequence": "Approved refunds never reach an executor or an operator queue"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:273-299",
+    "trigger_condition": "Admin review accepts rows already completed, denied or approved",
+    "guard_snippet": "if (![\"human_review\", \"pending\"].includes(row.status)) throw new ORPCError(\"BAD_REQUEST\", { message: \"Already reviewed\" });",
+    "potential_consequence": "Terminal refunds are flipped and resolvedAt is overwritten"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:239-270",
+    "trigger_condition": "Appeal UPDATE carries no status predicate, racing a concurrent admin review",
+    "guard_snippet": ".where(and(eq(refundRequest.id, row.id), eq(refundRequest.status, \"auto_denied\"))) // check returning().length",
+    "potential_consequence": "Late appeal resets a decided refund back to human_review"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:88-102",
+    "trigger_condition": "Any open technical or other ticket counts as a login-failure ticket",
+    "guard_snippet": "and(inArray(supportTicket.status, [...OPEN_TICKET_STATUSES]), sql`lower(${supportTicket.subject} || ' ' || ${supportTicket.description}) ~ '(login|sign in|otp|password|verify)')",
+    "potential_consequence": "Unrelated ticket auto-approves a full refund"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/lib/refund-classifier.ts:48-60",
+    "trigger_condition": "Negative daysSinceCharge satisfies both auto-approve window checks",
+    "guard_snippet": "const daysSinceCharge = Math.max(0, daysBetween(chargeDate, now));",
+    "potential_consequence": "Future-dated or skewed charge auto-approves regardless of real age"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/lib/refund-classifier.ts:64-69",
+    "trigger_condition": "Login-failure branch has no cap on days since the charge",
+    "guard_snippet": "return input.daysSinceCharge <= AUTO_DENY_DAYS_SINCE_CHARGE && input.hasOpenLoginFailureTicket && (input.hoursSinceLastSuccessfulLogin ?? 0) >= LOGIN_FAILURE_HOURS;",
+    "potential_consequence": "A year-old charge with an open ticket is auto-approved"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:59-71",
+    "trigger_condition": "Session count is lifetime, not scoped to the period since the charge",
+    "guard_snippet": "and(eq(callRoom.status, \"ended\"), gte(callRoom.endedAt, chargeDate), or(eq(callRoom.participantA, userId), eq(callRoom.participantB, userId)))",
+    "potential_consequence": "Pre-charge sessions block never-connected and satisfy auto-deny"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:161",
+    "trigger_condition": "completedAt null falls back to checkout createdAt, shifting every window",
+    "guard_snippet": "if (!charge.completedAt) throw new ORPCError(\"BAD_REQUEST\", { message: \"Charge has no completion time\" });",
+    "potential_consequence": "Older checkout date widens crash and never-connected windows"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:116",
+    "trigger_condition": "Charge date uses app clock while crash rows use database defaultNow clock",
+    "guard_snippet": "timestamp(\"completed_at\", { withTimezone: true }) // same clock for paymentTransaction and crashEvent",
+    "potential_consequence": "Day math shifts by the app/database timezone offset"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:185-188",
+    "trigger_condition": "User's reason is dropped on auto-approve and auto-deny paths",
+    "guard_snippet": "denialReason: decision.path === \"auto_deny\" ? decision.reason : input.reason ?? null, userReason: input.reason ?? null",
+    "potential_consequence": "Support loses the user's explanation on two of three paths"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/routers/refund.ts:311-317",
+    "trigger_condition": "listPendingReviews caps at 100 rows with no pagination input",
+    "guard_snippet": ".input(z.object({ limit: z.number().default(50).max(200), cursor: z.string().nullish() }))",
+    "potential_consequence": "Overdue refunds past the first page are never seen"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/lib/refund-classifier.ts:39",
+    "trigger_condition": "REFUND_DENIAL_TEMPLATE is exported but never wired into the denial path",
+    "guard_snippet": "denialReason: REFUND_DENIAL_TEMPLATE.replace(\"[reason]\", decision.reason)",
+    "potential_consequence": "Denials never tell the user that an appeal exists"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/auth/src/index.ts:76-81",
+    "trigger_condition": "Login before a user_profile row exists updates zero rows silently",
+    "guard_snippet": "db.insert(userProfile).values({ userId: createdSession.userId, lastLoginAt: new Date() }).onConflictDoUpdate({ target: userProfile.userId, set: { lastLoginAt: new Date() } });",
+    "potential_consequence": "lastLoginAt stays null, 72-hour auto-approve unreachable for that user"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/auth/src/index.ts:73-89",
+    "trigger_condition": "lastLoginAt refreshes only on session create, never on session update",
+    "guard_snippet": "session: { create: { after: touch }, update: { after: touch } }",
+    "potential_consequence": "Continuously signed-in user reads as a 72-hour login failure"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "apps/native/app/_layout.tsx:63-71",
+    "trigger_condition": "Stale call state never cleared, so every foregrounding resubmits force_close",
+    "guard_snippet": "submitCrashReport(reportCrash(\"force_close\", \"App killed while in background\")); clearCallState().catch(() => undefined);",
+    "potential_consequence": "Duplicate rows inflate crashCount to the auto-approve threshold"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "apps/native/utils/crash-reporter.ts:130-146",
+    "trigger_condition": "Unauthenticated or offline crash submission is silently dropped",
+    "guard_snippet": "await AsyncStorage.setItem(\"pending_crashes\", JSON.stringify(payload)); // flush after session restore",
+    "potential_consequence": "Refund crash counts under-report, wrong classification path"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "apps/native/app/(app)/refund/[id].tsx:158-159",
+    "trigger_condition": "Status value absent from STATUS_VIEW makes the map lookup undefined",
+    "guard_snippet": "const view = STATUS_VIEW[status] ?? FALLBACK_VIEW;",
+    "potential_consequence": "Render throws while reading view.badgeBg"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "apps/native/app/(app)/refund/[id].tsx:144-155",
+    "trigger_condition": "Any query error, including 401 or 500, renders \"Request not found\"",
+    "guard_snippet": "if (error) return <EmptyState title=\"Could not load\" body={error.message} actionLabel=\"Retry\" onAction={() => refetch()} />;",
+    "potential_consequence": "Transient or auth failures look permanent, no retry path"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "apps/native/app/(app)/refund/request.tsx:38,74",
+    "trigger_condition": "Subscription query error renders the \"No paid plan\" empty state",
+    "guard_snippet": "const { data: subscription, isLoading, error } = useQuery(...); if (error) return <EmptyState title=\"Could not load your plan\" .../>;",
+    "potential_consequence": "Signed-out users are told they have nothing to refund"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "apps/native/app/(app)/refund/request.tsx:71-74",
+    "trigger_condition": "Screen gate uses getSubscription while router uses latest active or cancelled row",
+    "guard_snippet": "const { data: eligibility } = useQuery(orpc.refund.refundEligibility.queryOptions()); if (!eligibility?.refundable) return <EmptyState .../>;",
+    "potential_consequence": "Valid refund blocked, or shown amount differs from refunded amount"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "apps/native/app/(app)/refund/[id].tsx:209-226",
+    "trigger_condition": "Appeal button shown for status denied, which appealRefund rejects",
+    "guard_snippet": "{status === \"auto_denied\" ? (<Button onPress={handleAppeal} ...>Ask a human to review</Button>) : null}",
+    "potential_consequence": "Tapping appeal always errors on permanently denied refunds"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "apps/native/app/(app)/refund/[id].tsx:105-110",
+    "trigger_condition": "refundAmount is stored in smallest currency unit but rendered unscaled",
+    "guard_snippet": "return `৳${(amount / 100).toFixed(2)}`;",
+    "potential_consequence": "A 120 taka charge displays as 12000"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "apps/native/app/(app)/refund/[id].tsx:105-110",
+    "trigger_condition": "Refund row stores no currency yet the symbol is hardcoded to ৳",
+    "guard_snippet": "currency: paymentTransaction.currency // selected in getRefundStatus, then SYMBOLS[currency] ?? currency",
+    "potential_consequence": "Non-BDT refunds display the wrong currency symbol"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "pnpm-lock.yaml:140,558",
+    "trigger_condition": "Removed better-auth resolution pinned @better-auth/utils 0.4.1, re-added at 0.4.0",
+    "guard_snippet": "guard_snippet",
+    "potential_consequence": "Web and native resolve different utils copies than before",
+    "kind": "deletion",
+    "confidence": "low"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "pnpm-lock.yaml:558",
+    "trigger_condition": "Resolved @better-auth/utils version for one importer changed without a manifest edit",
+    "guard_snippet": "pnpm add -w @better-auth/utils@0.4.1  # or commit the 0.4.0 downgrade deliberately",
+    "potential_consequence": "Unreviewed dependency downgrade reaches apps/web auth path",
+    "kind": "deletion",
+    "confidence": "low"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/db/src/migrations/0004_amazing_proudstar.sql:1",
+    "trigger_condition": "\"Migrations 0003 and 0004 add them\" (the two refund columns)",
+    "guard_snippet": "0003 adds payment_transaction_id and refund_amount; 0004 adds user_profile.last_login_at",
+    "potential_consequence": "Believes 0004 carries a refund column; it carries none",
+    "kind": "claim",
+    "confidence": "high"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/api/src/lib/refund-classifier.ts:92-115",
+    "trigger_condition": "\"Either alone routes to human review\" asserted for the >5 sessions case",
+    "guard_snippet": "crashAutoApproves(input) // evaluated first, so 40 sessions + 3 crashes yields auto_approve",
+    "potential_consequence": "Expects session-only cases to reach a human; they auto-approve",
+    "kind": "claim",
+    "confidence": "high"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "apps/native/app/_layout.tsx:63-71",
+    "trigger_condition": "\"Adds a writer\" for refund-qualifying crashes; only force_close is ever emitted",
+    "guard_snippet": "grep -rn submitCrashReport apps/native # _layout.tsx only; anr and black_screen have no producer",
+    "potential_consequence": "Crash auto-approve reachable only through backgrounding interruptions",
+    "kind": "claim",
+    "confidence": "high"
+  },
+  {
+    "lens": "edge-case-hunter",
+    "location": "packages/auth/src/index.ts:78-81",
+    "trigger_condition": "\"This change instruments login\" assumes the profile row exists at sign-in",
+    "guard_snippet": "db.update(userProfile)...where(eq(userProfile.userId, createdSession.userId)) // 0 rows when no profile yet",
+    "potential_consequence": "Believes login failures are measurable; lastLoginAt stays null",
+    "kind": "claim",
+    "confidence": "high"
+  },
+  {
+    "lens": "verification-gap",
+    "title": "Every ownership and status guard in the new refund router is unverified",
+    "location": "packages/api/src/routers/refund.ts:225 (getRefundStatus userId predicate), :246 (appealRefund userId predicate), :257 (appealRefund status guard)",
+    "trigger_condition": "The refund router's auth/ownership/status predicates can invert or drop without any test failing, because no test in the repo imports or invokes it.",
+    "guard_snippet": "Absent: no test constructs a refundRequest row owned by user A and calls `getRefundStatus({refundId})` / `appealRefund({refundId})` as user B and asserts ORPCError NOT_FOUND, and none calls appealRefund on a row whose status is `approved` or `human_review` and asserts BAD_REQUEST. The repo already has a home for exactly this shape — `packages/api/src/routers/__tests__/` already holds bulk-import.test.ts, content-embedding.test.ts, content-embedding-update.test.ts, interaction-feedback.test.ts, profile-embedding.test.ts, rating-matching.test.ts, secure-content-creation.test.ts.",
+    "potential_consequence": "`getRefundStatus` returns another user's refund row — status, `refundAmount`, `denialReason`/`approvalReason`, `slaDeadline` — to any authenticated caller who guesses or learns a refund id, since `eq(refundRequest.userId, context.session.user.id)` at :225 is the only thing preventing it. `appealRefund` regresses the other way: inverting `row.status !== \"auto_denied\"` (:257) lets any owner of an already-approved refund drive it back to `human_review` and overwrite `slaDeadline` (:266). Neither ships a failing test.",
+    "gap_shape": "regression-gap",
+    "consumer": "the two native screens that are the router's only callers — `orpc.refund.getRefundStatus.queryOptions(...)` at apps/native/app/(app)/refund/[id].tsx:117 and `orpc.refund.appealRefund.mutationOptions(...)` at apps/native/app/(app)/refund/[id].tsx:121",
+    "evidence": "Search 1 — `find` over the whole repo for *.test.ts|*.test.tsx|*.spec.ts|*.spec.tsx (node_modules/.git/.next pruned) returned exactly 32 files: apps/native/__tests__/{auth-redirect-guard.test.tsx, tab-shell.test.tsx, text-field.test.tsx}, apps/native/utils/{call-state-storage.test.ts, network-state.test.ts, __tests__/crash-reporter.test.ts}, packages/api/src/lib/__tests__/refund-classifier.test.ts, the 7 files in packages/api/src/routers/__tests__/, and 16 Playwright specs under tests/api and tests/e2e. Grepping all of them for `refund` (case-insensitive) returned matches ONLY inside packages/api/src/lib/__tests__/refund-classifier.test.ts (lines 2,9, 14, 15, 19 and every `classifyRefundRequest` call) — zero matches in any router test, any native test, any tests/api spec, any tests/e2e spec. Search 2 — repo-wide grep for `routers/refund|refundRouter|requestRefund|appealRefund|getRefundStatus|reviewRefund|listPendingReviews` returned only packages/api/src/routers/index.ts:11,27 and the definition sites inside packages/api/src/routers/refund.ts, plus the native call sites — no test file. Search 3 — the root `test` script added in this diff (`package.json:30`) is `bun test packages/api && bun test --cwd apps/native utils && pnpm --filter native test`; `bun test packages/api` reports 150 pass / 0 fail and contains no refund-router file. Search 4 — all 16 Playwright specs are inert: `test.skip(` counts 4–23 per file with `grep -cE '^\\s*test\\('` = 0 for every one, and none is referenced by any script in package.json."
+  },
+  {
+    "lens": "verification-gap",
+    "title": "The router overwrites the slaDeadline contract the classifier test pins, and nothing observes the substitution",
+    "location": "packages/api/src/routers/refund.ts:167-169",
+    "trigger_condition": "The unit suite pins `slaDeadline === null` on the auto_approve and auto_deny paths, but the only production consumer replaces that null with a fabricated date, so the asserted contract does not describe what ships.",
+    "guard_snippet": "Absent: no assertion of the `slaDeadline` value actually persisted for an `auto_approved` or `auto_denied` row. The existing test asserts the opposite for the pure function — `expect(result.slaDeadline).toBeNull()` at packages/api/src/lib/__tests__/refund-classifier.test.ts:241 and :249 — but there is no test at the router boundary where the substitution happens.",
+    "potential_consequence": "`decision.slaDeadline ?? new Date(now.getTime() + AUTO_DENY_DAYS_SINCE_CHARGE * 86_400_000)` fabricates a 14-day deadline for every auto_approved row, reusing the auto-deny *threshold* constant as an SLA length. apps/native/app/(app)/refund/[id].tsx:110-116 renders that fabricated date to the user under the label \"Decision by\" on a refund the system has already approved — a decision that is already made is presented as pending for a further14 days. The regression is invisible because the assertion that exists lives one layer below the substitution.",
+    "gap_shape": "regression-gap",
+    "consumer": "the `auto_approved` branch render in apps/native/app/(app)/refund/[id].tsx:110 (`data.slaDeadline ? <DetailRow label=\"Decision by\" .../> : null`) fed by `getRefundStatus`'s `slaDeadline: refundRequest.slaDeadline` projection at packages/api/src/routers/refund.ts:219",
+    "evidence": "Read packages/api/src/lib/refund-classifier.ts:96-132 — all three non-human_review returns set `slaDeadline: null`. Read packages/api/src/routers/refund.ts:166-169 — the comment says 'slaDeadline is NOT NULL but only meaningful on the human-review path' and then unconditionally substitutes `AUTO_DENY_DAYS_SINCE_CHARGE * 86_400_000`; grep confirms `AUTO_DENY_DAYS_SINCE_CHARGE = 14` (refund-classifier.ts:14). Read packages/api/src/lib/__tests__/refund-classifier.test.ts:238-251 in full — describe block 'SLA deadline is absent outside human review', UNIT-022 asserts null for auto_approve (:241), UNIT-023 asserts null for auto_deny (:249); neither reaches the router. Repo-wide grep for `routers/refund|requestRefund|getRefundStatus` in all 32 test/spec files returned no match outside the classifier test, so the router's actual `slaDeadline` write at :169 and :188 is unobserved."
+  },
+  {
+    "lens": "verification-gap",
+    "title": "daysBetween/hoursBetween — the only functions that derive the classifier's numeric inputs from Dates — have zero assertions",
+    "location": "packages/api/src/lib/refund-classifier.ts:135 and :139",
+    "trigger_condition": "The threshold matrix is tested only through pre-computed integers; the Date→number derivation that production actually uses is untested, so an inverted argument order or a changed divisor shifts every threshold silently.",
+    "guard_snippet": "Absent: no assertion such as `expect(hoursBetween(chargeDate, NOW)).toBe(72)` / `expect(daysBetween(lastLoginAt, NOW)).toBe(14)`, and none covering the `Math.floor` boundary (72.9h → 72, 14.9d → 14) that decides exactly-at-threshold classifications.",
+    "potential_consequence": "`daysBetween(chargeDate, now)` at packages/api/src/routers/refund.ts:116 and `hoursBetween(profile.lastLoginAt, now)` at :124 are the sole producers of `daysSinceCharge` and `hoursSinceLastSuccessfulLogin`. Swapping to `daysBetween(now, chargeDate)` — which is `Math.floor` of a negative number — flips both to large negative values, which satisfy `<= 7` and `>= 72` simultaneously, so every refund request auto-approves regardless of evidence. All 23 classifier tests stay green because every one of them supplies `daysSinceCharge`/`hoursSinceLastSuccessfulLogin` as literals.",
+    "gap_shape": "regression-gap",
+    "consumer": "`buildClassifierInput` in packages/api/src/routers/refund.ts:116 and :124, whose output is passed straight into `classifyRefundRequest` at :163",
+    "evidence": "Repo-wide grep for `\\b(daysBetween|hoursBetween)\\b` across all *.ts/*.tsx outside node_modules returned exactly five hits: the two definitions (packages/api/src/lib/refund-classifier.ts:135, :139), the two imports (packages/api/src/routers/refund.ts:19, :20) and the two call sites (:116, :124). No test file appears. Read packages/api/src/lib/__tests__/refund-classifier.test.ts in full (252 lines): the `input()` factory at :19-29 hard-codes `daysSinceCharge: 3` and `hoursSinceLastSuccessfulLogin: 1` as numbers, and no test in the file constructs a `Date` or calls either helper. Confirmed the helper bodies are `Math.floor((to.getTime() - from.getTime()) / DAY_MS)` and `/ HOUR_MS`."
+  },
+  {
+    "lens": "verification-gap",
+    "title": "The never-connected auto-approve window can be halved with the whole suite green",
+    "location": "packages/api/src/lib/refund-classifier.ts:56 (`input.daysSinceCharge <= NEVER_CONNECTED_WINDOW_DAYS`)",
+    "trigger_condition": "The 14-day boundary of the never-connected auto-approve row is never asserted; the suite samples day 3 and day 15 but nothing in between, so the lower edge is unpinned.",
+    "guard_snippet": "Absent: `classifyRefundRequest(input({everCompletedSession: false, completedSessionCount: 0, daysSinceCharge: 14}), NOW)` expecting `\"auto_approve\"`, matching the boundary tests that DO exist for the other five constants (days 7 at UNIT-004, sessions 5 at UNIT-014, days 14 at UNIT-015).",
+    "potential_consequence": "A user who never connected but bought8–14 days ago — inside the consumer-facing promise the story's own glossary records as the 14-day never-connected window — is routed to human review with a 7-day SLA instead of being auto-approved, so they wait on a human for money they were entitled to receive immediately.",
+    "gap_shape": "regression-gap",
+    "consumer": "`neverConnectedAutoApproves` at packages/api/src/lib/refund-classifier.ts:53-58, consumed by `classifyRefundRequest` at :104 and driven from real charge dates by packages/api/src/routers/refund.ts:116",
+    "evidence": "Read packages/api/src/lib/__tests__/refund-classifier.test.ts:65-83 — UNIT-005 uses `input({everCompletedSession: false, completedSessionCount: 0})`, which inherits `daysSinceCharge: 3` from the factory at :22; UNIT-006 uses `daysSinceCharge: 15`. No test uses 8, 10, 13 or 14. Mechanically confirmed by copying the classifier and its test to a scratch directory outside the repo and mutating only the constant: setting `NEVER_CONNECTED_WINDOW_DAYS = 7` produced `23 pass / 0 fail / 28 expect() calls` (identical to the unmodified baseline), while setting it to `30` produced `22 pass / 1 fail` (caught by UNIT-006). The failing direction is the only one covered. Cross-checked that the other five constants each have a pair straddling their boundary: CRASH_AUTO_APPROVE_COUNT (UNIT-001/002), CRASH_AUTO_APPROVE_WINDOW_DAYS (UNIT-003/004), LOGIN_FAILURE_HOURS (UNIT-007/008), AUTO_DENY_SESSION_COUNT (UNIT-011/014), AUTO_DENY_DAYS_SINCE_CHARGE (UNIT-011/015), HUMAN_REVIEW_SLA_DAYS (UNIT-020 exact ISO comparison)."
+  },
+  {
+    "lens": "verification-gap",
+    "title": "UNIT-016's `not.toBe(\"auto_deny\")` is too weak to observe any change to the login-failure branch",
+    "location": "packages/api/src/lib/__tests__/refund-classifier.test.ts:181",
+    "trigger_condition": "The only test touching the login-failure path together with an old charge asserts a negated path, so any change to that branch's behaviour — including adding a recency cap — leaves the suite green.",
+    "guard_snippet": "Absent: `expect(result.path).toBe(\"auto_approve\")` for the UNIT-016 seed `{completedSessionCount: 1, daysSinceCharge: 40, hasOpenLoginFailureTicket: true, hoursSinceLastSuccessfulLogin: 96}`, which is what the classifier actually returns and which is the AC-4 appeal case the story describes.",
+    "potential_consequence": "Adding a `daysSinceCharge <= 14` cap to `loginFailureAutoApproves` (a plausible 'refunds are for recent purchases' tightening) still reports23 pass / 0 fail. Under that change the exact user the story's Decision Records say must never be denied — one session, 40 days post-charge, 96h unable to sign in with an open ticket — silently stops being auto-approved and drops to a 7-day human-review queue.",
+    "gap_shape": "broken-verification-gap",
+    "consumer": "`loginFailureAutoApproves` at packages/api/src/lib/refund-classifier.ts:64-70, whose result becomes `status: \"auto_approved\"` and `approvalReason` at packages/api/src/routers/refund.ts:178-189",
+    "evidence": "Read packages/api/src/lib/__tests__/refund-classifier.test.ts:171-182 — the test is named 'one session with a 72h login failure is never auto-denied', seeds daysSinceCharge: 40 / hours 96 / ticket true, and asserts only `expect(result.path).not.toBe(\"auto_deny\")`. Read packages/api/src/lib/refund-classifier.ts:112-118 — with those inputs the third branch matches and returns `path: \"auto_approve\"`, so the assertion passes whether the branch returns auto_approve or falls through to human_review. Mechanically confirmed on scratch copies outside the repo: inserting `input.daysSinceCharge <= 14 &&` at the head of the predicate at :66 produced `23 pass / 0 fail / 28 expect() calls`."
+  },
+  {
+    "lens": "verification-gap",
+    "title": "submitCrashReport — the new crashEvent writer that makes the crash auto-approve path reachable — has no test at all",
+    "location": "apps/native/utils/crash-reporter.ts:120 (submitCrashReport) and :131 (persistCrashReport)",
+    "trigger_condition": "The DB write that AC-7 calls 'the single hardest blocker in the story' can silently stop happening, or can start sending `runtime_error`, and no test observes either.",
+    "guard_snippet": "Absent: no assertion that `submitCrashReport(reportCrash(\"force_close\", …))` invokes `client.rebuild.reportCrash` with `{type: \"force_close\", appVersion, osVersion, deviceModel}`, and none asserting `submitCrashReport` makes zero calls for a `runtime_error` report. The natural home already exists and is already in the run path — apps/native/utils/__tests__/crash-reporter.test.ts.",
+    "potential_consequence": "If the `await import(\"@/utils/orpc\")` at :134 or the `client.rebuild.reportCrash` call at :135 is renamed, or the `toRefundQualifying` filter at :118 is widened to include `runtime_error`, the suite stays green. Meanwhile `crashCountSince` (packages/api/src/routers/refund.ts:73) reads `crashEvent`, so the crashCount stays 0 and the AC-2 / AC-7 auto-approve row becomes permanently unreachable — the same dead-trigger failure AC-7 was written to prevent, reintroduced silently.",
+    "gap_shape": "regression-gap",
+    "consumer": "the crash-count classifier input at packages/api/src/routers/refund.ts:73-86 (`crashEvent` count filtered to force_close|anr|black_screen, gte chargeDate), which feeds `crashCount` at :119 and `triggerCrashes` at :180",
+    "evidence": "Repo-wide grep for `submitCrashReport` across all *.ts/*.tsx outside node_modules/.git returned exactly two files: apps/native/utils/crash-reporter.ts (the definition) and apps/native/app/_layout.tsx:1480 in the diff (the call site). The same grep restricted to test/spec files returned `(none)`. Read apps/native/utils/__tests__/crash-reporter.test.ts in full (92 lines): it imports only `reportCrash` (:10) and all five tests (6.2-UNIT-001 …6.2-UNIT-005, :34, :48, :59, :77, :86) assert report shape, device metadata, type coverage and message tolerance — none calls `submitCrashReport` or mocks `@/utils/orpc`. The file is in the normal run path: the root `test` script includes `bun test --cwd apps/native utils` and the new apps/native/bunfig.toml preloads ./utils/test-setup.ts. Cross-checked the server side is at least present: `reportCrash: protectedProcedure` in packages/api/src/routers/rebuild.ts:635-661 already validates `z.enum([\"force_close\",\"anr\",\"black_screen\"])`, so widening the client filter to runtime_error would be rejected server-side rather than persisted — but only because that enum happens to exist, and nothing tests the client-side filter."
+  },
+  {
+    "lens": "verification-gap",
+    "title": "The two new refund screens are outside every configured test discovery path",
+    "location": "apps/native/app/(app)/refund/request.tsx:38 (hasPaidPlan guard) and apps/native/app/(app)/refund/[id].tsx:117 (getRefundStatus query key)",
+    "trigger_condition": "The refund UI's paid-plan guard, query-key wiring and error branches can break with no test failing, because jest's testMatch and the bun invocation both exclude apps/native/app.",
+    "guard_snippet": "Absent: no test renders RefundRequestScreen asserting the `!hasPaidPlan` EmptyState for a `free`/`expired`/`refunded` subscription, and none renders RefundStatusScreen asserting the `error || !data` EmptyState at :154. The repo already has the exact harness — apps/native/__tests__/auth-redirect-guard.test.tsx uses `@testing-library/react-native` with a `jest.mock(\"@/lib/auth-client\")` and asserts on guard branches; tab-shell.test.tsx renders an `app/(app)` layout.",
+    "potential_consequence": "Dropping `\"cancelled\"` from `subscription?.status === \"active\" || subscription?.status === \"cancelled\"` (request.tsx:83) locks out exactly the users story 5.5 protects — cancelled but paid until period end — behind \"No paid plan\". Changing `queryKey: orpc.refund.getRefundStatus.key()` (:46 in request.tsx, :124 in [id].tsx) so the post-appeal invalidation misses would leave the screen showing the stale auto-denied badge with a working appeal button. Neither ships a failing test.",
+    "gap_shape": "regression-gap",
+    "consumer": "the entry point added in this diff at apps/native/app/(app)/subscription.tsx:1460 (`router.push(\"/(app)/refund/request\")`, gated on `data.status === \"active\" || data.status === \"cancelled\"`) and the post-submit `router.replace` to `/(app)/refund/[id]` at apps/native/app/(app)/refund/request.tsx:59-62",
+    "evidence": "Ran `jest --listTests` from apps/native against the jest-expo config and it collected exactly three files: `__tests__/text-field.test.tsx`, `__tests__/tab-shell.test.tsx`, `__tests__/auth-redirect-guard.test.tsx`. apps/native/jest.config.js:19-22 pins `testMatch` to `<rootDir>/__tests__/**/*.test.ts(x)`, which structurally excludes `app/**`. The other half of the native path, `bun test --cwd apps/native utils`, scopes to the `utils` directory and reported 29 pass / 0 fail — also excluding `app/**`. Searched all 32 test/spec files in the repo for `refund`: the only matches were inside packages/api/src/lib/__tests__/refund-classifier.test.ts. Read apps/native/__tests__/auth-redirect-guard.test.tsx:26-59 in full to confirm the screen-guard convention exists and asserts both branches (`queryByTestId(\"child\")).toBeNull()` while pending, `getByTestId(\"child\")).toBeTruthy()` once resolved)."
+  },
+  {
+    "lens": "verification-gap",
+    "title": "The packages/auth lastLoginAt write is invisible to every test in the repo",
+    "location": "packages/auth/src/index.ts:3429-3445 (databaseHooks.session.create.after)",
+    "trigger_condition": "The instrumentation that makes the login-failure auto-approve row measurable (AC-8) can be deleted, misspelled, or pointed at the wrong column and nothing observes it.",
+    "guard_snippet": "Absent: no test calls `createAuth()`, drives a session create, and asserts `userProfile.lastLoginAt` is updated; and no test asserts the hook's swallow-and-continue behaviour when the update throws.",
+    "potential_consequence": "`hoursSinceLastSuccessfulLogin` at packages/api/src/routers/refund.ts:123-125 reads `userProfile.lastLoginAt`, which migration 0004 adds as nullable with no backfill. If the hook silently stops firing, every existing user keeps `lastLoginAt = null`, the router returns `null`, and `loginFailureAutoApproves` (refund-classifier.ts:66-68) short-circuits on `!== null` — the third auto-approve row dies for the whole existing user base, invisibly. The hook's own comment concedes the failure mode is silent by design: 'A stale lastLoginAt reads as an unresolved failure, so a dropped write costs one refund.'",
+    "gap_shape": "regression-gap",
+    "consumer": "`buildClassifierInput`'s `hoursSinceLastSuccessfulLogin` projection at packages/api/src/routers/refund.ts:109-113 and :123-125, compared against `LOGIN_FAILURE_HOURS` at packages/api/src/lib/refund-classifier.ts:68",
+    "evidence": "Grepped all 32 test/spec files in the repo for `crashEvent|reportCrash|lastLoginAt|databaseHooks|createAuth` (case-insensitive): the only hits were the five `reportCrash` tests in apps/native/utils/__tests__/crash-reporter.test.ts — nothing matching `lastLoginAt`, `databaseHooks`, or `createAuth`. Grepped all test/spec files for `@community/auth|packages/auth`: a single hit, a prose comment at tests/api/reinstall-account-preservation.spec.ts:176 ('T1 — Enable account.accountLinking in packages/auth/src/index.ts'), which is inside a `test.skip` block and asserts nothing. Read packages/auth/src/index.ts:3429-3445 in the working tree via the diff hunk: the hook is registered under `databaseHooks.session.create.after` and wraps the `db.update(userProfile)` in a bare `try/catch` that swallows all errors. Also confirmed packages/auth/package.json has `\"scripts\": {}`, so no package-level task runs over it."
+  },
+  {
+    "lens": "verification-gap",
+    "title": "Migrations 0003/0004 are never applied by any test — no suite runs against a real schema at all",
+    "location": "packages/db/src/migrations/0003_peaceful_captain_midlands.sql:1-4 and 0004_amazing_proudstar.sql:1",
+    "trigger_condition": "The two new columns (`refund_request.payment_transaction_id`, `refund_request.refund_amount`, `user_profile.last_login_at`) are only exercised through live Drizzle queries, and no verification applies the migration chain to an existing database.",
+    "guard_snippet": "Absent: no step anywhere applies 0001→0004 to a database seeded at the 0002 shape and asserts the pre-existing `refund_request` rows survive with NULL in the two new columns while `refundAmount`/`paymentTransactionId` become writable. There is no migration harness to hang such an assertion on — no test script invokes `db:migrate` or `db:push`.",
+    "potential_consequence": "`refundAmount` and `paymentTransactionId` are nullable with `onDelete: set null`, so a deployment whose migration did not apply surfaces as a runtime Postgres error from the `.insert(refundRequest)` at packages/api/src/routers/refund.ts:171-190, and the FK/index correctness of 0003 is never exercised at all. Both new columns are written on the single most important insert in the feature, and the schema is only ever reached by a running server.",
+    "gap_shape": "regression-gap",
+    "consumer": "the insert at packages/api/src/routers/refund.ts:171-190 writing `paymentTransactionId: charge.id` (:176) and `refundAmount: charge.amount` (:177) into the two columns migration 0003 creates",
+    "evidence": "Enumerated the repo's entire test inventory (32 files) and grepped for `@community/db|drizzle|migrat` — the only hit was a comment in tests/api/reinstall-account-preservation.spec.ts, no real DB access in any test. Grepped repo-wide for `db:migrate|db:push|drizzle-kit` outside node_modules: only packages/db/package.json:13-16 (the four scripts), packages/db/drizzle.config.ts:2, turbo.json:20-26, and the four root package.json passthroughs — no test file, CI workflow, or setup script references any of them. Confirmed no CI workflow exists that could apply them. The API-side tests that do exist are pure-function tests with no database: read packages/api/src/routers/__tests__/rating-matching.test.ts:24-62, which re-declares its helpers locally and imports nothing from the router. All 16 Playwright specs under tests/api and tests/e2e are entirely `test.skip` (skip counts 4–23, active `test(` count 0 per file) and none is referenced by any script in package.json."
+  },
+  {
+    "lens": "verification-gap",
+    "title": "packages/api has no check-types script, so the new test file — and10 other api/auth sources — are typechecked by nothing",
+    "location": "packages/api/package.json:10 (`\"scripts\": {}`)",
+    "trigger_condition": "Turbo never schedules a check-types task for packages/api, so verification of those files depends entirely on whether apps/server or apps/native happens to pull them into their programs.",
+    "guard_snippet": "Absent: no `check-types` script in packages/api/package.json (verified: the key exists with an empty object), and none in packages/auth/package.json, packages/db/package.json, packages/env/package.json, packages/models/package.json, or packages/config/package.json. Only packages/ui/package.json declares `check-types`.",
+    "potential_consequence": "packages/api/src/lib/__tests__/refund-classifier.test.ts — the one new test in this diff — is in no tsc program at all, so `bun test` runs it with types erased and a type error in it is invisible. The same is true of packages/api/src/lib/model-stack.ts, packages/api/src/lib/shadow-runner.ts, all seven existing files in packages/api/src/routers/__tests__/, packages/auth/src/session-verifier.ts, and packages/auth/src/session-refresh.ts (server-side). Today the new *router* happens to be covered only because apps/server's `tsc -b` and apps/native's `tsc --noEmit` both happen to reach it transitively — coverage by accident of the import graph, not by configuration.",
+    "gap_shape": "other",
+    "consumer": "the new test file packages/api/src/lib/__tests__/refund-classifier.test.ts, and the refund router's only guarantee of typechecking — apps/server/tsconfig.json running `tsc -b` (`check-types`: \"tsc -b\")",
+    "evidence": "Read packages/api/package.json in full: `\"scripts\": {}`. Read packages/auth/package.json (`\"scripts\": {}`), packages/db/package.json (8 db:* scripts, no check-types), packages/env/package.json (no scripts key), packages/models/package.json (4 models:* scripts, no check-types), packages/config/package.json (no scripts), packages/ui/package.json (`\"check-types\": \"tsc --noEmit\"`). Read turbo.json — the `check-types` task is `dependsOn: [\"^check-types\"]`, which only runs in packages that declare the script; this matches the observed `pnpm check-types` run of 3 of 10 packages. Proved the transitive coverage empirically with `tsc -p apps/server/tsconfig.json --listFilesOnly`: packages/api/src/routers/refund.ts and lib/refund-classifier.ts are both in the program, while 11 api/auth files on disk are not. Same check against apps/native/tsconfig.json: 10 api/auth files absent, including lib/__tests__/refund-classifier.test.ts."
+  },
+  {
+    "lens": "verification-gap",
+    "title": "refundAmount is stored in poisha and rendered as taka with no conversion",
+    "location": "apps/native/app/(app)/refund/[id].tsx:101-110 (formatPrice) and :171-173 (the Amount row)",
+    "trigger_condition": "The status screen formats a poisha integer as if it were major units, and nothing renders the screen to notice.",
+    "guard_snippet": "Absent: no assertion that the Amount row shows `৳29` for a 299-poisha refund. The repo has the harness for it — the jest screen tests in apps/native/__tests__/ — but the file is outside jest's testMatch.",
+    "potential_consequence": "`refundAmount: integer(\"refund_amount\") // in poisha (BDT × 100)` at packages/db/src/schema/rebuild.ts:286 is written from `charge.amount` at packages/api/src/routers/refund.ts:177, then rendered by `` `৳${amount}` `` with no division. A 299-poisha monthly premium shows as৳299 to the user on the refund confirmation screen — a 100× overstatement of the refund they are about to receive. Story AC-12 names this exact conversion as the requirement (poisha in, major units out) and the correction lives in the un-built executor, so the display path has no conversion anywhere.",
+    "gap_shape": "other",
+    "consumer": "the DetailRow rendered at apps/native/app/(app)/refund/[id].tsx:168-173 from `data.refundAmount`, projected by `getRefundStatus` at packages/api/src/routers/refund.ts:217",
+    "evidence": "Read apps/native/app/(app)/refund/[id].tsx:101-106 in full — `function formatPrice(amount: number | null) { if (amount === null) return \"—\"; return `৳${amount}`; }`, no division. Read packages/db/src/schema/rebuild.ts:286 and :359 — both `refundAmount` and `paymentTransaction.amount` are annotated `// in poisha (BDT × 100)`; grep for `poisha` repo-wide returns exactly those two schema lines and no conversion site. Confirmed against the sibling site apps/native/app/(app)/subscription.tsx:41-48, which has the same `৳${amount}` formatting for `data.amount`, fed by `amount: subRow.amount` at packages/api/src/routers/rebuild.ts:136 — so this is a duplicated defect, not a new convention, and there is no test pinning either one. Noted in the story's own AC-12 (epic-005-story-053.md:635-644) that the adapter 'passes `params.amount.toFixed(2)` straight through, so passing poisha refunds 100× the intended amount'. The un-built executor (5-3f) is where the correction would land, so nothing in this diff observes the display value."
+  }
+]
