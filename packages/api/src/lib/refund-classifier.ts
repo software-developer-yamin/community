@@ -19,6 +19,16 @@ const HOUR_MS = 60 * 60 * 1000;
 
 export type RefundPath = "auto_approve" | "auto_deny" | "human_review";
 
+export type RefundStatus =
+  | "pending"
+  | "auto_approved"
+  | "auto_denied"
+  | "human_review"
+  | "approved"
+  | "denied"
+  | "processing"
+  | "completed";
+
 export type CrashType = "force_close" | "anr" | "black_screen";
 
 export interface RefundClassifierInput {
@@ -136,6 +146,20 @@ export function classifyRefundRequest(
     slaDeadline: new Date(now.getTime() + HUMAN_REVIEW_SLA_DAYS * DAY_MS),
     reason: "Gray area — outside every automatic threshold",
   };
+}
+
+/** Terminal denials. "Closed" means no money moved — `completed` is not here
+ *  because money already left and a new request must still be blocked. */
+const CLOSED_REFUND_STATUSES: readonly RefundStatus[] = [
+  "auto_denied",
+  "denied",
+];
+
+/** Whether a refund in `status` may still move money, and so must block a second
+ *  request for the same charge. Fails closed: an unrecognised status blocks,
+ *  because treating it as closed would permit a second payout. */
+export function isOpenRefundStatus(status: string): boolean {
+  return !CLOSED_REFUND_STATUSES.includes(status as RefundStatus);
 }
 
 export function daysBetween(from: Date, to: Date): number {

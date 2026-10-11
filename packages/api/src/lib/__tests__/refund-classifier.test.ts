@@ -11,8 +11,11 @@
 
 import { describe, expect, test } from "bun:test";
 
-import type { RefundClassifierInput } from "../refund-classifier";
-import { classifyRefundRequest } from "../refund-classifier";
+import type { RefundClassifierInput, RefundStatus } from "../refund-classifier";
+import {
+  classifyRefundRequest,
+  isOpenRefundStatus,
+} from "../refund-classifier";
 
 const NOW = new Date("2026-10-11T00:00:00.000Z");
 
@@ -287,6 +290,52 @@ describe("classifyRefundRequest", () => {
         NOW
       );
       expect(result.slaDeadline).toBeNull();
+    });
+  });
+
+  describe("isOpenRefundStatus — the duplicate-request guard", () => {
+    // Every value of refundStatusEnum in packages/db/src/schema/rebuild.ts.
+    // One that may move money must block a second request for the same charge.
+    test("5.3d-UNIT-027: statuses that may still move money are open", () => {
+      const blocking: RefundStatus[] = [
+        "pending",
+        "auto_approved",
+        "human_review",
+        "approved",
+        "processing",
+        "completed",
+      ];
+      for (const status of blocking) {
+        expect(isOpenRefundStatus(status)).toBe(true);
+      }
+    });
+
+    test("5.3d-UNIT-028: statuses that moved no money are not open", () => {
+      const notBlocking: RefundStatus[] = ["auto_denied", "denied"];
+      for (const status of notBlocking) {
+        expect(isOpenRefundStatus(status)).toBe(false);
+      }
+    });
+
+    test("5.3d-UNIT-029: covers every member of refundStatusEnum", () => {
+      const every: RefundStatus[] = [
+        "pending",
+        "auto_approved",
+        "auto_denied",
+        "human_review",
+        "approved",
+        "denied",
+        "processing",
+        "completed",
+      ];
+      for (const status of every) {
+        expect(typeof isOpenRefundStatus(status)).toBe("boolean");
+      }
+    });
+
+    test("5.3d-UNIT-030: an unknown status is treated as open", () => {
+      // Fail closed: an unrecognised status must not permit a second payout.
+      expect(isOpenRefundStatus("some_future_status")).toBe(true);
     });
   });
 });

@@ -18,6 +18,7 @@ import {
   classifyRefundRequest,
   daysBetween,
   hoursBetween,
+  isOpenRefundStatus,
   type RefundClassifierInput,
 } from "../lib/refund-classifier";
 
@@ -155,6 +156,25 @@ const requestRefund = protectedProcedure
     if (!charge) {
       throw new ORPCError("BAD_REQUEST", {
         message: "No completed payment found for this subscription",
+      });
+    }
+
+    // Without this, a retried or repeated request inserts a second row. Once
+    // 5-3f's executor lands it drains every auto_approved row for a charge,
+    // so two rows here become two real refunds for one purchase.
+    const priorRequests = await db
+      .select({ id: refundRequest.id, status: refundRequest.status })
+      .from(refundRequest)
+      .where(eq(refundRequest.subscriptionId, sub.id));
+
+    const inFlight = priorRequests.find((prior) =>
+      isOpenRefundStatus(prior.status)
+    );
+
+    if (inFlight) {
+      throw new ORPCError("CONFLICT", {
+        message:
+          "A refund request for this subscription is already in progress",
       });
     }
 
