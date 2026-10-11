@@ -27,7 +27,10 @@
     "livekit:ps": "docker compose -f docker/livekit/docker-compose.yml ps",
     "check": "ultracite check",
     "fix": "ultracite fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "bun test packages/api && bun test --cwd apps/native utils && pnpm --filter native test",
+    "test:api": "bun test packages/api",
+    "test:native": "bun test --cwd apps/native utils && pnpm --filter native test"
   },
   "dependencies": {
     "@community/env": "workspace:*",
