@@ -469,7 +469,7 @@ async function getRecommendationsHandler(
 // Router
 // ───────────────────────────────────────────────────────────────
 
-interface ImportError {
+export interface ImportError {
   error: string;
   index: number;
   title: string;
