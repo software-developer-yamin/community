@@ -96,3 +96,51 @@ export function reportCrash(
     return null;
   }
 }
+
+type RefundQualifyingCrashType = "force_close" | "anr" | "black_screen";
+
+function toRefundQualifying(type: CrashType): RefundQualifyingCrashType | null {
+  switch (type) {
+    case "force_close":
+    case "anr":
+    case "black_screen":
+      return type;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Fire-and-forget persistence of a crash report. Never throws and never returns
+ * a rejected promise — a crash path must not be able to fail the app.
+ * `runtime_error` is a local render error and is not refund-qualifying, so it
+ * is dropped here rather than sent.
+ */
+export function submitCrashReport(report: CrashReport | null): void {
+  if (!report) {
+    return;
+  }
+  const type = toRefundQualifying(report.type);
+  if (!type) {
+    return;
+  }
+  persistCrashReport(type, report).catch(() => undefined);
+}
+
+async function persistCrashReport(
+  type: RefundQualifyingCrashType,
+  report: CrashReport
+): Promise<void> {
+  try {
+    const { client } = await import("@/utils/orpc");
+    await client.rebuild.reportCrash({
+      type,
+      appVersion: report.appVersion,
+      osVersion: report.osVersion,
+      deviceModel: report.deviceModel,
+    });
+  } catch {
+    // Offline, unauthenticated, or server down. A lost crash row is
+    // preferable to an unhandled rejection on the crash path.
+  }
+}

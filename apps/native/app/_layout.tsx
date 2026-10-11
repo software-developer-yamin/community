@@ -21,7 +21,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { SessionRestoreGuard } from "@/components/session-restore-guard";
 import { ToastProvider } from "@/components/ui/toast";
 import { authClient } from "@/lib/auth-client";
-import { reportCrash } from "@/utils/crash-reporter";
+import { reportCrash, submitCrashReport } from "@/utils/crash-reporter";
 import { queryClient } from "@/utils/orpc";
 
 export const unstable_settings = {
@@ -65,7 +65,9 @@ export default function RootLayout() {
             ({ getCallState, isStateStale }) => {
               getCallState().then((state) => {
                 if (state && isStateStale(state)) {
-                  reportCrash("force_close", "App killed while in background");
+                  submitCrashReport(
+                    reportCrash("force_close", "App killed while in background")
+                  );
                 }
               });
             }
