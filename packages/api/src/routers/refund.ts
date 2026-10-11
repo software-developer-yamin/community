@@ -10,6 +10,7 @@ import {
 } from "@community/db/schema/rebuild";
 import { ORPCError } from "@orpc/server";
 import { and, count, desc, eq, gte, inArray, or } from "drizzle-orm";
+import { log } from "evlog";
 import { z } from "zod";
 
 import { adminProcedure, protectedProcedure } from "../index";
@@ -20,10 +21,25 @@ import {
   canReviewRefund,
   classifyRefundRequest,
   daysBetween,
+  HUMAN_REVIEW_SLA_DAYS,
   hoursBetween,
   isOpenRefundStatus,
   type RefundClassifierInput,
+  type RefundStatus,
 } from "../lib/refund-classifier";
+import {
+  checkSettlementTarget,
+  classifyProviderOutcome,
+  decideRefundAttempt,
+  describeSettlementBlocker,
+  humanReviewSlaDeadline,
+  isRefundSettleable,
+  needsSlaReset,
+  PROVIDER_CALL_FAILED,
+  recordedProviderStatus,
+  resolveSettlementStatus,
+} from "../lib/refund-executor";
+import { sendRefundToProvider } from "../lib/refund-provider";
 
 const REFUND_QUALIFYING_CRASHES = [
   "force_close",
@@ -278,7 +294,10 @@ const appealRefund = protectedProcedure
       });
     }
 
-    const slaDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const slaDeadline = humanReviewSlaDeadline(
+      new Date(),
+      HUMAN_REVIEW_SLA_DAYS
+    );
 
     const appealed = await db
       .update(refundRequest)
@@ -365,10 +384,238 @@ const listPendingReviews = adminProcedure.handler(async () =>
     .limit(100)
 );
 
+/**
+ * `note` is written only when it adds something. The exhaustion path passes
+ * `null` so it cannot overwrite the provider's verbatim `errorReason` from the
+ * final attempt — that free text is the whole reason a human is being asked.
+ */
+async function escalateToHumanReview(
+  refund: { id: string; status: RefundStatus; reviewNotes: string | null },
+  now: Date,
+  note: string | null
+): Promise<RefundStatus> {
+  const [updated] = await db
+    .update(refundRequest)
+    .set({
+      status: "human_review",
+      reviewNotes: note ?? refund.reviewNotes,
+      slaDeadline: humanReviewSlaDeadline(now, HUMAN_REVIEW_SLA_DAYS),
+    })
+    .where(
+      and(
+        eq(refundRequest.id, refund.id),
+        eq(refundRequest.status, refund.status)
+      )
+    )
+    .returning({ status: refundRequest.status });
+
+  if (!updated) {
+    throw new ORPCError("CONFLICT", {
+      message: "Refund status changed; reload and try again",
+    });
+  }
+
+  return updated.status;
+}
+
+/** `refund_remarks` is merchant-visible and capped at 255 characters. */
+function refundRemark(approvalReason: string | null): string {
+  const remark = approvalReason
+    ? `Refund approved — ${approvalReason}`
+    : "Refund approved";
+
+  return remark.slice(0, 255);
+}
+
+const settleRefund = adminProcedure
+  .input(z.object({ refundId: z.string().min(1) }))
+  .handler(async ({ input }) => {
+    const now = new Date();
+
+    const [row] = await db
+      .select({
+        id: refundRequest.id,
+        status: refundRequest.status,
+        refundAmount: refundRequest.refundAmount,
+        approvalReason: refundRequest.approvalReason,
+        reviewNotes: refundRequest.reviewNotes,
+        providerRefundId: refundRequest.providerRefundId,
+        providerRefundAttempts: refundRequest.providerRefundAttempts,
+        lastRefundAttemptAt: refundRequest.lastRefundAttemptAt,
+        chargeId: paymentTransaction.id,
+        bankTranId: paymentTransaction.bankTranId,
+        provider: subscription.provider,
+      })
+      .from(refundRequest)
+      .leftJoin(
+        paymentTransaction,
+        eq(refundRequest.paymentTransactionId, paymentTransaction.id)
+      )
+      .leftJoin(subscription, eq(refundRequest.subscriptionId, subscription.id))
+      .where(eq(refundRequest.id, input.refundId))
+      .limit(1);
+
+    if (!row) {
+      throw new ORPCError("NOT_FOUND", { message: "Refund request not found" });
+    }
+
+    if (!isRefundSettleable(row.status)) {
+      return {
+        id: row.id,
+        result: "skipped" as const,
+        status: row.status,
+        providerCalled: false,
+        reason: `Refund in state ${row.status} may not settle`,
+      };
+    }
+
+    const guard = decideRefundAttempt({
+      attempts: row.providerRefundAttempts,
+      lastAttemptAt: row.lastRefundAttemptAt,
+      now,
+    });
+
+    if (guard.action === "exhaust") {
+      const status = await escalateToHumanReview(row, now, null);
+
+      return {
+        id: row.id,
+        result: "exhausted" as const,
+        status,
+        providerCalled: false,
+      };
+    }
+
+    if (guard.action === "skip") {
+      return {
+        id: row.id,
+        result: "skipped" as const,
+        status: row.status,
+        providerCalled: false,
+        reason: guard.reason,
+      };
+    }
+
+    const target = checkSettlementTarget({
+      chargeFound: row.chargeId !== null,
+      bankTranId: row.bankTranId,
+      refundAmount: row.refundAmount,
+      provider: row.provider,
+    });
+
+    if (!target.ok) {
+      const status = await escalateToHumanReview(
+        row,
+        now,
+        describeSettlementBlocker(target.blocker)
+      );
+
+      log.warn({
+        action: "refund_settlement",
+        message: "Refund blocked before the provider call",
+        refundId: row.id,
+        blocker: target.blocker,
+      });
+
+      return {
+        id: row.id,
+        result: "blocked" as const,
+        status,
+        providerCalled: false,
+        blocker: target.blocker,
+      };
+    }
+
+    // Claimed with a compare-and-swap before the call, not after. Two
+    // concurrent settlements would otherwise both pass the guard and both
+    // reach the gateway — and the adapter's `REFUND-${Date.now()}` dedup key
+    // means the provider would treat them as two distinct refunds.
+    const attemptsAfterAttempt = row.providerRefundAttempts + 1;
+
+    const [claimed] = await db
+      .update(refundRequest)
+      .set({
+        providerRefundAttempts: attemptsAfterAttempt,
+        lastRefundAttemptAt: now,
+      })
+      .where(
+        and(
+          eq(refundRequest.id, row.id),
+          eq(refundRequest.status, row.status),
+          eq(refundRequest.providerRefundAttempts, row.providerRefundAttempts)
+        )
+      )
+      .returning({ id: refundRequest.id });
+
+    if (!claimed) {
+      throw new ORPCError("CONFLICT", {
+        message: "Refund status changed; reload and try again",
+      });
+    }
+
+    const result = await sendRefundToProvider({
+      bankTranId: target.bankTranId,
+      amount: target.refundAmount,
+      reason: refundRemark(row.approvalReason),
+      provider: target.provider,
+    });
+
+    const outcome = classifyProviderOutcome(
+      result.ok ? result.raw : { status: PROVIDER_CALL_FAILED }
+    );
+    const nextStatus = resolveSettlementStatus(outcome, attemptsAfterAttempt);
+    const providerStatus = result.ok
+      ? recordedProviderStatus(result.raw)
+      : PROVIDER_CALL_FAILED;
+    const errorReason = result.ok ? result.raw.errorReason : result.errorReason;
+
+    const [settled] = await db
+      .update(refundRequest)
+      .set({
+        status: nextStatus,
+        providerRefundId:
+          result.ok && result.refundId !== null
+            ? result.refundId
+            : row.providerRefundId,
+        providerRefundStatus: providerStatus,
+        reviewNotes:
+          errorReason && errorReason.length > 0 ? errorReason : row.reviewNotes,
+        ...(needsSlaReset(nextStatus)
+          ? { slaDeadline: humanReviewSlaDeadline(now, HUMAN_REVIEW_SLA_DAYS) }
+          : {}),
+      })
+      .where(eq(refundRequest.id, row.id))
+      .returning({ status: refundRequest.status });
+
+    if (!settled) {
+      throw new ORPCError("CONFLICT", {
+        message: "Refund row vanished mid-settlement",
+      });
+    }
+
+    log.info({
+      action: "refund_settlement",
+      message: "Refund settlement attempt recorded",
+      refundId: row.id,
+      providerStatus,
+      status: settled.status,
+      attempts: attemptsAfterAttempt,
+    });
+
+    return {
+      id: row.id,
+      result: "attempted" as const,
+      status: settled.status,
+      providerCalled: true,
+      attempts: attemptsAfterAttempt,
+    };
+  });
+
 export const refundRouter = {
   appealRefund,
   getRefundStatus,
   listPendingReviews,
   requestRefund,
   reviewRefund,
+  settleRefund,
 };
