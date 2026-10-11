@@ -97,6 +97,7 @@ export const userProfile = pgTable("user_profile", {
   // Analytics
   totalCallCount: integer("total_call_count").default(0).notNull(),
   totalCallDuration: integer("total_call_duration").default(0).notNull(), // seconds
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -278,6 +279,11 @@ export const refundRequest = pgTable(
     subscriptionId: text("subscription_id")
       .notNull()
       .references(() => subscription.id, { onDelete: "cascade" }),
+    paymentTransactionId: text("payment_transaction_id").references(
+      () => paymentTransaction.id,
+      { onDelete: "set null" }
+    ),
+    refundAmount: integer("refund_amount"), // in poisha (BDT × 100)
     // Classification
     path: text("path").notNull(), // "auto_approve" | "auto_deny" | "human_review"
     status: refundStatusEnum("status").default("pending").notNull(),
@@ -315,6 +321,9 @@ export const refundRequest = pgTable(
     index("refund_request_user_idx").on(table.userId),
     index("refund_request_status_idx").on(table.status),
     index("refund_request_sla_idx").on(table.slaDeadline),
+    index("refund_request_payment_transaction_idx").on(
+      table.paymentTransactionId
+    ),
   ]
 );
 
