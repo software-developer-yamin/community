@@ -11,7 +11,8 @@
       "!.agent/skills",
       "!.agents/skills",
       "!.claude/skills",
-      "!.worktrees"
+      "!.worktrees",
+      "!**/src/migrations"
     ]
   },
   "javascript": {
