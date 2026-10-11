@@ -13,6 +13,7 @@ import { and, count, desc, eq, gte, inArray, or } from "drizzle-orm";
 import { z } from "zod";
 
 import { adminProcedure, protectedProcedure } from "../index";
+import { completedChargeForSubscription } from "../lib/refund-charge-filter";
 import {
   AUTO_DENY_DAYS_SINCE_CHARGE,
   classifyRefundRequest,
@@ -36,7 +37,7 @@ const PATH_STATUS = {
   human_review: "human_review",
 } as const;
 
-async function latestCompletedCharge(userId: string) {
+async function latestCompletedCharge(userId: string, subscriptionId: string) {
   const [charge] = await db
     .select({
       id: paymentTransaction.id,
@@ -45,12 +46,7 @@ async function latestCompletedCharge(userId: string) {
       createdAt: paymentTransaction.createdAt,
     })
     .from(paymentTransaction)
-    .where(
-      and(
-        eq(paymentTransaction.userId, userId),
-        eq(paymentTransaction.status, "completed")
-      )
-    )
+    .where(completedChargeForSubscription(userId, subscriptionId))
     .orderBy(desc(paymentTransaction.createdAt))
     .limit(1);
 
@@ -152,7 +148,7 @@ const requestRefund = protectedProcedure
       });
     }
 
-    const charge = await latestCompletedCharge(userId);
+    const charge = await latestCompletedCharge(userId, sub.id);
     if (!charge) {
       throw new ORPCError("BAD_REQUEST", {
         message: "No completed payment found for this subscription",
