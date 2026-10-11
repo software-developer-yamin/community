@@ -41,3 +41,25 @@ This project is indexed by GitNexus as **community** (5424 symbols, 6212 relatio
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues on `software-developer-yamin/community`, driven via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical roles, label string equal to its name: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout — one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Skill routing
+
+Four skill families run here and **stack by default** — BMAD holds the product track, Matt
+Pocock the engineering loop, Impeccable the UI craft, Superpowers the process gate. Run all
+four on any task spanning more than one. Only genuine same-rung substitutes need a pick-one.
+The routing rule lives in `AGENTS.md`; the full catalog and scenario recipes are in
+`docs/agents/skill-routing.md`.

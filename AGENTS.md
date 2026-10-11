@@ -168,3 +168,75 @@ This project is indexed by GitNexus as **community** (5424 symbols, 6212 relatio
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
+
+<!-- skill-routing:start -->
+## Skill routing — stack all four, one per rung
+
+Four skill families run here. They **stack by default**: BMAD holds the product track, Matt
+Pocock the engineering loop, Impeccable the UI craft, Superpowers the process gate. On any
+task spanning more than one of those, run all of them.
+
+**Full loop — all four families, in order**
+
+`/bmad-help` → `/to-spec` → `/to-tickets` → `/impeccable shape <route>` →
+`/impeccable harden <route>` → `/using-git-worktrees` →
+`/subagent-driven-development` (or `/implement` inline) → `/impeccable audit <route>` →
+`/impeccable polish <route>` → `/code-review` → `/bmad-review` →
+`/verification-before-completion` → `/finishing-a-development-branch` → `/pr` →
+`/bmad-retrospective` + `/retro`
+
+**Superpowers is a full rung, not an add-on.** `using-superpowers` fires every turn and
+its execution protocol governs the build step: `/using-git-worktrees` to isolate,
+`/dispatching-parallel-agents` or `/subagent-driven-development` when tickets are
+independent, `/verification-before-completion` before any claim of done/fixed/passing,
+`/requesting-code-review` after a major feature, `/receiving-code-review` before acting on
+feedback, `/finishing-a-development-branch` once tests pass.
+
+**Same rung → pick one.** Only these pairs are true substitutes, occupying the identical
+step. Everything else composes.
+
+| Rung | Reach for |
+|---|---|
+| Shape an idea | `/grill-with-docs` **and** `/bmad-brainstorming` **and** `/superpowers:brainstorming` |
+| Plan | `/bmad-architecture` + `/bmad-create-epics-and-stories` **and** `/to-spec` + `/to-tickets` **and** `/superpowers:writing-plans` — epic altitude, ticket altitude, session altitude |
+| Execute | `/superpowers:executing-plans` inline · `/subagent-driven-development` across subagents · `/implement` per ticket · `/implement-spec` for the whole graph · `/bmad-build` for BMAD-backlog stories · `/bad` for autonomous batches |
+| Test-first | `/tdd` **and** `/bmad-testarch-atdd` **and** `/superpowers:test-driven-development` — acceptance-level and unit-level red phases stack |
+| Debug | `/diagnosing-bugs` **and** `/superpowers:systematic-debugging` — near-identical, Matt's demands a red command first |
+| Review | `/code-review` **and** `/bmad-review` **and** `/superpowers:requesting-code-review` — Standards+Spec, edge cases, fresh-eyes pass |
+| Close | `/retro` **and** `/bmad-retrospective` — session environment vs epic outcome |
+
+**Three surfaces, three roles.** `apps/native` is the client application and the **main
+focus** — learners practice there. `apps/web` is the admin panel operators use.
+`apps/server` serves both. `packages/*` are the shared layers both surfaces build on.
+
+| Path | Role | Reads |
+|---|---|---|
+| `apps/native` | **Main focus.** Client application — learners practice here | root pair |
+| `apps/web` | Admin panel — moderation, users, content, subscriptions | root pair |
+| `apps/server` | Serves both surfaces | root pair |
+| `packages/*` | Shared layers — api, auth, config, db, env, models, ui | root pair |
+
+The root `PRODUCT.md` + `DESIGN.md` pair is the single source of truth for every surface.
+Per-surface overrides were retired 2026-10-11 and live in
+`docs/archives/native-surface-override/`.
+
+**Every Impeccable command takes a target.** Default to `apps/native` — it is the main
+focus. Aim at `apps/web` only for operator surface.
+
+**Branch on entry**
+
+| Situation | Reach for |
+|---|---|
+| Bug report | `/diagnosing-bugs` + `/superpowers:systematic-debugging`, `/bmad-help` for the epic it belongs to |
+| Sprint state or epic scope | `/bmad-help` |
+| Raw incoming issues | `/triage` → `/implement` |
+| Effort larger than one session, no visible path | `/wayfinder` |
+| Surface with pixels | `/impeccable shape` before any UI code |
+| Independent tickets ready | `/superpowers:dispatching-parallel-agents` |
+| Any completion claim | `/superpowers:verification-before-completion` |
+| A session went sideways | `/retro` + `/superpowers:diagnosing-superpowers` |
+| Finished a build | `/code-review` + `/bmad-review` + `/retro` |
+
+Catalog and scenario recipes: `docs/agents/skill-routing.md`.
+Repo skill config: `docs/agents/issue-tracker.md`, `triage-labels.md`, `domain.md`.
+<!-- skill-routing:end -->

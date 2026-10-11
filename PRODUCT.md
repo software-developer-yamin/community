@@ -7,6 +7,12 @@
 >
 > _This record was authored from codebase evidence only, with no user interview. Facts not directly confirmed by the repository are labeled `[inferred]`. Substitute a real interview before treating any `[inferred]` fact as confirmed._
 
+> **Single source of truth.** Every surface reads this file and the root `DESIGN.md`.
+> Per-surface overrides were retired 2026-10-11; the archived native override lives in
+> `docs/archives/native-surface-override/` and carries a wider scope than this record does.
+> That wider scope is planned work, tracked under the `epic-native` phases in
+> `_bmad-output/implementation-artifacts/sprint-status.yaml`.
+
 ## Platform
 
 adaptive
