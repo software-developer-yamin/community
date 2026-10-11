@@ -31,6 +31,10 @@ interface StatusView {
 }
 
 const DECLINED: Status[] = ["auto_denied", "denied"];
+/** Only an auto-denial is appealable; a human denial is final. The server's
+ *  canAppealRefund enforces this, so offering the button for `denied` would
+ *  guarantee an error on every tap. */
+const APPEALABLE: Status[] = ["auto_denied"];
 const IN_REVIEW: Status[] = ["pending", "human_review"];
 
 const STATUS_VIEW: Record<Status, StatusView> = {
@@ -206,7 +210,7 @@ export default function RefundStatusScreen() {
           </View>
         </Card>
 
-        {isDeclined ? (
+        {APPEALABLE.includes(status) ? (
           <>
             {appeal.error ? (
               <Text style={styles.errorText}>
