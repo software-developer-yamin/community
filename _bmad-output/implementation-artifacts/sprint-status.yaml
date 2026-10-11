@@ -42,7 +42,7 @@ development_status:
   5-3c-refund-schema-migration: review
   5-3d-pure-classifier: review
   5-3e-refund-router: review
-  5-3f-provider-executor: backlog
+  5-3f-provider-executor: done
   5-3g-settlement-poller: backlog
   5-3h-native-refund-ui: review
   5-4-sslcommerz-payment-gateway: done
