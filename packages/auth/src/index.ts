@@ -6,10 +6,12 @@ import {
   user,
   verification,
 } from "@community/db/schema/auth";
+import { userProfile } from "@community/db/schema/rebuild";
 import { env } from "@community/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { phoneNumber } from "better-auth/plugins";
+import { eq } from "drizzle-orm";
 
 import { configureSms, sendSms } from "./sms";
 
@@ -67,6 +69,23 @@ export function createAuth() {
       expiresIn: 2_592_000, // 30 days (default: 604800 = 7 days)
       updateAge: 86_400, // extend session on use within 1 day of expiry
       freshAge: 0, // always check session from DB (no fresh cache)
+    },
+    databaseHooks: {
+      session: {
+        create: {
+          after: async (createdSession) => {
+            try {
+              await db
+                .update(userProfile)
+                .set({ lastLoginAt: new Date() })
+                .where(eq(userProfile.userId, createdSession.userId));
+            } catch {
+              // Never fail a login over telemetry. A stale lastLoginAt reads as
+              // an unresolved failure, so a dropped write costs one refund.
+            }
+          },
+        },
+      },
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
