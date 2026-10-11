@@ -283,7 +283,7 @@ export const refundRequest = pgTable(
       () => paymentTransaction.id,
       { onDelete: "set null" }
     ),
-    refundAmount: integer("refund_amount"), // in poisha (BDT × 100)
+    refundAmount: integer("refund_amount"), // major units (a ৳299 charge is 299)
     // Classification
     path: text("path").notNull(), // "auto_approve" | "auto_deny" | "human_review"
     status: refundStatusEnum("status").default("pending").notNull(),
@@ -356,7 +356,7 @@ export const paymentTransaction = pgTable(
     // Payment details
     tier: tierEnum("tier").notNull(),
     billingPeriod: text("billing_period").notNull(), // "monthly" | "annual"
-    amount: integer("amount").notNull(), // in poisha (BDT × 100)
+    amount: integer("amount").notNull(), // major units (a ৳299 charge is 299)
     currency: text("currency").default("BDT").notNull(),
     // Status
     status: paymentTransactionStatusEnum("status").default("pending").notNull(),
