@@ -180,6 +180,46 @@ describe("classifyRefundRequest", () => {
       );
       expect(result.path).not.toBe("auto_deny");
     });
+
+    test("5.3d-UNIT-024: login failure beyond the 14-day window goes to review", () => {
+      const result = classifyRefundRequest(
+        input({
+          completedSessionCount: 1,
+          daysSinceCharge: 40,
+          hasOpenLoginFailureTicket: true,
+          hoursSinceLastSuccessfulLogin: 96,
+        }),
+        NOW
+      );
+      expect(result.path).toBe("human_review");
+      expect(result.slaDeadline).not.toBeNull();
+    });
+
+    test("5.3d-UNIT-025: login failure inside the 14-day window still auto-approves", () => {
+      const result = classifyRefundRequest(
+        input({
+          completedSessionCount: 1,
+          daysSinceCharge: 14,
+          hasOpenLoginFailureTicket: true,
+          hoursSinceLastSuccessfulLogin: 96,
+        }),
+        NOW
+      );
+      expect(result.path).toBe("auto_approve");
+    });
+
+    test("5.3d-UNIT-026: login failure at 15 days is outside the window", () => {
+      const result = classifyRefundRequest(
+        input({
+          completedSessionCount: 1,
+          daysSinceCharge: 15,
+          hasOpenLoginFailureTicket: true,
+          hoursSinceLastSuccessfulLogin: 96,
+        }),
+        NOW
+      );
+      expect(result.path).toBe("human_review");
+    });
   });
 
   describe("precedence", () => {

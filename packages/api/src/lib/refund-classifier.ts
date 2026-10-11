@@ -60,9 +60,15 @@ function neverConnectedAutoApproves(input: RefundClassifierInput): boolean {
 /**
  * Requires an open ticket: the user must have told us they cannot log in.
  * A 72-hour gap in successful logins on its own is not a fault report.
+ *
+ * Bounded by NEVER_CONNECTED_WINDOW_DAYS like the other two auto-approve
+ * rows. Without this cap a year-old charge with any open ticket auto-approves
+ * a full refund, and auto-approve is evaluated before auto-deny — so the
+ * session-count and age protections never get a chance to run.
  */
 function loginFailureAutoApproves(input: RefundClassifierInput): boolean {
   return (
+    input.daysSinceCharge <= NEVER_CONNECTED_WINDOW_DAYS &&
     input.hasOpenLoginFailureTicket &&
     input.hoursSinceLastSuccessfulLogin !== null &&
     input.hoursSinceLastSuccessfulLogin >= LOGIN_FAILURE_HOURS
