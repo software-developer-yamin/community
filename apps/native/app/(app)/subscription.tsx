@@ -2,6 +2,7 @@ import type { SubscriptionDetail } from "@community/api/types/subscription";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import {
   ActivityIndicator,
@@ -13,6 +14,7 @@ import {
 } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { orpc, queryClient } from "@/utils/orpc";
 
@@ -57,6 +59,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 export default function SubscriptionScreen() {
   const { theme } = useUnistyles();
+  const router = useRouter();
   const { data, isLoading, error } = useQuery(
     orpc.rebuild.getSubscription.queryOptions()
   );
@@ -177,6 +180,16 @@ export default function SubscriptionScreen() {
                 value={data.autoRenew}
               />
             </View>
+          ) : null}
+
+          {data.status === "active" || data.status === "cancelled" ? (
+            <Button
+              onPress={() => router.push("/(app)/refund/request")}
+              size="md"
+              variant="secondary"
+            >
+              Request refund
+            </Button>
           ) : null}
 
           {data.status === "cancelled" ? (
