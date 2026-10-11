@@ -13,6 +13,8 @@ import { describe, expect, test } from "bun:test";
 
 import type { RefundClassifierInput, RefundStatus } from "../refund-classifier";
 import {
+  canAppealRefund,
+  canReviewRefund,
   classifyRefundRequest,
   isOpenRefundStatus,
 } from "../refund-classifier";
@@ -336,6 +338,71 @@ describe("classifyRefundRequest", () => {
     test("5.3d-UNIT-030: an unknown status is treated as open", () => {
       // Fail closed: an unrecognised status must not permit a second payout.
       expect(isOpenRefundStatus("some_future_status")).toBe(true);
+    });
+  });
+
+  describe("canAppealRefund", () => {
+    test("5.3f-UNIT-001: an auto-denial is appealable", () => {
+      expect(canAppealRefund("auto_denied")).toBe(true);
+    });
+
+    test("5.3f-UNIT-002: no other status is appealable", () => {
+      const notAppealable: RefundStatus[] = [
+        "pending",
+        "auto_approved",
+        "human_review",
+        "approved",
+        "denied",
+        "processing",
+        "completed",
+      ];
+      for (const status of notAppealable) {
+        expect(canAppealRefund(status)).toBe(false);
+      }
+    });
+
+    test("5.3f-UNIT-003: a human denial is final", () => {
+      // The status screen shows an appeal button for `denied` as well, but
+      // only auto-denials are appealable. Pin the mismatch here.
+      expect(canAppealRefund("denied")).toBe(false);
+    });
+
+    test("5.3f-UNIT-004: an unknown status is not appealable", () => {
+      expect(canAppealRefund("some_future_status")).toBe(false);
+    });
+  });
+
+  describe("canReviewRefund", () => {
+    test("5.3f-UNIT-005: queued statuses are reviewable", () => {
+      expect(canReviewRefund("human_review")).toBe(true);
+      expect(canReviewRefund("pending")).toBe(true);
+    });
+
+    test("5.3f-UNIT-006: a decided or settled refund cannot be re-decided", () => {
+      const notReviewable: RefundStatus[] = [
+        "auto_approved",
+        "auto_denied",
+        "approved",
+        "denied",
+        "processing",
+        "completed",
+      ];
+      for (const status of notReviewable) {
+        expect(canReviewRefund(status)).toBe(false);
+      }
+    });
+
+    test("5.3f-UNIT-007: the reviewable set matches the admin queue", () => {
+      // listPendingReviews selects human_review and pending. A refund an admin
+      // cannot see must not be one they can decide.
+      const queue: RefundStatus[] = ["human_review", "pending"];
+      for (const status of queue) {
+        expect(canReviewRefund(status)).toBe(true);
+      }
+    });
+
+    test("5.3f-UNIT-008: an unknown status is not reviewable", () => {
+      expect(canReviewRefund("some_future_status")).toBe(false);
     });
   });
 });

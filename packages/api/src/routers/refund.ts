@@ -16,6 +16,8 @@ import { adminProcedure, protectedProcedure } from "../index";
 import { completedChargeForSubscription } from "../lib/refund-charge-filter";
 import {
   AUTO_DENY_DAYS_SINCE_CHARGE,
+  canAppealRefund,
+  canReviewRefund,
   classifyRefundRequest,
   daysBetween,
   hoursBetween,
@@ -270,7 +272,7 @@ const appealRefund = protectedProcedure
       throw new ORPCError("NOT_FOUND", { message: "Refund request not found" });
     }
 
-    if (row.status !== "auto_denied") {
+    if (!canAppealRefund(row.status)) {
       throw new ORPCError("BAD_REQUEST", {
         message: "Only an auto-denied refund can be appealed",
       });
@@ -278,10 +280,22 @@ const appealRefund = protectedProcedure
 
     const slaDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    await db
+    const appealed = await db
       .update(refundRequest)
       .set({ path: "human_review", status: "human_review", slaDeadline })
-      .where(eq(refundRequest.id, row.id));
+      .where(
+        and(
+          eq(refundRequest.id, row.id),
+          eq(refundRequest.status, "auto_denied")
+        )
+      )
+      .returning();
+
+    if (!appealed[0]) {
+      throw new ORPCError("CONFLICT", {
+        message: "Refund status changed; reload and try again",
+      });
+    }
 
     return { id: row.id, status: "human_review" as const, slaDeadline };
   });
@@ -305,9 +319,15 @@ const reviewRefund = adminProcedure
       throw new ORPCError("NOT_FOUND", { message: "Refund request not found" });
     }
 
+    if (!canReviewRefund(row.status)) {
+      throw new ORPCError("CONFLICT", {
+        message: `Refund in state ${row.status} cannot be reviewed`,
+      });
+    }
+
     const approved = input.decision === "approve";
 
-    await db
+    const reviewed = await db
       .update(refundRequest)
       .set({
         status: approved ? "approved" : "denied",
@@ -316,7 +336,19 @@ const reviewRefund = adminProcedure
         reviewNotes: input.notes,
         resolvedAt: new Date(),
       })
-      .where(eq(refundRequest.id, row.id));
+      .where(
+        and(
+          eq(refundRequest.id, row.id),
+          inArray(refundRequest.status, ["human_review", "pending"])
+        )
+      )
+      .returning();
+
+    if (!reviewed[0]) {
+      throw new ORPCError("CONFLICT", {
+        message: "Refund status changed; reload and try again",
+      });
+    }
 
     return {
       id: row.id,

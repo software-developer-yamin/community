@@ -162,6 +162,21 @@ export function isOpenRefundStatus(status: string): boolean {
   return !CLOSED_REFUND_STATUSES.includes(status as RefundStatus);
 }
 
+const APPEALABLE_REFUND_STATUSES: readonly RefundStatus[] = ["auto_denied"];
+
+const REVIEWABLE_REFUND_STATUSES: readonly RefundStatus[] = [
+  "human_review",
+  "pending",
+];
+
+export function canAppealRefund(status: string): boolean {
+  return APPEALABLE_REFUND_STATUSES.includes(status as RefundStatus);
+}
+
+export function canReviewRefund(status: string): boolean {
+  return REVIEWABLE_REFUND_STATUSES.includes(status as RefundStatus);
+}
+
 export function daysBetween(from: Date, to: Date): number {
   return Math.floor((to.getTime() - from.getTime()) / DAY_MS);
 }
