@@ -1,9 +1,11 @@
 generated: 2026-06-14T00:00:00+06:00
-last_updated: 2026-10-11T00:00:00+06:00
+last_updated: 2026-10-16T12:00:00+06:00
 project: community
 project_key: NOKEY
 tracking_system: file-system
-story_location: /home/yamin/Documents/Yamin Portfolio/community/_bmad-output/implementation-artifacts
+story_location: >-
+  /home/yamin/Documents/Yamin
+  Portfolio/community/_bmad-output/implementation-artifacts
 
 development_status:
   epic-1: done
@@ -33,21 +35,21 @@ development_status:
   4-4-visible-moderation-state: done
   epic-4-retrospective: optional
 
-  epic-5: in-progress
+  epic-5: done
   5-1-visible-subscription-state: done
   5-2-in-app-support-ticket: done
-  5-3-refund-mechanism: in-progress
-  5-3a-persist-crash-event: review
-  5-3b-instrument-login-failure: review
-  5-3c-refund-schema-migration: review
-  5-3d-pure-classifier: review
-  5-3e-refund-router: review
+  5-3-refund-mechanism: done
+  5-3a-persist-crash-event: done
+  5-3b-instrument-login-failure: done
+  5-3c-refund-schema-migration: done
+  5-3d-pure-classifier: done
+  5-3e-refund-router: done
   5-3f-provider-executor: done
-  5-3g-settlement-poller: backlog
-  5-3h-native-refund-ui: review
+  5-3g-settlement-poller: done
+  5-3h-native-refund-ui: done
   5-4-sslcommerz-payment-gateway: done
   5-5-cancellation-preserves-access: done
-  epic-5-retrospective: optional
+  epic-5-retrospective: done
 
   epic-6: done
   6-1-state-preservation-across-backgrounding: done
