@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { authClient } from "@/lib/auth-client";
 import { orpc, queryClient } from "@/utils/orpc";
 
@@ -154,6 +155,19 @@ export default function LobbyScreen() {
                     color={theme.colors.foreground}
                     size="large"
                     style={styles.loader}
+                  />
+                );
+              }
+              if (roomsQuery.isError) {
+                // Above the empty state on purpose: a failed fetch used to
+                // render there and claim there were no rooms.
+                return (
+                  <EmptyState
+                    actionLabel="Try again"
+                    body="We could not load the rooms. Check your connection and try again."
+                    emoji="📡"
+                    onAction={() => roomsQuery.refetch()}
+                    title="Could not load rooms"
                   />
                 );
               }

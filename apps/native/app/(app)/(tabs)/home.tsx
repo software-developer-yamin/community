@@ -254,6 +254,19 @@ export default function Home() {
                 </View>
               );
             }
+            if (matchQuery.isError) {
+              // Without this, a failed poll falls through to the empty state and
+              // tells the user nobody is available when the truth is unknown.
+              return (
+                <EmptyState
+                  actionLabel="Try again"
+                  body="We could not check who is available. Check your connection and try again."
+                  emoji="📡"
+                  onAction={() => matchQuery.refetch()}
+                  title="Could not load partners"
+                />
+              );
+            }
             if (noEmbedding) {
               return (
                 <EmptyState

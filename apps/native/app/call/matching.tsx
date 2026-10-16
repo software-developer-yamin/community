@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { orpc } from "@/utils/orpc";
 
 type MatchStatus =
@@ -165,6 +166,22 @@ export default function MatchingScreen() {
     });
 
   const renderStatusContent = () => {
+    if (matchQuery.isError) {
+      // This screen polled every 5s with no loading or error branch, so a failed
+      // fetch left the animated dots running forever as if still searching.
+      return (
+        <View style={styles.centerContent}>
+          <EmptyState
+            actionLabel="Try again"
+            body="We could not reach the matching service. Check your connection and try again."
+            emoji="📡"
+            onAction={() => matchQuery.refetch()}
+            title="Could not reach matching"
+          />
+        </View>
+      );
+    }
+
     if (status === "found" && foundPartner) {
       return (
         <View style={styles.foundContainer}>

@@ -13,6 +13,7 @@ import {
 import { StyleSheet } from "react-native-unistyles";
 
 import { Container } from "@/components/container";
+import { EmptyState } from "@/components/ui/empty-state";
 import { orpc } from "@/utils/orpc";
 
 const STATUS_CONFIG: Record<string, { badgeBg: string; badgeText: string }> = {
@@ -53,9 +54,12 @@ function formatRelative(date: Date | string): string {
 export default function TicketListScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: tickets, isLoading } = useQuery(
-    orpc.rebuild.getMyTickets.queryOptions()
-  );
+  const {
+    data: tickets,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery(orpc.rebuild.getMyTickets.queryOptions());
 
   const [showCreate, setShowCreate] = useState(false);
   const [subject, setSubject] = useState("");
@@ -189,6 +193,21 @@ export default function TicketListScreen() {
               return (
                 <View style={styles.centered}>
                   <ActivityIndicator size="large" />
+                </View>
+              );
+            }
+            if (isError) {
+              // Sits above the empty state on purpose: a failed fetch used to
+              // render here and tell the user they had no tickets at all.
+              return (
+                <View style={styles.centered}>
+                  <EmptyState
+                    actionLabel="Try again"
+                    body="We could not load your tickets. Check your connection and try again."
+                    emoji="📡"
+                    onAction={() => refetch()}
+                    title="Could not load tickets"
+                  />
                 </View>
               );
             }

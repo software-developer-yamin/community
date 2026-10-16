@@ -16,6 +16,7 @@ import { StyleSheet, useUnistyles } from "react-native-unistyles";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { orpc, queryClient } from "@/utils/orpc";
 
 type Status = SubscriptionDetail["status"];
@@ -60,7 +61,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 export default function SubscriptionScreen() {
   const { theme } = useUnistyles();
   const router = useRouter();
-  const { data, isLoading, error } = useQuery(
+  const { data, isLoading, error, refetch } = useQuery(
     orpc.rebuild.getSubscription.queryOptions()
   );
 
@@ -96,9 +97,13 @@ export default function SubscriptionScreen() {
     return (
       <View style={styles.root}>
         <View style={styles.centered}>
-          <Text style={styles.errorText}>
-            Unable to load subscription information.
-          </Text>
+          <EmptyState
+            actionLabel="Try again"
+            body="We could not load your subscription. Check your connection and try again."
+            emoji="📡"
+            onAction={() => refetch()}
+            title="Could not load subscription"
+          />
         </View>
       </View>
     );

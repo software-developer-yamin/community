@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 import { Container } from "@/components/container";
+import { EmptyState } from "@/components/ui/empty-state";
 import { orpc } from "@/utils/orpc";
 
 const STATUS_CONFIG: Record<string, { badgeBg: string; badgeText: string }> = {
@@ -54,12 +55,20 @@ export default function TicketDetailScreen() {
   const queryClient = useQueryClient();
   const [newMessage, setNewMessage] = useState("");
 
-  const { data: allTickets, isLoading: ticketsLoading } = useQuery(
-    orpc.rebuild.getMyTickets.queryOptions()
-  );
+  const {
+    data: allTickets,
+    isLoading: ticketsLoading,
+    isError: ticketsError,
+    refetch: refetchTickets,
+  } = useQuery(orpc.rebuild.getMyTickets.queryOptions());
   const ticket = allTickets?.find((t) => t.id === id);
 
-  const { data: messages, isLoading: messagesLoading } = useQuery(
+  const {
+    data: messages,
+    isLoading: messagesLoading,
+    isError: messagesError,
+    refetch: refetchMessages,
+  } = useQuery(
     orpc.rebuild.getTicketMessages.queryOptions({
       input: { ticketId: id ?? "" },
     })
@@ -92,6 +101,27 @@ export default function TicketDetailScreen() {
       <Container>
         <View style={styles.centered}>
           <ActivityIndicator size="large" />
+        </View>
+      </Container>
+    );
+  }
+
+  if (ticketsError || messagesError) {
+    // Ahead of the `!ticket` check on purpose: a failed fetch used to land there
+    // and claim the ticket does not exist.
+    return (
+      <Container>
+        <View style={styles.centered}>
+          <EmptyState
+            actionLabel="Try again"
+            body="We could not load this ticket. Check your connection and try again."
+            emoji="📡"
+            onAction={() => {
+              refetchTickets();
+              refetchMessages();
+            }}
+            title="Could not load ticket"
+          />
         </View>
       </Container>
     );
