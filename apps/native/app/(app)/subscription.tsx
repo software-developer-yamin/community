@@ -7,6 +7,7 @@ import { useCallback } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Pressable,
   ScrollView,
   Switch,
   Text,
@@ -28,6 +29,58 @@ const STATUS_LABEL: Record<Status, string> = {
   refunded: "Refunded",
   free: "Free",
 };
+
+interface Plan {
+  description: string;
+  features: string[];
+  id: "free" | "premium" | "premium_plus";
+  name: string;
+  period: string;
+  popular?: boolean;
+  price: string;
+}
+
+const AVAILABLE_PLANS: Plan[] = [
+  {
+    id: "free",
+    name: "Free",
+    price: "৳0",
+    period: "forever",
+    description: "Basic practice with daily limits",
+    features: [
+      "15 minutes daily 1:1 speaking",
+      "Standard audio connection",
+      "Community room access (listener)",
+    ],
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    price: "৳299",
+    period: "month",
+    description: "Unlimited speaking practice & AI coaching",
+    popular: true,
+    features: [
+      "Unlimited 1:1 speaking practice",
+      "AI Speaking test with deep analysis",
+      "Priority queue matching",
+      "Speaking streak protection",
+    ],
+  },
+  {
+    id: "premium_plus",
+    name: "Premium Plus",
+    price: "৳499",
+    period: "month",
+    description: "For serious learners & future leaders",
+    features: [
+      "Everything in Premium",
+      "20% off all Trainer marketplace classes",
+      "Host exclusive voice rooms",
+      "Advanced CEFR progress analytics",
+    ],
+  },
+];
 
 function formatTier(tier: SubscriptionDetail["tier"]): string {
   if (tier === "premium") {
@@ -111,7 +164,27 @@ export default function SubscriptionScreen() {
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.header}>
+        <Pressable
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons
+            color={theme.colors.foreground}
+            name="chevron-back"
+            size={24}
+          />
+        </Pressable>
+        <Text style={styles.headerTitle}>Subscription</Text>
+        <View style={styles.headerRightPlaceholder} />
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <LinearGradient
           colors={
             data.status === "active"
@@ -211,6 +284,80 @@ export default function SubscriptionScreen() {
             </View>
           ) : null}
         </Card>
+
+        <View style={styles.plansSection}>
+          <Text style={styles.sectionTitle}>Available Plans</Text>
+          <Text style={styles.sectionSubtitle}>
+            Upgrade or switch plans to unlock unlimited conversation and AI
+            coaching
+          </Text>
+
+          <View style={styles.plansList}>
+            {AVAILABLE_PLANS.map((plan) => {
+              const isCurrent = data.tier === plan.id;
+              return (
+                <Card
+                  key={plan.id}
+                  style={
+                    plan.popular
+                      ? [styles.planCard, styles.planCardPopular]
+                      : styles.planCard
+                  }
+                >
+                  {plan.popular ? (
+                    <View style={styles.popularBadge}>
+                      <Text style={styles.popularBadgeText}>Most Popular</Text>
+                    </View>
+                  ) : null}
+
+                  <View style={styles.planHeader}>
+                    <Text style={styles.planName}>{plan.name}</Text>
+                    <View style={styles.planPriceRow}>
+                      <Text style={styles.planPrice}>{plan.price}</Text>
+                      <Text style={styles.planPeriod}>/{plan.period}</Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.planDesc}>{plan.description}</Text>
+
+                  <View style={styles.featuresList}>
+                    {plan.features.map((feat) => (
+                      <View key={feat} style={styles.featureRow}>
+                        <Ionicons
+                          color={theme.colors.success}
+                          name="checkmark-circle"
+                          size={16}
+                        />
+                        <Text style={styles.featureText}>{feat}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  {isCurrent ? (
+                    <Button disabled size="md" variant="secondary">
+                      Current Plan
+                    </Button>
+                  ) : (
+                    <Button
+                      onPress={() =>
+                        Alert.alert(
+                          `Upgrade to ${plan.name}`,
+                          `Payment checkout for ${plan.name} at ${plan.price}/${plan.period}.`
+                        )
+                      }
+                      size="md"
+                      variant={plan.popular ? "primary" : "secondary"}
+                    >
+                      {plan.id === "free"
+                        ? "Downgrade"
+                        : `Upgrade to ${plan.name}`}
+                    </Button>
+                  )}
+                </Card>
+              );
+            })}
+          </View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -220,6 +367,29 @@ const styles = StyleSheet.create((theme, rt) => ({
   root: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: rt.insets.top + theme.spacing.sm,
+    paddingBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  backButton: {
+    padding: theme.spacing.xs,
+    borderRadius: theme.borderRadius.full,
+  },
+  headerTitle: {
+    fontFamily: theme.fontFamily.bodyStrong,
+    fontSize: theme.fontSize.lg,
+    color: theme.colors.foreground,
+  },
+  headerRightPlaceholder: {
+    width: 32,
   },
   scrollContent: {
     padding: theme.spacing.lg,
@@ -323,6 +493,93 @@ const styles = StyleSheet.create((theme, rt) => ({
   },
   cancelledBannerText: {
     flex: 1,
+    fontFamily: theme.fontFamily.body,
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.foreground,
+  },
+  plansSection: {
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
+  },
+  sectionTitle: {
+    fontFamily: theme.fontFamily.display,
+    fontSize: theme.fontSize.xl,
+    color: theme.colors.foreground,
+  },
+  sectionSubtitle: {
+    fontFamily: theme.fontFamily.body,
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.mutedForeground,
+    marginBottom: theme.spacing.xs,
+  },
+  plansList: {
+    gap: theme.spacing.md,
+  },
+  planCard: {
+    gap: theme.spacing.sm,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    position: "relative",
+  },
+  planCardPopular: {
+    borderColor: theme.colors.primary,
+    borderWidth: 2,
+  },
+  popularBadge: {
+    position: "absolute",
+    top: -10,
+    right: 16,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 2,
+    borderRadius: theme.borderRadius.full,
+  },
+  popularBadgeText: {
+    fontFamily: theme.fontFamily.caption,
+    fontSize: theme.fontSize.xs,
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+  planHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+  },
+  planName: {
+    fontFamily: theme.fontFamily.bodyStrong,
+    fontSize: theme.fontSize.lg,
+    color: theme.colors.foreground,
+  },
+  planPriceRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+  planPrice: {
+    fontFamily: theme.fontFamily.display,
+    fontSize: theme.fontSize["2xl"],
+    color: theme.colors.foreground,
+  },
+  planPeriod: {
+    fontFamily: theme.fontFamily.body,
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.mutedForeground,
+  },
+  planDesc: {
+    fontFamily: theme.fontFamily.body,
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.mutedForeground,
+  },
+  featuresList: {
+    gap: theme.spacing.xs,
+    marginVertical: theme.spacing.xs,
+  },
+  featureRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.xs,
+  },
+  featureText: {
     fontFamily: theme.fontFamily.body,
     fontSize: theme.fontSize.sm,
     color: theme.colors.foreground,

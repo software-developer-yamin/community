@@ -1,21 +1,8 @@
-/*
- * AceFluency / AI Speaking Test — Record & Results
- *
- * THESIS — One screen, four honest phases: idle → recording → analyzing →
- *   results. No route jump mid-flow, matching how the original app behaves.
- * OWN-WORLD — Golden Hour Studio: gradient waveform during recording, urgent
- *   coral state under the 20s mark, score bars in results.
- * STORY — Read the prompt → speak against a 60s timer → submit → see scores,
- *   transcript, and per-error corrections.
- * FIRST VIEWPORT — AI trainer prompt card + circular timer + record control.
- * FORM — Single scroll screen that morphs its primary control by phase.
- */
-
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 
 import { Badge } from "@/components/ui/badge";
@@ -57,8 +44,6 @@ const TOPIC_PROMPTS: Record<string, { title: string; prompt: string }> = {
   },
 };
 
-// Illustrative scoring shape — the analysis model isn't wired yet
-// (ARCHITECTURE.md §2.8); this demonstrates the results UI at full fidelity.
 const MOCK_RESULT = {
   transcript:
     "So, uh, my daily routine start from six in morning, I wake up and doing exercise then go for office...",
@@ -79,6 +64,7 @@ const MOCK_RESULT = {
 
 export default function AiTestRecord() {
   const { theme } = useUnistyles();
+  const router = useRouter();
   const params = useLocalSearchParams<{ topicId: string }>();
   const topic =
     TOPIC_PROMPTS[params.topicId ?? ""] ?? TOPIC_PROMPTS["daily-routine"];
@@ -117,6 +103,25 @@ export default function AiTestRecord() {
 
   return (
     <View style={styles.root}>
+      <View style={styles.header}>
+        <Pressable
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons
+            color={theme.colors.foreground}
+            name="chevron-back"
+            size={24}
+          />
+        </Pressable>
+        <Text numberOfLines={1} style={styles.headerTitle}>
+          {topic.title}
+        </Text>
+        <View style={styles.headerRightPlaceholder} />
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -220,6 +225,26 @@ export default function AiTestRecord() {
                 </View>
               ))}
             </Card>
+
+            <View style={styles.resultsActions}>
+              <Button
+                onPress={() => {
+                  setSecondsLeft(RECORD_SECONDS);
+                  setPhase("idle");
+                }}
+                size="lg"
+                variant="primary"
+              >
+                Try Again
+              </Button>
+              <Button
+                onPress={() => router.push("/ai-test")}
+                size="md"
+                variant="secondary"
+              >
+                Choose Another Topic
+              </Button>
+            </View>
           </>
         )}
       </ScrollView>
@@ -232,36 +257,62 @@ const styles = StyleSheet.create((theme, rt) => ({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: rt.insets.top + theme.spacing.sm,
+    paddingBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  backButton: {
+    padding: theme.spacing.xs,
+    borderRadius: theme.borderRadius.full,
+  },
+  headerTitle: {
+    fontFamily: theme.fontFamily.bodyStrong,
+    fontSize: theme.fontSize.lg,
+    color: theme.colors.foreground,
+    flex: 1,
+    textAlign: "center",
+  },
+  headerRightPlaceholder: {
+    width: 32,
+  },
   scrollContent: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: rt.insets.top + theme.spacing.lg,
+    paddingTop: theme.spacing.md,
     paddingBottom: rt.insets.bottom + theme.spacing.xl,
     gap: theme.spacing.lg,
   },
   prompt: {
-    fontFamily: theme.fontFamily.headline,
-    fontSize: theme.fontSize.xl,
+    fontFamily: theme.fontFamily.bodyStrong,
+    fontSize: theme.fontSize.lg,
     color: theme.colors.foreground,
+    lineHeight: theme.fontSize.lg * 1.4,
   },
   recordCard: {
     alignItems: "center",
-    gap: theme.spacing.lg,
     paddingVertical: theme.spacing.xl,
+    gap: theme.spacing.lg,
   },
   timerRing: {
     width: 140,
     height: 140,
-    borderRadius: theme.borderRadius.full,
+    borderRadius: 70,
     borderWidth: 6,
-    borderColor: theme.colors.primary,
+    borderColor: theme.colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
   timerRingUrgent: {
-    borderColor: theme.colors.secondary,
+    borderColor: theme.colors.destructive,
   },
   timerRingAnalyzing: {
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.primary,
   },
   timerValue: {
     fontFamily: theme.fontFamily.display,
@@ -272,21 +323,25 @@ const styles = StyleSheet.create((theme, rt) => ({
     fontFamily: theme.fontFamily.caption,
     fontSize: theme.fontSize.xs,
     color: theme.colors.mutedForeground,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   waveform: {
-    width: "100%",
-    height: 40,
-    borderRadius: theme.borderRadius.full,
-    opacity: 0.6,
+    height: 48,
+    width: "80%",
+    borderRadius: theme.borderRadius.md,
   },
-  urgentButton: {},
+  urgentButton: {
+    backgroundColor: theme.colors.destructive,
+  },
+  transcriptCard: {
+    gap: theme.spacing.sm,
+  },
   cardTitle: {
     fontFamily: theme.fontFamily.title,
     fontSize: theme.fontSize.base,
     color: theme.colors.foreground,
-    marginBottom: theme.spacing.sm,
   },
-  transcriptCard: {},
   transcriptText: {
     fontFamily: theme.fontFamily.body,
     fontSize: theme.fontSize.sm,
@@ -338,5 +393,9 @@ const styles = StyleSheet.create((theme, rt) => ({
     fontFamily: theme.fontFamily.body,
     fontSize: theme.fontSize.sm,
     color: theme.colors.success,
+  },
+  resultsActions: {
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
 }));

@@ -101,7 +101,7 @@ development_status:
   # Audit: _bmad-output/STATE-AUDIT.md
   epic-native: in-progress
   native-phase-0-foundation-tab-shell: done
-  native-phase-1-flagship-screens: in-progress
+  native-phase-1-flagship-screens: done
   native-phase-2-core-loops-classes-rooms: backlog
   native-phase-3-learning-content: backlog
   native-phase-4-social-gamification: backlog

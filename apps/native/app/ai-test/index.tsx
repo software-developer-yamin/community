@@ -1,14 +1,3 @@
-/*
- * AceFluency / AI Speaking Test — Topics
- *
- * THESIS — The AI coach is a warm, always-ready practice partner, not a
- *   clinical assessment tool.
- * OWN-WORLD — Golden Hour Studio: gradient AI-trainer avatar, category chips.
- * STORY — Meet the AI trainer → filter by category → pick a topic → speak.
- * FIRST VIEWPORT — AI trainer intro band, then a scrollable topic grid.
- * FORM — 2-column card grid, one gradient CTA per card ("Start").
- */
-
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -24,8 +13,6 @@ interface Topic {
   title: string;
 }
 
-// Representative subset of the brief's 32-topic bank — UI is built to scale
-// to the full set once the topic-bank endpoint lands (ARCHITECTURE.md §2.8).
 const TOPICS: Topic[] = [
   { id: "daily-routine", title: "My Daily Routine", category: "Personal" },
   { id: "hometown", title: "My Hometown", category: "Place" },
@@ -52,6 +39,23 @@ export default function AiTestTopics() {
 
   return (
     <View style={styles.root}>
+      <View style={styles.header}>
+        <Pressable
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons
+            color={theme.colors.foreground}
+            name="chevron-back"
+            size={24}
+          />
+        </Pressable>
+        <Text style={styles.headerTitle}>AI Speaking Test</Text>
+        <View style={styles.headerRightPlaceholder} />
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -127,9 +131,32 @@ const styles = StyleSheet.create((theme, rt) => ({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: rt.insets.top + theme.spacing.sm,
+    paddingBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  backButton: {
+    padding: theme.spacing.xs,
+    borderRadius: theme.borderRadius.full,
+  },
+  headerTitle: {
+    fontFamily: theme.fontFamily.bodyStrong,
+    fontSize: theme.fontSize.lg,
+    color: theme.colors.foreground,
+  },
+  headerRightPlaceholder: {
+    width: 32,
+  },
   scrollContent: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: rt.insets.top + theme.spacing.md,
+    paddingTop: theme.spacing.md,
     paddingBottom: rt.insets.bottom + theme.spacing.xl,
     gap: theme.spacing.lg,
   },
