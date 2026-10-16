@@ -4,7 +4,6 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
@@ -12,6 +11,7 @@ import {
 import { StyleSheet } from "react-native-unistyles";
 
 import { Container } from "@/components/container";
+import { EmptyState } from "@/components/ui/empty-state";
 import { orpc } from "@/utils/orpc";
 
 interface ContentItem {
@@ -95,19 +95,15 @@ export default function RecommendationsScreen() {
   if (error) {
     return (
       <Container>
-        <ScrollView
-          contentContainerStyle={styles.errorContainer}
-          refreshControl={
-            <RefreshControl onRefresh={handleRefresh} refreshing={isLoading} />
-          }
-        >
-          <Text style={styles.errorText}>
-            Failed to load recommendations: {error.message}
-          </Text>
-          <TouchableOpacity onPress={handleRefresh} style={styles.retryButton}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </ScrollView>
+        <View style={styles.centered}>
+          <EmptyState
+            actionLabel="Try again"
+            body="We could not load your recommendations. Check your connection and try again."
+            emoji="📡"
+            onAction={handleRefresh}
+            title="Could not load recommendations"
+          />
+        </View>
       </Container>
     );
   }
@@ -115,24 +111,15 @@ export default function RecommendationsScreen() {
   if (recommendations.length === 0) {
     return (
       <Container>
-        <ScrollView
-          contentContainerStyle={styles.emptyContainer}
-          refreshControl={
-            <RefreshControl onRefresh={handleRefresh} refreshing={isLoading} />
-          }
-        >
-          <Text style={styles.emptyText}>
-            No recommendations yet. Complete your profile or try refreshing.
-          </Text>
-          <TouchableOpacity
-            onPress={handleRefresh}
-            style={styles.refreshButton}
-          >
-            <Text style={styles.refreshButtonText}>
-              Generate Recommendations
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
+        <View style={styles.centered}>
+          <EmptyState
+            actionLabel="Generate Recommendations"
+            body="You've explored all the content at your level! Try refreshing to recompute recommendations or complete more speaking sessions."
+            emoji="🎯"
+            onAction={handleRefresh}
+            title="No recommendations yet"
+          />
+        </View>
       </Container>
     );
   }
@@ -409,6 +396,12 @@ const styles = StyleSheet.create((theme) => ({
   actionButtonText: {
     fontSize: theme.fontSize.sm,
     color: theme.colors.foreground,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: theme.spacing.lg,
   },
   loadingContainer: {
     flex: 1,

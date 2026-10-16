@@ -13,6 +13,37 @@ import { setUpTests } from "react-native-reanimated";
 
 setUpTests();
 
+jest.mock("@community/env/native", () => ({
+  env: {
+    EXPO_PUBLIC_SERVER_URL: "http://localhost:3000",
+  },
+}));
+
+jest.mock("@/utils/orpc", () => ({
+  orpc: {
+    recommendations: {
+      getRecommendations: {
+        queryOptions: jest.fn().mockReturnValue({}),
+      },
+      trackInteraction: {
+        mutationOptions: jest.fn().mockReturnValue({}),
+      },
+    },
+    rebuild: {
+      getSubscription: {
+        queryOptions: jest.fn().mockReturnValue({}),
+      },
+      getMyTickets: {
+        queryOptions: jest.fn().mockReturnValue({}),
+      },
+      getTicketMessages: {
+        queryOptions: jest.fn().mockReturnValue({}),
+      },
+    },
+  },
+  queryClient: {},
+}));
+
 // expo-constants warns "no native ExponentConstants module found" on import
 // under Node. It has no usable runtime there, so stub the constant surface.
 jest.mock("expo-constants", () => ({
@@ -22,6 +53,22 @@ jest.mock("expo-constants", () => ({
     StoreClient: "storeClient",
   },
 }));
+
+jest.mock("expo-linear-gradient", () => {
+  const { createElement } = require("react");
+  const { View } = require("react-native");
+  return {
+    LinearGradient: ({
+      children,
+      style,
+      ...rest
+    }: {
+      children?: ReactNode;
+      style?: unknown;
+      [key: string]: unknown;
+    }) => createElement(View, { style, ...rest }, children),
+  };
+});
 
 // Mock contract: `Tabs` renders children; each `Tabs.Screen` renders a marker
 // `View` with testID `tab:<name>` and accessibilityLabel = configured title, and

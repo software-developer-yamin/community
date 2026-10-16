@@ -74,9 +74,9 @@ development_status:
   re-2-3-real-profile-embeddings-from-user-data: done
   epic-re-2-retrospective: optional
 
-  epic-re-3: in-progress
-  re-3-1-native-mobile-recommendation-feed-expo: in-progress
-  re-3-2-recommendation-feed-empty-state-design: backlog
+  epic-re-3: done
+  re-3-1-native-mobile-recommendation-feed-expo: done
+  re-3-2-recommendation-feed-empty-state-design: done
   epic-re-3-retrospective: optional
 
   epic-re-4: backlog

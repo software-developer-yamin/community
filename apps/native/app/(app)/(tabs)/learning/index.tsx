@@ -74,6 +74,36 @@ export default function LearningScreen() {
           </Pressable>
         </Link>
 
+        <Link asChild href="/(app)/(tabs)/recommendations">
+          <Pressable
+            accessibilityLabel="View recommended content"
+            accessibilityRole="button"
+          >
+            <Card style={styles.recommendationCard}>
+              <View style={styles.recommendationIconWrap}>
+                <Ionicons
+                  color={theme.colors.primary}
+                  name="compass-outline"
+                  size={24}
+                />
+              </View>
+              <View style={styles.recommendationTextWrap}>
+                <Text style={styles.recommendationTitle}>
+                  Recommended for You
+                </Text>
+                <Text style={styles.recommendationSubtitle}>
+                  Personalized videos, articles & dialogue practice
+                </Text>
+              </View>
+              <Ionicons
+                color={theme.colors.mutedForeground}
+                name="chevron-forward"
+                size={20}
+              />
+            </Card>
+          </Pressable>
+        </Link>
+
         <View style={styles.grid}>
           {GRID_ITEMS.map((item) => (
             <Card key={item.label} style={styles.gridCard}>
@@ -138,6 +168,34 @@ const styles = StyleSheet.create((theme, rt) => ({
     fontFamily: theme.fontFamily.body,
     fontSize: theme.fontSize.xs,
     color: "rgba(255,255,255,0.9)",
+  },
+  recommendationCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: theme.spacing.md,
+    gap: theme.spacing.md,
+  },
+  recommendationIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  recommendationTextWrap: {
+    flex: 1,
+    gap: 2,
+  },
+  recommendationTitle: {
+    fontFamily: theme.fontFamily.title,
+    fontSize: theme.fontSize.base,
+    color: theme.colors.foreground,
+  },
+  recommendationSubtitle: {
+    fontFamily: theme.fontFamily.body,
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.mutedForeground,
   },
   grid: {
     flexDirection: "row",
