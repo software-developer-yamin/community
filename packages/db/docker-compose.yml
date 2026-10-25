@@ -2,7 +2,7 @@ name: community
 
 services:
   postgres:
-    image: postgres
+    image: pgvector/pgvector:pg18
     container_name: community-postgres
     environment:
       POSTGRES_DB: community
