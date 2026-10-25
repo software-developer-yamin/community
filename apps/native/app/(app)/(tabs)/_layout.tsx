@@ -13,25 +13,25 @@ const TABS: {
   icon: IoniconName;
   iconActive: IoniconName;
 }[] = [
-  { name: "home", title: "Home", icon: "home-outline", iconActive: "home" },
+  { icon: "home-outline", iconActive: "home", name: "home", title: "Home" },
   {
-    name: "classes",
-    title: "Classes",
     icon: "school-outline",
     iconActive: "school",
+    name: "classes",
+    title: "Classes",
   },
-  { name: "rooms", title: "Rooms", icon: "mic-outline", iconActive: "mic" },
+  { icon: "mic-outline", iconActive: "mic", name: "rooms", title: "Rooms" },
   {
-    name: "learning",
-    title: "Learning",
     icon: "book-outline",
     iconActive: "book",
+    name: "learning",
+    title: "Learning",
   },
   {
-    name: "my-view",
-    title: "My View",
     icon: "person-circle-outline",
     iconActive: "person-circle",
+    name: "my-view",
+    title: "My View",
   },
 ];
 
@@ -44,25 +44,25 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.mutedForeground,
+        tabBarItemStyle: {
+          borderRadius: theme.borderRadius.full,
+        },
         tabBarLabelStyle: {
           fontFamily: theme.fontFamily.caption,
           fontSize: 11,
         },
         tabBarStyle: {
-          position: "absolute",
-          left: theme.spacing.lg,
-          right: theme.spacing.lg,
+          backgroundColor: theme.colors.card,
+          borderRadius: theme.borderRadius.full,
+          borderTopWidth: 0,
           bottom: theme.spacing.lg,
           height: 68,
-          borderRadius: theme.borderRadius.full,
-          backgroundColor: theme.colors.card,
-          borderTopWidth: 0,
-          paddingTop: theme.spacing.sm,
+          left: theme.spacing.lg,
           paddingBottom: theme.spacing.sm,
+          paddingTop: theme.spacing.sm,
+          position: "absolute",
+          right: theme.spacing.lg,
           ...theme.shadow.tabBar,
-        },
-        tabBarItemStyle: {
-          borderRadius: theme.borderRadius.full,
         },
       }}
     >
@@ -71,14 +71,14 @@ export default function TabLayout() {
           key={name}
           name={name}
           options={{
-            title,
             tabBarIcon: ({ color, focused }) => (
               <Ionicons
-                color={color}
+                color={typeof color === "string" ? color : undefined}
                 name={focused ? iconActive : icon}
                 size={TAB_ICON_SIZE}
               />
             ),
+            title,
           }}
         />
       ))}

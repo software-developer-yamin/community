@@ -36,11 +36,11 @@ export default function RootLayout() {
   const { theme } = useUnistyles();
   const appState = useRef(AppState.currentState);
   const [fontsLoaded] = useFonts({
-    Sora_700Bold,
-    Sora_600SemiBold,
     Manrope_400Regular,
     Manrope_500Medium,
     Manrope_600SemiBold,
+    Sora_600SemiBold,
+    Sora_700Bold,
   });
 
   useEffect(() => {
@@ -60,7 +60,11 @@ export default function RootLayout() {
         // and is now active, check whether the call state is stale.
         // A stale call while coming to foreground = the app was killed
         // while backgrounded (force_close).
-        if (BACKGROUND_STATE_REGEX.test(prevState) && nextState === "active") {
+        if (
+          prevState &&
+          BACKGROUND_STATE_REGEX.test(prevState) &&
+          nextState === "active"
+        ) {
           import("@/utils/call-state-storage").then(
             ({ getCallState, isStateStale }) => {
               getCallState().then((state) => {
@@ -99,10 +103,10 @@ export default function RootLayout() {
                         headerStyle: {
                           backgroundColor: theme.colors.background,
                         },
+                        headerTintColor: theme.colors.foreground,
                         headerTitleStyle: {
                           color: theme.colors.foreground,
                         },
-                        headerTintColor: theme.colors.foreground,
                       }}
                     >
                       <Stack.Screen
@@ -111,11 +115,11 @@ export default function RootLayout() {
                       />
                       <Stack.Screen
                         name="call/[room]"
-                        options={{ title: "Call", headerShown: true }}
+                        options={{ headerShown: true, title: "Call" }}
                       />
                       <Stack.Screen
                         name="modal"
-                        options={{ title: "Modal", presentation: "modal" }}
+                        options={{ presentation: "modal", title: "Modal" }}
                       />
                       <Stack.Screen
                         name="(auth)"

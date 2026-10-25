@@ -1,0 +1,64 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index c19095ef73e35a2aca7bc4ec35b2414d4f3ae7b3..6ca77266b6f5e0486ae949574e2324696dbe5cc5 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs	
+@@ -99,12 +99,12 @@ const OPERATION_CONTEXT_SYMBOL = Symbol("ORPC_OPERATION_CONTEXT");
+ function createProcedureUtils(client, options) {
+   const utils = {
+     call: client,
+-    queryKey(...[optionsIn = {}]) {
++    queryKey(optionsIn = {}) {
+       optionsIn = { ...options.experimental_defaults?.queryKey, ...optionsIn };
+       const queryKey = optionsIn.queryKey ?? generateOperationKey(options.path, { type: "query", input: optionsIn.input });
+       return queryKey;
+     },
+-    queryOptions(...[optionsIn = {}]) {
++    queryOptions(optionsIn = {}) {
+       optionsIn = { ...options.experimental_defaults?.queryOptions, ...optionsIn };
+       const queryKey = utils.queryKey(optionsIn);
+       return {
+@@ -128,12 +128,12 @@ function createProcedureUtils(client, options) {
+         queryKey
+       };
+     },
+-    experimental_streamedKey(...[optionsIn = {}]) {
++    experimental_streamedKey(optionsIn = {}) {
+       optionsIn = { ...options.experimental_defaults?.experimental_streamedKey, ...optionsIn };
+       const queryKey = optionsIn.queryKey ?? generateOperationKey(options.path, { type: "streamed", input: optionsIn.input, fnOptions: optionsIn.queryFnOptions });
+       return queryKey;
+     },
+-    experimental_streamedOptions(...[optionsIn = {}]) {
++    experimental_streamedOptions(optionsIn = {}) {
+       optionsIn = { ...options.experimental_defaults?.experimental_streamedOptions, ...optionsIn };
+       const queryKey = utils.experimental_streamedKey(optionsIn);
+       return {
+@@ -164,12 +164,12 @@ function createProcedureUtils(client, options) {
+         queryKey
+       };
+     },
+-    experimental_liveKey(...[optionsIn = {}]) {
++    experimental_liveKey(optionsIn = {}) {
+       optionsIn = { ...options.experimental_defaults?.experimental_liveKey, ...optionsIn };
+       const queryKey = optionsIn.queryKey ?? generateOperationKey(options.path, { type: "live", input: optionsIn.input });
+       return queryKey;
+     },
+-    experimental_liveOptions(...[optionsIn = {}]) {
++    experimental_liveOptions(optionsIn = {}) {
+       optionsIn = { ...options.experimental_defaults?.experimental_liveOptions, ...optionsIn };
+       const queryKey = utils.experimental_liveKey(optionsIn);
+       return {
+@@ -229,12 +229,12 @@ function createProcedureUtils(client, options) {
+         queryKey
+       };
+     },
+-    mutationKey(...[optionsIn = {}]) {
++    mutationKey(optionsIn = {}) {
+       optionsIn = { ...options.experimental_defaults?.mutationKey, ...optionsIn };
+       const mutationKey = optionsIn.mutationKey ?? generateOperationKey(options.path, { type: "mutation" });
+       return mutationKey;
+     },
+-    mutationOptions(...[optionsIn = {}]) {
++    mutationOptions(optionsIn = {}) {
+       optionsIn = { ...options.experimental_defaults?.mutationOptions, ...optionsIn };
+       const mutationKey = utils.mutationKey(optionsIn);
+       return {

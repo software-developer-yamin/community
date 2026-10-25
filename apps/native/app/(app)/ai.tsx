@@ -2,13 +2,14 @@ import { useChat } from "@ai-sdk/react";
 import { env } from "@community/env/native";
 import { Ionicons } from "@expo/vector-icons";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
   TextInput,
+  type TextInputSubmitEditingEvent,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -31,25 +32,33 @@ export default function AIScreen() {
   const { theme } = useUnistyles();
   const [input, setInput] = useState("");
   const { messages, error, sendMessage } = useChat({
+    onError: (chatError) => console.error(chatError, "AI Chat Error"),
     transport: new DefaultChatTransport({
       api: generateAPIUrl("/ai"),
     }),
-    onError: (error) => console.error(error, "AI Chat Error"),
   });
 
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, []);
 
-  const onSubmit = () => {
+  const onSubmit = useCallback(() => {
     const value = input.trim();
     if (value) {
       sendMessage({ text: value });
       setInput("");
     }
-  };
+  }, [input, sendMessage]);
+
+  const handleSubmitEditing = useCallback(
+    (e: TextInputSubmitEditingEvent) => {
+      e.preventDefault();
+      onSubmit();
+    },
+    [onSubmit]
+  );
 
   if (error) {
     return (
@@ -137,10 +146,7 @@ export default function AIScreen() {
               <TextInput
                 autoFocus={true}
                 onChangeText={setInput}
-                onSubmitEditing={(e) => {
-                  e.preventDefault();
-                  onSubmit();
-                }}
+                onSubmitEditing={handleSubmitEditing}
                 placeholder="Type your message..."
                 placeholderTextColor={theme.colors.border}
                 style={styles.textInput}
@@ -171,6 +177,12 @@ export default function AIScreen() {
 }
 
 const styles = StyleSheet.create((theme) => ({
+  assistantMessage: {
+    backgroundColor: theme.colors.background,
+    borderColor: theme.colors.border,
+    borderWidth: 1,
+    marginRight: theme.spacing.xl,
+  },
   container: {
     flex: 1,
   },
@@ -179,112 +191,106 @@ const styles = StyleSheet.create((theme) => ({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.lg,
   },
-  errorContainer: {
+  emptyContainer: {
+    alignItems: "center",
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: theme.spacing.md,
   },
-  errorText: {
-    color: theme.colors.destructive,
-    textAlign: "center",
+  emptyText: {
+    color: theme.colors.typography,
     fontSize: 18,
-    marginBottom: theme.spacing.md,
+    textAlign: "center",
+  },
+  errorContainer: {
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: theme.spacing.md,
   },
   errorSubtext: {
     color: theme.colors.typography,
-    textAlign: "center",
     fontSize: 16,
+    textAlign: "center",
+  },
+  errorText: {
+    color: theme.colors.destructive,
+    fontSize: 18,
+    marginBottom: theme.spacing.md,
+    textAlign: "center",
   },
   header: {
     marginBottom: theme.spacing.lg,
   },
+  headerSubtitle: {
+    color: theme.colors.typography,
+    fontSize: 16,
+  },
   headerTitle: {
+    color: theme.colors.typography,
     fontSize: 28,
     fontWeight: "bold",
-    color: theme.colors.typography,
     marginBottom: theme.spacing.sm,
   },
-  headerSubtitle: {
-    fontSize: 16,
-    color: theme.colors.typography,
+  inputContainer: {
+    alignItems: "flex-end",
+    flexDirection: "row",
+    gap: theme.spacing.sm,
   },
-  messagesContainer: {
-    flex: 1,
-    marginBottom: theme.spacing.md,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyText: {
-    textAlign: "center",
-    color: theme.colors.typography,
-    fontSize: 18,
-  },
-  messagesWrapper: {
-    gap: theme.spacing.md,
+  inputSection: {
+    borderTopColor: theme.colors.border,
+    borderTopWidth: 1,
+    paddingTop: theme.spacing.md,
   },
   messageContainer: {
-    padding: theme.spacing.md,
     borderRadius: 8,
-  },
-  userMessage: {
-    backgroundColor: `${theme.colors.primary}20`,
-    marginLeft: theme.spacing.xl,
-    alignSelf: "flex-end",
-  },
-  assistantMessage: {
-    backgroundColor: theme.colors.background,
-    marginRight: theme.spacing.xl,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  messageRole: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: theme.spacing.sm,
-    color: theme.colors.typography,
-  },
-  messageContentWrapper: {
-    gap: theme.spacing.xs,
+    padding: theme.spacing.md,
   },
   messageContent: {
     color: theme.colors.typography,
     lineHeight: 20,
   },
-  inputSection: {
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    paddingTop: theme.spacing.md,
+  messageContentWrapper: {
+    gap: theme.spacing.xs,
   },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: theme.spacing.sm,
-  },
-  textInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: 8,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+  messageRole: {
     color: theme.colors.typography,
-    backgroundColor: theme.colors.background,
-    fontSize: 16,
-    minHeight: 40,
-    maxHeight: 120,
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: theme.spacing.sm,
+  },
+  messagesContainer: {
+    flex: 1,
+    marginBottom: theme.spacing.md,
+  },
+  messagesWrapper: {
+    gap: theme.spacing.md,
   },
   sendButton: {
+    alignItems: "center",
     backgroundColor: theme.colors.primary,
-    padding: theme.spacing.sm,
     borderRadius: 8,
     justifyContent: "center",
-    alignItems: "center",
+    padding: theme.spacing.sm,
   },
   sendButtonDisabled: {
     backgroundColor: theme.colors.border,
+  },
+  textInput: {
+    backgroundColor: theme.colors.background,
+    borderColor: theme.colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    color: theme.colors.typography,
+    flex: 1,
+    fontSize: 16,
+    maxHeight: 120,
+    minHeight: 40,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+  },
+  userMessage: {
+    alignSelf: "flex-end",
+    backgroundColor: `${theme.colors.primary}20`,
+    marginLeft: theme.spacing.xl,
   },
 }));

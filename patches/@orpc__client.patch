@@ -1,0 +1,13 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 71f37f7509e7e6cb986c04d8665b1661ccf23aa7..b419519ff4fd3c80afc33f081a37f744ef327c8f 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs	
+@@ -65,7 +65,7 @@ function consumeEventIterator(iterator, options) {
+ 
+ function createORPCClient(link, options = {}) {
+   const path = options.path ?? [];
+-  const procedureClient = async (...[input, options2 = {}]) => {
++  const procedureClient = async (input, options2 = {}) => {
+     return await link.call(path, input, resolveFriendlyClientOptions(options2));
+   };
+   const recursive = new Proxy(procedureClient, {

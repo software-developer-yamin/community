@@ -17,25 +17,25 @@ export const queryClient = new QueryClient({
 });
 
 export const link = new RPCLink({
-  url: `${env.EXPO_PUBLIC_SERVER_URL}/rpc`,
   fetch(url, options) {
-    return fetch(url, {
+    return globalThis.fetch(url, {
       ...options,
       // Better Auth Expo forwards the session cookie manually on native.
       credentials: Platform.OS === "web" ? "include" : "omit",
     });
   },
-  headers() {
+  async headers() {
     if (Platform.OS === "web") {
       return {};
     }
     const headers = new Map<string, string>();
-    const cookies = authClient.getCookie();
+    const cookies = await authClient.getCookie();
     if (cookies) {
       headers.set("Cookie", cookies);
     }
     return Object.fromEntries(headers);
   },
+  url: `${env.EXPO_PUBLIC_SERVER_URL}/rpc`,
 });
 
 export const client: AppRouterClient = createORPCClient(link);

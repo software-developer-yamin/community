@@ -1,32 +1,32 @@
 {
   "name": "community",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
-  "type": "module",
   "scripts": {
-    "dev": "turbo dev",
     "build": "turbo build",
+    "check": "ultracite check",
     "check-types": "turbo check-types",
-    "dev:native": "turbo -F native dev",
-    "dev:web": "turbo -F web dev",
-    "dev:server": "turbo -F server dev",
-    "db:push": "turbo -F @community/db db:push",
-    "db:studio": "turbo -F @community/db db:studio",
+    "db:down": "turbo -F @community/db db:down",
     "db:generate": "turbo -F @community/db db:generate",
     "db:migrate": "turbo -F @community/db db:migrate",
+    "db:push": "turbo -F @community/db db:push",
     "db:start": "turbo -F @community/db db:start",
-    "db:watch": "turbo -F @community/db db:watch",
     "db:stop": "turbo -F @community/db db:stop",
-    "db:down": "turbo -F @community/db db:down",
-    "livekit:up": "docker compose -f docker/livekit/docker-compose.yml up -d",
+    "db:studio": "turbo -F @community/db db:studio",
+    "db:watch": "turbo -F @community/db db:watch",
+    "dev": "turbo dev",
+    "dev:native": "turbo -F native dev",
+    "dev:server": "turbo -F server dev",
+    "dev:web": "turbo -F web dev",
+    "fix": "ultracite fix",
     "livekit:down": "docker compose -f docker/livekit/docker-compose.yml down",
     "livekit:logs": "docker compose -f docker/livekit/docker-compose.yml logs -f livekit",
     "livekit:ps": "docker compose -f docker/livekit/docker-compose.yml ps",
-    "check": "ultracite check",
-    "fix": "ultracite fix",
+    "livekit:up": "docker compose -f docker/livekit/docker-compose.yml up -d",
     "prepare": "husky",
     "test": "bun test packages/api && bun test --cwd apps/native utils && pnpm --filter native test",
     "test:api": "bun test packages/api",
@@ -38,14 +38,14 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.15",
+    "@biomejs/biome": "2.5.15",
     "@community/config": "workspace:*",
-    "@playwright/test": "^1.61.0",
+    "@playwright/test": "^1.64.1",
     "@types/bun": "catalog:",
     "husky": "latest",
-    "turbo": "^2.8.12",
+    "turbo": "^2.11.10",
     "typescript": "catalog:",
-    "ultracite": "7.8.1"
+    "ultracite": "8.0.2"
   },
   "packageManager": "pnpm@10.9.0"
 }
